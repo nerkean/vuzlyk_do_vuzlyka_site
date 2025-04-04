@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %> - Вузлик</title>
+    <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Перегляньте каталог вишивки ручної роботи від Вузлик.' %>"> 
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/catalog-page.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+
+</head>
+<body>
+    <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>
+
+    <main class="catalog-page-main">
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title"><%= typeof pageHeading !== 'undefined' ? pageHeading : pageTitle %></h1> 
+            </div>
+
+            <div class="catalog-layout">
+                <aside class="catalog-sidebar" data-aos="fade-right" id="filter-sidebar">
+                    <h2 class="sidebar-title">Фільтри</h2>
+                    <form id="filter-form">
+                        <div class="filter-block">
+                            <h3 class="filter-title">Ціна, грн</h3>
+                            <div class="filter-price">
+                                <div class="price-input-group">
+                                    <label for="price-from">Від:</label>
+                                    <input type="number" id="price-from" name="price_from" placeholder="0" min="0">
+                                </div>
+                                <div class="price-input-group">
+                                    <label for="price-to">До:</label>
+                                    <input type="number" id="price-to" name="price_to" placeholder="10000" min="0">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-block">
+                            <h3 class="filter-title">Наявність</h3>
+                            <div class="filter-status">
+                                <div class="filter-option">
+                                    <input type="checkbox" id="status-available" name="status" value="available">
+                                    <label for="status-available">В наявності</label>
+                                </div>
+                                <div class="filter-option">
+                                    <input type="checkbox" id="status-order" name="status" value="order">
+                                    <label for="status-order">Під замовлення</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filter-block">
+                            <h3 class="filter-title">Теги</h3>
+                            <div class="filter-tags">
+                                <div class="filter-option"><input type="checkbox" id="tag-lon" name="tags" value="льон"><label for="tag-lon">Льон</label></div>
+                                <div class="filter-option"><input type="checkbox" id="tag-kvity" name="tags" value="квіти"><label for="tag-kvity">Квіти</label></div>
+                                <div class="filter-option"><input type="checkbox" id="tag-sorochka" name="tags" value="сорочка"><label for="tag-sorochka">Сорочка</label></div>
+                                <div class="filter-option"><input type="checkbox" id="tag-rushnyk" name="tags" value="рушник"><label for="tag-rushnyk">Рушник</label></div>
+                                <div class="filter-option"><input type="checkbox" id="tag-podarunok" name="tags" value="подарунок"><label for="tag-podarunok">Подарунок</label></div>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-secondary clear-filters-btn">Скинути фільтри</button>
+                    </form>
+                </aside>
+
+                <div class="catalog-content">
+                    <div class="sorting-controls">
+                        <label for="sort-by">Сортувати:</label>
+                        <select name="sort" id="sort-by"> <option value="default">За замовчуванням</option>
+                            <option value="price_asc">За ціною (від дешевших)</option>
+                            <option value="price_desc">За ціною (від дорожчих)</option>
+                            <option value="newest">За новизною</option>
+                        </select>
+                        <span class="product-count">Знайдено: <span id="product-count-value"><%= typeof count !== 'undefined' ? count : 0 %></span></span>
+                    </div>
+
+                    <div class="product-grid" id="product-grid-container">
+                        <% if (products && products.length > 0) { %>
+                            <% products.forEach((product, index) => { %>
+                                <article class="product-card" data-aos="fade-up" data-aos-delay="<%= index * 50 %>">
+                                     <div class="product-image-wrapper">
+                                        <a href="/product/<%= product._id %>">
+                                            <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+                                            <div class="product-overlay"><span class="view-details-btn">Детальніше</span></div>
+                                        </a>
+                                    </div>
+                                    <div class="product-info">
+                                         <a href="/product/<%= product._id %>"><h3><%= product.name %></h3></a>
+                                        <p class="price"><%= product.price %> грн</p>
+                                        <button class="btn btn-tertiary add-to-cart-button" data-product-id="<%= product._id %>">
+                                            <svg class="icon icon-cart-plus" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor">
+                                               <path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/>
+                                            </svg>
+                                            В кошик
+                                        </button>
+                                    </div>
+                                </article>
+                            <% }); %>
+                        <% } else { %>
+                            <p>На жаль, товари за вашим запитом не знайдено.</p>
+                        <% } %>
+                    </div>
+
+                    <nav class="pagination" aria-label="Навігація по сторінках" id="pagination-container">
+                       <ul></ul>
+                    </nav>
+
+                </div> </div> </div> </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+    <script src="/js/main.js" defer ></script>
+    <script src="/js/catalog.js" defer></script> </body>
+    <script defer >
+        AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic', offset: 50 });
+    </script>
+</html>
+

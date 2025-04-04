@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %> - Вузлик</title>
+
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/checkout-page.css">
+</head>
+<body>
+    <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>
+
+    <main class="checkout-page-main">
+        <div class="container">
+            <h1 class="page-title">Оформлення замовлення</h1>
+
+            <form id="checkout-form" action="/order/place" method="POST">
+                <div class="checkout-layout">
+
+                    <div class="checkout-details">
+                        <section class="checkout-section">
+                            <h2>1. Контактна інформація</h2>
+                            <div class="form-group">
+                                <label for="email">Email <span class="required">*</span></label>
+                                <input type="email" id="email" name="email" required placeholder="Ваш email">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Телефон <span class="required">*</span></label>
+                                <input type="tel" id="phone" name="phone" required placeholder="+380 XX XXX XX XX">
+                            </div>
+                             <div class="form-group">
+                                <label for="full_name_contact">Прізвище та Ім'я отримувача <span class="required">*</span></label>
+                                <input type="text" id="full_name_contact" name="full_name" required placeholder="Прізвище Ім'я">
+                            </div>
+                        </section>
+
+                        <section class="checkout-section">
+                            <h2>2. Доставка</h2>
+                            <div class="shipping-methods">
+                                <div class="form-group shipping-option">
+                                    <input type="radio" id="shipping-np-branch" name="shippingMethod" value="np_branch" required checked>
+                                    <label for="shipping-np-branch">Нова Пошта (на відділення)<span class="shipping-cost">За тарифами перевізника</span></label>
+                                </div>
+                                <div class="form-group shipping-option">
+                                    <input type="radio" id="shipping-np-courier" name="shippingMethod" value="np_courier">
+                                    <label for="shipping-np-courier">Нова Пошта (кур'єром)<span class="shipping-cost">За тарифами перевізника</span></label>
+                                </div>
+                                <div class="form-group shipping-option">
+                                    <input type="radio" id="shipping-ukrposhta" name="shippingMethod" value="ukrposhta">
+                                    <label for="shipping-ukrposhta">Укрпошта<span class="shipping-cost">За тарифами перевізника</span></label>
+                                </div>
+                                <div class="form-group shipping-option">
+                                    <input type="radio" id="shipping-pickup" name="shippingMethod" value="pickup">
+                                    <label for="shipping-pickup">Самовивіз (м. Бровари)<span class="shipping-cost">Безкоштовно</span></label>
+                                </div>
+                            </div>
+                            <div class="shipping-address-fields">
+                                <div class="form-group" data-shipping-methods="np_branch np_courier ukrposhta"><label for="shipping-city">Місто / Населений пункт <span class="required">*</span></label><input type="text" id="shipping-city" name="shipping_city" required placeholder="Наприклад, Київ"></div>
+                                <div class="form-group" data-shipping-methods="np_branch" style="display: block;"><label for="shipping-np-warehouse">Номер відділення Нової Пошти <span class="required">*</span></label><input type="text" id="shipping-np-warehouse" name="shipping_np_warehouse" placeholder="Введіть номер відділення"></div>
+                                <div class="form-group" data-shipping-methods="np_courier ukrposhta" style="display: none;"><label for="shipping-address1">Вулиця, будинок, квартира <span class="required">*</span></label><input type="text" id="shipping-address1" name="shipping_address1" placeholder="Вулиця Незалежності, 10, кв. 5"></div>
+                                <div class="form-group" data-shipping-methods="ukrposhta" style="display: none;"><label for="shipping-zip">Поштовий індекс <span class="required">*</span></label><input type="text" id="shipping-zip" name="shipping_zip" placeholder="Наприклад, 07400"></div>
+                                <div class="form-group pickup-note" data-shipping-methods="pickup" style="display: none;"><p>Ми зв'яжемося з вами для узгодження часу та місця зустрічі в м. Бровари.</p></div>
+                            </div>
+                        </section>
+
+                         <section class="checkout-section">
+                             <h2>3. Коментар до замовлення</h2>
+                             <div class="form-group">
+                                 <label for="order-comments">Ваші побажання</label>
+                                 <textarea id="order-comments" name="comments" rows="4" placeholder="Додаткова інформація, побажання щодо замовлення..."></textarea>
+                             </div>
+                         </section>
+                    </div> <div class="checkout-summary">
+                        <aside class="checkout-sidebar">
+                            <section class="checkout-section order-summary">
+                                <h2>Ваше замовлення</h2>
+                                <div class="summary-items">
+                                    <% if (cartItems && cartItems.length > 0) { %>
+                                        <% cartItems.forEach(item => { %>
+                                            <div class="summary-item">
+                                                <span class="summary-item-name"><%= item.name %> x <%= item.quantity %></span>
+                                                <span class="summary-item-price"><%= item.lineTotal %> грн</span>
+                                            </div>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <p>Ваш кошик порожній.</p>
+                                    <% } %>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Проміжний підсумок:</span>
+                                    <span class="subtotal-amount"><%= subtotal %> грн</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Доставка:</span>
+                                    <span class="shipping-total-text">За тарифами перевізника</span>
+                                </div>
+                                <div class="summary-row total-row">
+                                    <span>До сплати:</span>
+                                    <span class="grand-total-amount"><%= total %> грн</span>
+                                </div>
+                            </section>
+
+                            <section class="checkout-section">
+                                <h2>4. Оплата</h2>
+                                <div class="payment-method">
+                                    <p>Оплата карткою Visa/Mastercard через безпечний сервіс **LiqPay**.</p>
+                                    <img src="/images/liqpay_logo.png" alt="LiqPay" style="max-width: 100px; margin-top: 10px;">
+                                    <p class="payment-note">Після підтвердження замовлення ви будете перенаправлені на сторінку оплати.</p>
+                                </div>
+                            </section>
+
+                            <div class="place-order-action">
+                                <button type="submit" class="btn btn-primary btn-lg place-order-btn">Підтвердити замовлення</button>
+                            </div>
+                            
+                        </aside>
+                    </div> </div> </form> </div> </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

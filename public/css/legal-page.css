@@ -1,0 +1,73 @@
+/* Основний контент */
+.legal-page-main .container {
+    padding-top: 40px;  /* Відступ зверху */
+    padding-bottom: 60px; /* Відступ знизу */
+    max-width: 900px; /* Можна зробити контент трохи вужчим для кращої читабельності довгого тексту */
+}
+
+/* Заголовок сторінки */
+.legal-page-main .page-title {
+    text-align: center;
+    margin-bottom: 15px;
+    /* Розмір успадковується з h1 в common.css */
+}
+
+/* Дата оновлення */
+.last-updated {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    margin-bottom: 40px;
+}
+
+/* Секції документа */
+.legal-page-main section {
+    margin-bottom: 35px; /* Відстань між секціями */
+}
+
+/* Заголовки секцій (h2) */
+.legal-page-main section h2 {
+    font-size: 1.6em; /* Трохи менший розмір, ніж h2 за замовчуванням */
+    margin-top: 1.5em; /* Відступ зверху */
+    margin-bottom: 1em; /* Відступ знизу */
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--color-border); /* Підкреслення */
+    color: var(--color-text);
+}
+.legal-page-main section:first-of-type h2 {
+    margin-top: 0; /* Прибираємо верхній відступ у першого заголовка h2 */
+}
+
+
+/* Параграфи */
+.legal-page-main section p {
+    margin-bottom: 1em; /* Відступ між параграфами */
+    line-height: 1.7; /* Міжрядковий інтервал успадковується з body, але можна уточнити */
+    color: var(--color-text-light);
+}
+
+/* Списки */
+.legal-page-main section ul {
+    list-style: disc; /* Стандартні маркери */
+    margin-left: 25px; /* Відступ зліва для списку */
+    margin-bottom: 1em;
+    padding-left: 15px;
+}
+.legal-page-main section li {
+    margin-bottom: 0.6em; /* Відступ між пунктами списку */
+    color: var(--color-text-light);
+}
+
+/* Адаптивність (зазвичай такі сторінки добре адаптуються, але можна додати) */
+@media (max-width: 768px) {
+    .legal-page-main .container {
+        padding-top: 30px;
+        padding-bottom: 40px;
+    }
+    .legal-page-main section h2 {
+        font-size: 1.4em;
+    }
+     .last-updated {
+        margin-bottom: 30px;
+    }
+}
