@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= pageTitle %> - Вузлик</title>
-    <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Перегляньте каталог вишивки ручної роботи від Вузлик.' %>"> 
+
+    <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+
+    <% if (typeof firstProductImageUrl !== 'undefined' && firstProductImageUrl) { %>
+        <link rel="preload" href="<%= firstProductImageUrl %>" as="image">
+    <% } %>
+
+    <title>Каталог Вишивки Ручної Роботи - Вузлик</title>
+    <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : 'Перегляньте каталог вишивки ручної роботи від Вузлик.' %>">
+
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/catalog-page.css">
 
-    <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="preload" href="https://unpkg.com/aos@next/dist/aos.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css"></noscript>
 
 </head>
 <body>
@@ -17,11 +28,19 @@
     <main class="catalog-page-main">
         <div class="container">
             <div class="page-header">
-                <h1 class="page-title"><%= typeof pageHeading !== 'undefined' ? pageHeading : pageTitle %></h1> 
+                <h1 class="page-title"><%= typeof pageHeading !== 'undefined' ? pageHeading : pageTitle %></h1>
             </div>
 
             <div class="catalog-layout">
-                <aside class="catalog-sidebar" data-aos="fade-right" id="filter-sidebar">
+
+                <button type="button" class="btn btn-secondary mobile-filter-toggle" id="mobile-filter-toggle">
+                    <svg class="icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" style="width: 1em; height: 1em; vertical-align: -0.125em; margin-right: 0.5em;">
+                        <path d="M3.9 54.9C10.5 40.9 24.5 32 40 32H472c15.5 0 29.5 8.9 36.1 22.9s4.6 30.5-5.2 42.5L320 320.9V448c0 12.1-6.8 23.2-17.7 28.6s-23.8 4.3-33.5-3l-64-48c-8.1-6-12.8-15.5-12.8-25.6V320.9L9 97.3C-.7 85.4-2.8 68.8 3.9 54.9z"/>
+                    </svg>
+                    Фільтри
+                </button>
+
+                <aside class="catalog-sidebar" data-aos="fade-right" data-aos-once="true" id="filter-sidebar">
                     <h2 class="sidebar-title">Фільтри</h2>
                     <form id="filter-form">
                         <div class="filter-block">
@@ -29,15 +48,14 @@
                             <div class="filter-price">
                                 <div class="price-input-group">
                                     <label for="price-from">Від:</label>
-                                    <input type="number" id="price-from" name="price_from" placeholder="0" min="0">
+                                    <input type="number" id="price-from" name="price_from" placeholder="0" min="0" aria-label="Ціна від">
                                 </div>
                                 <div class="price-input-group">
                                     <label for="price-to">До:</label>
-                                    <input type="number" id="price-to" name="price_to" placeholder="10000" min="0">
+                                    <input type="number" id="price-to" name="price_to" placeholder="10000" min="0" aria-label="Ціна до">
                                 </div>
                             </div>
                         </div>
-
                         <div class="filter-block">
                             <h3 class="filter-title">Наявність</h3>
                             <div class="filter-status">
@@ -51,73 +69,96 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="filter-block">
                             <h3 class="filter-title">Теги</h3>
-                            <div class="filter-tags">
-                                <div class="filter-option"><input type="checkbox" id="tag-lon" name="tags" value="льон"><label for="tag-lon">Льон</label></div>
-                                <div class="filter-option"><input type="checkbox" id="tag-kvity" name="tags" value="квіти"><label for="tag-kvity">Квіти</label></div>
-                                <div class="filter-option"><input type="checkbox" id="tag-sorochka" name="tags" value="сорочка"><label for="tag-sorochka">Сорочка</label></div>
-                                <div class="filter-option"><input type="checkbox" id="tag-rushnyk" name="tags" value="рушник"><label for="tag-rushnyk">Рушник</label></div>
-                                <div class="filter-option"><input type="checkbox" id="tag-podarunok" name="tags" value="подарунок"><label for="tag-podarunok">Подарунок</label></div>
+                            <div class="filter-block">
+                                <div class="filter-tags">
+                                    <div class="filter-option"><input type="checkbox" id="tag-dytiachi" name="tags" value="дитячі"><label for="tag-dytiachi">Дитячі</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-peizazhi" name="tags" value="пейзажі"><label for="tag-peizazhi">Пейзажі</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-vesilni" name="tags" value="весільні"><label for="tag-vesilni">Весільні</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-konturna" name="tags" value="контурна вишивка"><label for="tag-konturna">Контурна вишивка</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-arkhitekturna" name="tags" value="архітектурна вишивка"><label for="tag-arkhitekturna">Архітектурна вишивка</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-kvity-bukety" name="tags" value="квіти, букети"><label for="tag-kvity-bukety">Квіти, букети</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-karty" name="tags" value="карти"><label for="tag-karty">Карти</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-tvaryny" name="tags" value="тварини"><label for="tag-tvaryny">Тварини</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-simeini" name="tags" value="сімейні"><label for="tag-simeini">Сімейні</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-litery" name="tags" value="літери"><label for="tag-litery">Літери</label></div>
+                                    <div class="filter-option"><input type="checkbox" id="tag-sviata" name="tags" value="свята"><label for="tag-sviata">Свята</label></div>
+                                </div>
                             </div>
                         </div>
-
                         <button type="button" class="btn btn-secondary clear-filters-btn">Скинути фільтри</button>
                     </form>
                 </aside>
 
                 <div class="catalog-content">
+                    <div id="active-filters-container" class="active-filters">
+                    </div>
                     <div class="sorting-controls">
-                        <label for="sort-by">Сортувати:</label>
-                        <select name="sort" id="sort-by"> <option value="default">За замовчуванням</option>
+                         <label for="sort-by">Сортувати:</label>
+                        <select name="sort" id="sort-by" aria-label="Сортування товарів">
+                            <option value="default">За замовчуванням</option>
                             <option value="price_asc">За ціною (від дешевших)</option>
                             <option value="price_desc">За ціною (від дорожчих)</option>
                             <option value="newest">За новизною</option>
                         </select>
-                        <span class="product-count">Знайдено: <span id="product-count-value"><%= typeof count !== 'undefined' ? count : 0 %></span></span>
+                        <span class="product-count" aria-live="polite">Знайдено: <span id="product-count-value"><%= typeof count !== 'undefined' ? count : 0 %></span></span>
                     </div>
+
+                     <h2 class="visually-hidden">Товари в каталозі</h2>
 
                     <div class="product-grid" id="product-grid-container">
                         <% if (products && products.length > 0) { %>
                             <% products.forEach((product, index) => { %>
-                                <article class="product-card" data-aos="fade-up" data-aos-delay="<%= index * 50 %>">
-                                     <div class="product-image-wrapper">
-                                        <a href="/product/<%= product._id %>">
-                                            <img src="<%= product.images[0] %>" alt="<%= product.name %>">
+                                <article class="product-card" data-aos="fade-up" data-aos-delay="<%= index * 50 %>" data-aos-once="true">
+                                    <div class="product-image-wrapper">
+                                        <a href="/product/<%= product._id %>" aria-label="Переглянути деталі товару <%= product.name %>">
+                                             <img src="<%= product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.png' %>"
+                                                 alt="<%= product.name %>"
+                                                 loading="lazy"
+                                                 <%= index === 0 ? 'fetchpriority="high"' : '' %>
+                                                 onerror="this.onerror=null; this.src='/images/placeholder.png';">
                                             <div class="product-overlay"><span class="view-details-btn">Детальніше</span></div>
                                         </a>
                                     </div>
                                     <div class="product-info">
                                          <a href="/product/<%= product._id %>"><h3><%= product.name %></h3></a>
                                         <p class="price"><%= product.price %> грн</p>
-                                        <button class="btn btn-tertiary add-to-cart-button" data-product-id="<%= product._id %>">
+                                        <button class="btn btn-tertiary add-to-cart-button" data-product-id="<%= product._id %>" aria-label="Додати <%= product.name %> в кошик">
                                             <svg class="icon icon-cart-plus" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor">
-                                               <path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/>
+                                                <path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/>
                                             </svg>
                                             В кошик
                                         </button>
                                     </div>
                                 </article>
                             <% }); %>
-                        <% } else { %>
-                            <p>На жаль, товари за вашим запитом не знайдено.</p>
-                        <% } %>
+                        <% } %> <%# Removed the 'else' block here, handling visibility via CSS/JS %>
+
+                        <p id="no-products-message"
+                           style="grid-column: 1 / -1;" <%# Keep grid-column inline %>
+                           class="no-products-info <%= (typeof products === 'undefined' || products.length === 0) ? '' : 'is-hidden' %>"> <%# Add is-hidden if products initially exist %>
+                            На жаль, товари за вашим запитом не знайдено.
+                        </p>
+                    </div>
+
+                     <div id="loading-indicator" style="display: none; text-align: center; padding: 20px; grid-column: 1 / -1;" aria-live="polite">
+                        Завантаження товарів...
                     </div>
 
                     <nav class="pagination" aria-label="Навігація по сторінках" id="pagination-container">
-                       <ul></ul>
-                    </nav>
+                        <ul></ul> </nav>
 
                 </div> </div> </div> </main>
 
     <%- include('partials/footer') %>
 
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-    <script src="/js/main.js" defer ></script>
-    <script src="/js/catalog.js" defer></script> </body>
-    <script defer >
+    <script>
         AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic', offset: 50 });
     </script>
-</html>
+    <script src="/js/main.js" defer></script>
+    <script src="/js/catalog.js" defer></script>
 
+</body>
+</html>

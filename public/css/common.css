@@ -123,7 +123,6 @@ a:hover {
     font-family: var(--font-heading);
     font-weight: 900;
     position: absolute;
-    left: 0;
     top: -5px;
     font-size: 2em;
     color: var(--color-border);
@@ -156,6 +155,15 @@ strong {
     font-weight: 700;
     color: var(--color-text);
 }
+.main-nav ul {
+    display: flex;
+    align-items: center;
+}
+
+.main-nav .nav-profile-btn {
+    margin-top: 0;
+    margin-bottom: 0;
+}
 
 .section-title {
     text-align: center;
@@ -177,6 +185,59 @@ strong {
     border-radius: 2px;
 }
 
+.product-image-flyer {
+    position: fixed;
+    z-index: 1100;
+    display: block;
+    object-fit: cover;
+    border-radius: 8px;
+    pointer-events: none;
+    will-change: transform, opacity;
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+}
+
+.product-image-flyer.animate {
+    animation: flyToCartAnimationEpic 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+
+@keyframes flyToCartAnimationEpic {
+    0% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+        border-radius: 8px;
+    }
+    30% {
+        opacity: 1;
+        transform: scale(1.05) rotate(15deg);
+    }
+    100% {
+        opacity: 0;
+        transform: var(--fly-target-transform, translate(0, 0) scale(0.1) rotate(480deg));
+        border-radius: 50%;
+    }
+}
+
+@keyframes cartShake {
+  10%, 90% { transform: translate3d(-1px, 0, 0) scale(1.05); }
+  20%, 80% { transform: translate3d(2px, 0, 0) scale(1.05); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0) scale(1.1); }
+  40%, 60% { transform: translate3d(3px, 0, 0) scale(1.1); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+.header-cart a.cart-shake {
+  animation: cartShake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.cart-count.updated {
+  animation: bounce 0.6s ease;
+}
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
 .section-divider {
     text-align: center;
     padding: 30px 0;
@@ -192,12 +253,13 @@ strong {
     font-weight: 700;
     font-family: var(--font-heading);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: color 0.3s ease, transform 0.3s ease;
     border: none;
     font-size: 1em;
     text-align: center;
     letter-spacing: 0.5px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    will-change: transform, box-shadow;
 }
 .btn i {
     margin-left: 8px;
@@ -225,7 +287,8 @@ strong {
     color: var(--color-white);
 }
 .btn-primary:hover {
-    background: linear-gradient(45deg, var(--color-accent-dark), var(--color-accent));
+    background: var(--color-accent-dark);
+    color: var(--color-white);
 }
 
 .btn-secondary {
@@ -241,22 +304,24 @@ strong {
 
 .btn-tertiary {
     background-color: var(--color-white);
-    color: var(--color-accent);
-    border: 1px solid var(--color-border);
-    font-weight: 400;
+    color: var(--color-text);
+    border: 1px solid #aaaaaa;
+    font-weight: 600;
     font-family: var(--font-body);
     box-shadow: none;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 .btn-tertiary:hover {
-    background-color: var(--color-accent);
+    background-color: var(--color-accent-dark);
     color: var(--color-white);
-    border-color: var(--color-accent);
+    border-color: var(--color-accent-dark);
     box-shadow: var(--box-shadow-light);
 }
-.btn-tertiary i {
+.btn-tertiary i,
+.btn-tertiary .icon {
     margin-right: 5px;
     margin-left: 0;
+    vertical-align: middle;
 }
 
 .site-header {
@@ -275,7 +340,6 @@ strong {
 .header-actions {
     display: flex;
     align-items: center;
-    margin-left: auto;
     gap: 15px;
     flex-shrink: 0;
 }
@@ -328,10 +392,49 @@ strong {
 .main-nav ul {
     list-style: none;
     display: flex;
-    justify-content: center;
+    justify-content: center; 
     flex-wrap: wrap;
-    gap: 15px 30px;
+    gap: 15px 30px; 
+    padding: 0;
+    margin: 0;
 }
+
+.main-nav ul li a.nav-profile-btn, 
+.main-nav ul li a.nav-login-btn    {
+    background: linear-gradient(45deg, var(--color-accent), var(--color-accent-light));
+    color: var(--color-white);
+    border: none;
+    padding: 0.5rem 0.8rem; 
+    font-size: 0.9em;
+    text-decoration: none;
+    border-radius: var(--border-radius-main);
+    line-height: 1.5;
+    margin: 0;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: var(--box-shadow-light);
+}
+
+.main-nav ul li a.nav-profile-btn::after,
+.main-nav ul li a.nav-login-btn::after   {
+    display: none;
+}
+
+.main-nav ul li a.nav-profile-btn:hover, 
+.main-nav ul li a.nav-login-btn:hover    {
+    background: var(--color-accent-dark);
+    color: var(--color-white);
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-medium);
+    text-decoration: none;
+}
+
+.main-nav ul li a.nav-profile-btn:active, 
+.main-nav ul li a.nav-login-btn:active   {
+    transform: translateY(-1px);
+    box-shadow: var(--box-shadow-light);
+}
+
 .main-nav a {
     color: var(--color-text);
     text-decoration: none;
@@ -508,10 +611,11 @@ strong {
 }
 .product-image-wrapper img {
     width: 100%;
-    height: 320px;
+    aspect-ratio: 3 / 4; 
     object-fit: cover;
     display: block;
     transition: transform 0.4s ease;
+    background-color: #f0f0f0; 
 }
 .product-card:hover .product-image-wrapper img {
     transform: scale(1.05);
@@ -571,7 +675,7 @@ strong {
 .product-info .price {
     font-size: 1.2em;
     font-weight: 700;
-    color: var(--color-accent-dark);
+    color: var(--color-text);
     margin-bottom: 15px;
 }
 .product-info .btn-tertiary {
@@ -585,6 +689,15 @@ strong {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 35px;
 }
+
+.cart-count.updated {
+    animation: bounce 0.6s ease;
+  }
+  
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
 
 @media (max-width: 992px) {
     :root { --padding-section: 60px 0; }
@@ -628,6 +741,8 @@ strong {
 
     .main-nav {
         display: none;
+        flex-grow: 1;
+        justify-content: center;
         position: absolute;
         top: 100%;
         left: 0;

@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.success) {
-                alert('Товар успішно додано до кошика!');
                 updateCartView(data);
             } else {
                 alert(`Не вдалося додати товар: ${data.message || 'Невідома помилка'}`);

@@ -13,10 +13,6 @@
     grid-template-columns: 2fr 1fr;
     gap: 80px;
 }
-
-.cart-items-list {
-}
-
 .cart-header {
     display: grid;
     grid-template-columns: 120px 1fr auto auto 40px;

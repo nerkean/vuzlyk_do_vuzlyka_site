@@ -4,23 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= product.name %> - Вузлик</title>
-
-    <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : product.description.substring(0, 160) %>"> 
+    <meta name="description" content="<%= typeof metaDescription !== 'undefined' ? metaDescription : product.description.substring(0, 160) %>">
 
     <% if (product && product.images && product.images.length > 0) { %>
-        <link 
-            rel="preload" 
-            fetchpriority="high" 
-            as="image" 
-            href="<%= product.images[0] %>"
-        >
+        <link rel="preload" fetchpriority="high" as="image" href="<%= product.images[0] %>">
     <% } %>
     <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+
     <link rel="stylesheet" href="/css/common.css">
     <link rel="stylesheet" href="/css/product-page.css">
-
     <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+
 </head>
 <body>
     <%- include('partials/header') %>
@@ -30,8 +26,8 @@
             <section class="product-main-section" data-aos="fade-up">
                 <div class="product-gallery-column" data-aos="fade-right" data-aos-duration="800">
                     <div class="product-gallery">
-                        <div class="main-image-container">
-                            <img src="<%= product.images[0] %>" alt="<%= product.name %>" id="mainProductImage">
+                         <div class="main-image-container">
+                            <img src="<%= product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.png' %>" alt="<%= product.name %>" id="mainProductImage">
                         </div>
                         <% if (product.images && product.images.length > 1) { %>
                             <div class="thumbnail-list">
@@ -43,14 +39,37 @@
                             </div>
                         <% } %>
                     </div>
-                    <div class="product-action-area">
+                     <div class="product-action-area">
                         <div class="product-price"><%= product.price %> грн</div>
+                         <div class="product-rating-display">
+                            <% const avgRating = typeof averageRating !== 'undefined' ? averageRating : 0; %>
+                            <% const ratingCountVal = typeof ratingCount !== 'undefined' ? ratingCount : 0; %>
+                            <div class="stars">
+                                <% for(let i = 1; i <= 5; i++) { %>
+                                    <% if (i <= avgRating) { %>
+                                        <i class="fas fa-star"></i>
+                                    <% } else if (i - 0.5 <= avgRating) { %>
+                                        <i class="fas fa-star-half-alt"></i>
+                                    <% } else { %>
+                                        <i class="far fa-star"></i>
+                                    <% } %>
+                                <% } %>
+                            </div>
+                            <% if (ratingCountVal > 0) { %>
+                                <span class="rating-value"><%= avgRating.toFixed(1) %> з 5</span>
+                                <span class="rating-count">(<%= ratingCountVal %> <%= ratingCountVal === 1 ? 'відгук' : (ratingCountVal >= 2 && ratingCountVal <= 4 ? 'відгуки' : 'відгуків') %>)</span>
+                            <% } else { %>
+                                <span class="rating-value">Ще немає відгуків</span>
+                            <% } %>
+                        </div>
+
+                        <% if (typeof isCustomProduct !== 'undefined' && isCustomProduct) { %>
+                             <p class="custom-price-note">Це базова ціна. Фінальна вартість буде узгоджена після обговорення деталей вашого дизайну.</p>
+                        <% } %>
                         <button class="btn btn-primary btn-lg add-to-cart-button" data-product-id="<%= product._id %>">
-                            <i class="fa-solid fa-cart-plus"></i> Додати в кошик
+                            <i class="fas fa-shopping-cart"></i>
+                            Додати в кошик
                         </button>
-                         <% if (product.sku === 'CUSTOM_EMBROIDERY_SKU') { %> <button class="btn btn-secondary btn-lg upload-custom-image-btn">Завантажити своє фото</button>
-                            <input type="file" id="customImageUpload" style="display: none;" accept="image/*">
-                         <% } %>
                     </div>
                 </div>
 
@@ -59,21 +78,20 @@
 
                     <% if (product.status) { %>
                         <div class="product-status-info">
-                            <span class="status status-<%= product.status.toLowerCase().replace(' ', '-') %>">Статус: <%= product.status %></span>
-                            <% if (product.status === 'Під замовлення' && product.creation_time_info) { %>
-                                <span class="creation-time">(<%= product.creation_time_info %>)</span>
-                            <% } %>
-                        </div>
+                             <span class="status status-<%= product.status.toLowerCase().replace(/[\s_]+/g, '-') %>">Статус: <%= product.status %></span>
+                             <% if (product.status === 'Під замовлення' && product.creation_time_info) { %>
+                                 <span class="creation-time">(<%= product.creation_time_info %>)</span>
+                             <% } %>
+                         </div>
                     <% } %>
-
-                    <div class="product-short-specs">
-                        <% if (product.dimensions && product.dimensions.size_name) { %>
+                     <div class="product-short-specs">
+                         <% if (product.dimensions && product.dimensions.size_name) { %>
                             <p><strong>Розмір:</strong> <%= product.dimensions.size_name %></p>
-                        <% } %>
-                        <% if (product.colors && product.colors.length > 0) { %>
-                            <p><strong>Основні кольори:</strong> <%= product.colors.join(', ') %></p>
-                        <% } %>
-                    </div>
+                         <% } %>
+                         <% if (product.colors && product.colors.length > 0) { %>
+                             <p><strong>Основні кольори:</strong> <%= product.colors.join(', ') %></p>
+                         <% } %>
+                     </div>
 
                     <% if (product.description) { %>
                         <div class="product-description" data-aos="fade-up" data-aos-delay="200">
@@ -83,7 +101,7 @@
                     <% } %>
 
                     <% if (product.materials && product.materials.length > 0) { %>
-                        <div class="product-materials" data-aos="fade-up" data-aos-delay="250">
+                         <div class="product-materials" data-aos="fade-up" data-aos-delay="250">
                             <h2>Матеріали</h2>
                             <ul>
                                 <% product.materials.forEach(material => { %>
@@ -111,43 +129,59 @@
                 </div>
             </section>
 
-            <% if (reviews && reviews.length > 0) { %>
-                <section class="product-reviews-section section-padding bg-light" data-aos="zoom-in-up" data-aos-duration="600">
-                    <h2 class="section-title">Відгуки Покупців</h2>
-                    <div class="reviews-list">
+            
+
+            <section class="product-reviews-section section-padding bg-light" data-aos="fade-up">
+                <h2 class="section-title text-center">Відгуки Покупців</h2>
+                <div class="reviews-list" id="reviewsList">
+                    <% if (typeof reviews !== 'undefined' && reviews && reviews.length > 0) { %>
                         <% reviews.forEach((review, index) => { %>
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <span class="review-author"><%= review.author || 'Анонім' %></span>
-                                    <span class="review-date"><%= review.createdAt.toLocaleDateString('uk-UA') %></span> <div class="review-rating">
-                                        <% for(let i = 0; i < 5; i++) { %>
-                                            <i class="fa<%= (i < review.rating) ? 's' : 'r' %> fa-star"></i>
+                            <article class="review-item" data-aos="fade-up" data-aos-delay="<%= index * 50 %>">
+                                <header class="review-header">
+                                    <span class="review-author"><%= (review.userId && review.userId.name) ? review.userId.name : 'Анонім' %></span>
+                                    <div class="review-rating">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
                                         <% } %>
                                     </div>
-                                </div>
-                                <p class="review-text"><%= review.text %></p>
-                            </div>
+                                     <span class="review-date"><%= new Date(review.createdAt).toLocaleDateString('uk-UA') %></span>
+                                </header>
+                                <% if(review.text) { %>
+                                <blockquote class="review-text">
+                                    <p><%= review.text %></p>
+                                </blockquote>
+                                <% } %>
+                            </article>
                         <% }); %>
-                    </div>
-                </section>
-            <% } %>
-             <% if (similarProducts && similarProducts.length > 0) { %>
+                    <% } else { %>
+                        <p class="no-reviews-message">Для цього товару ще немає відгуків. Будьте першим!</p>
+                    <% } %>
+                </div>
+            </section>
+
+             <% if (typeof similarProducts !== 'undefined' && similarProducts && similarProducts.length > 0) { %>
                 <section class="similar-products-section section-padding" data-aos="fade-up" data-aos-duration="600">
                     <h2 class="section-title">Вам також може сподобатися</h2>
                     <div class="product-scroll-row">
                         <% similarProducts.forEach((similarProduct, index) => { %>
                             <article class="product-card" data-aos="fade-up" data-aos-delay="<%= 100 + index * 50 %>">
-                                 <div class="product-image-wrapper">
-                                    <a href="/product/<%= similarProduct._id %>">
-                                        <img src="<%= similarProduct.images[0] %>" alt="<%= similarProduct.name %>">
-                                        <div class="product-overlay"><span class="view-details-btn">Детальніше</span></div>
-                                    </a>
-                                </div>
-                                <div class="product-info">
-                                     <a href="/product/<%= similarProduct._id %>"><h3><%= similarProduct.name %></h3></a>
-                                    <p class="price"><%= similarProduct.price %> грн</p>
-                                    <button class="btn btn-tertiary" data-product-id="<%= similarProduct._id %>"><i class="fa-solid fa-cart-plus"></i> В кошик</button>
-                                </div>
+                                <div class="product-image-wrapper">
+                                     <a href="/product/<%= similarProduct._id %>" aria-label="Переглянути деталі товару <%= similarProduct.name %>">
+                                         <img src="<%= similarProduct.images && similarProduct.images.length > 0 ? similarProduct.images[0] : '/images/placeholder.png' %>"
+                                              alt="<%= similarProduct.name %>"
+                                              loading="lazy"
+                                              onerror="this.onerror=null; this.src='/images/placeholder.png';">
+                                         <div class="product-overlay"><span class="view-details-btn">Детальніше</span></div>
+                                     </a>
+                                 </div>
+                                 <div class="product-info">
+                                      <a href="/product/<%= similarProduct._id %>"><h3><%= similarProduct.name %></h3></a>
+                                     <p class="price"><%= similarProduct.price %> грн</p>
+                                     <button class="btn btn-tertiary add-to-cart-button" data-product-id="<%= similarProduct._id %>" aria-label="Додати <%= similarProduct.name %> в кошик">
+                                         <svg class="icon icon-cart-plus" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/></svg>
+                                         В кошик
+                                     </button>
+                                 </div>
                             </article>
                         <% }); %>
                     </div>
@@ -159,35 +193,7 @@
     <%- include('partials/footer') %>
 
     <script src="/js/main.js"></script>
+    <script src="/js/product-page.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-     <script>
-        AOS.init({ once: true, duration: 600, easing: 'ease-out-cubic', offset: 50 });
-
-        const mainImage = document.getElementById('mainProductImage');
-        const thumbnails = document.querySelectorAll('.thumbnail-item img');
-        const thumbnailItems = document.querySelectorAll('.thumbnail-item');
-
-        if (mainImage && thumbnails.length > 0) {
-            thumbnails.forEach((thumbnail, index) => {
-                thumbnail.addEventListener('click', () => {
-                    const largeImageSrc = thumbnail.dataset.large;
-                    if (largeImageSrc) {
-                        mainImage.src = largeImageSrc;
-                        mainImage.alt = thumbnail.alt.replace('Мініатюра', 'Фото');
-                        thumbnailItems.forEach(item => item.classList.remove('active'));
-                        if (thumbnailItems[index]) {
-                            thumbnailItems[index].classList.add('active');
-                        }
-                    }
-                });
-            });
-        } else if (mainImage && thumbnails.length === 0) {
-             const thumbnailList = document.querySelector('.thumbnail-list');
-             if (thumbnailList) {
-                thumbnailList.style.display = 'none';
-             }
-        }
-
-     </script>
 </body>
 </html>

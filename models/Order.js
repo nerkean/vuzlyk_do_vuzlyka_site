@@ -1,103 +1,82 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const OrderItemSchema = new Schema({
-    productId: { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
+const orderItemSchema = new Schema({
+    productId: {
+        type: String,
         required: true
     },
     name: {
         type: String,
         required: true
     },
-    price: { 
-        type: Number,
-        required: true
-    },
-    quantity: { 
+    quantity: {
         type: Number,
         required: true,
-        min: 1,
-        default: 1
+        min: 1
     },
-    image: { 
-        type: String
-    },
-
-    customImageUrl: { 
-        type: String
-    },
-    customizationDetails: {
-        type: String
+    price: {
+        type: Number,
+        required: true
     }
-}, { _id: false }); 
+}, { _id: false });
 
 const orderSchema = new Schema({
-    customerName: {
-        type: String,
-        required: [true, 'Ім\'я клієнта є обов\'язковим']
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',   
+        index: true 
     },
-    customerEmail: {
-        type: String,
-        required: [true, 'Email клієнта є обов\'язковим'],
+    receivedAt: {
+        type: Date,
+        default: Date.now
     },
-    customerPhone: {
-        type: String,
-        required: [true, 'Телефон клієнта є обов\'язковим']
+    contactInfo: {
+        name: { type: String, required: [true, 'Ім\'я є обов\'язковим'] },
+        email: { type: String, required: [true, 'Email є обов\'язковим'], lowercase: true, trim: true },
+        phone: { type: String, required: [true, 'Телефон є обов\'язковим'] }
     },
-
-    shippingMethod: {
-        type: String,
-        required: [true, 'Спосіб доставки є обов\'язковим'],
-        enum: ['np_branch', 'np_courier', 'ukrposhta', 'pickup'] 
+    shipping: {
+        method: { type: String, required: [true, 'Метод доставки є обов\'язковим'] },
+        city: { type: String },
+        warehouse: { type: String },
+        address: { type: String }
     },
-    shippingAddress: {
-        fullName: { type: String, required: true }, 
-        city: { type: String, required: true },
-        addressLine1: { type: String }, 
-        postalCode: { type: String }, 
-        npWarehouse: { type: String }, 
-        country: { type: String, default: 'Україна' }
-    },
-
-    items: [OrderItemSchema],
-
-    subtotal: { 
-        type: Number,
-        required: true
-    },
-    totalAmount: { 
-        type: Number,
-        required: true
-    },
-
-    status: { 
-        type: String,
+    items: {
+        type: [orderItemSchema],
         required: true,
-        enum: ['Нове', 'В обробці', 'Очікує підтвердження', 'Відправлено', 'Доставлено', 'Скасовано'],
-        default: 'Нове'
+        validate: [v => Array.isArray(v) && v.length > 0, 'Кошик не може бути порожнім']
     },
-    paymentMethod: {
+    customDescription: {
         type: String,
-        required: true,
-        default: 'LiqPay'
+        default: 'Не вказано'
     },
-    paymentStatus: {
+    comments: {
         type: String,
-        required: true,
-        enum: ['Очікує оплати', 'Оплачено', 'Помилка оплати', 'Повернено'],
-        default: 'Очікує оплати'
+        default: 'Немає'
     },
-    paymentId: { 
-        type: String
+    status: {
+        type: String,
+        enum: ['Новий', 'В обробці', 'Узгоджено', 'Виконано', 'Скасовано'],
+        default: 'Новий',
+        index: true
     },
+    totalAmount: {
+        type: Number
+    }
+}, {
+    timestamps: true
+});
 
-    customerComment: {
-        type: String
-    },
+orderSchema.pre('save', function(next) {
+  if (!this.totalAmount && this.items && this.items.length > 0) {
+    this.totalAmount = this.items.reduce((sum, item) => {
+      const price = typeof item.price === 'number' ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' ? item.quantity : 0;
+      return sum + (price * quantity);
+    }, 0);
+  }
+  next();
+});
 
-}, { timestamps: true }); 
-
-const Order = mongoose.model('Order', orderSchema);
-module.exports = Order;
+module.exports = mongoose.model('Order', orderSchema);

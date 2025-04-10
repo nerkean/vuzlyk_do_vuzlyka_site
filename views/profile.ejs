@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Профіль' %> - Вузлик</title>
+    <meta name="description" content="Налаштування вашого профілю на сайті Вузлик.">
+
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/profile.css">
+
+    <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+</head>
+<body>
+
+    <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>
+
+    <main>
+        <section class="profile-section section-padding">
+            <div class="container">
+                <h1 class="section-title">Налаштування профілю</h1>
+
+                <% if (user) { %>
+                    <div class="profile-info">
+                        <p><strong>Ім'я:</strong> <%= user.name || 'Не вказано' %></p>
+                        <p><strong>Email:</strong> <%= user.email %></p>
+                        <% if (user.googleId) { %>
+                            <p><small>(Вхід через Google)</small></p>
+                        <% } %>
+                    </div>
+
+                    <div class="profile-actions">
+                         <a href="/logout" class="btn btn-outline-danger">Вийти з акаунта</a>
+                    </div>
+
+                    <hr>
+
+                    <div class="order-history">
+                        <h2>Історія замовлень</h2>
+                    
+                        <% if (typeof orders !== 'undefined' && Array.isArray(orders) && orders.length > 0) { %>
+                            <div class="order-list">
+                                <% orders.forEach(order => { %>
+                                    <% if (order && order._id && order.createdAt && order.items) { %>
+                                        <article class="order-history-item">
+                                            <div class="order-summary">
+                                                <div>
+                                                    <strong>Замовлення №:</strong>
+                                                    <%= order._id.toString().slice(-6) %>
+                                                </div>
+                                                <div>
+                                                    <strong>Дата:</strong>
+                                                    <% try { %>
+                                                        <%= new Date(order.createdAt).toLocaleDateString('uk-UA', { day: '2-digit', month: 'long', year: 'numeric' }) %>
+                                                    <% } catch(e) { %>
+                                                        Невідома дата
+                                                    <% } %>
+                                                </div>
+                                                <div>
+                                                    <strong>Статус:</strong>
+                                                    <% const statusText = order.status || 'Невідомо'; %>
+                                                    <% const statusClass = statusText.toLowerCase().replace(' ', '-'); %>
+                                                    <span class="status-badge status-<%= statusClass %>"><%= statusText %></span>
+                                                </div>
+                                                <div>
+                                                    <strong>Сума:</strong>
+                                                    <%= (typeof order.totalAmount === 'number' ? order.totalAmount : 0).toFixed(2) %> грн
+                                                </div>
+                                            </div>
+                                            <div class="order-items-preview">
+                                                <strong>Товари:</strong>
+                                                <ul>
+                                                    <% if (Array.isArray(order.items)) { %>
+                                                        <% order.items.forEach(item => { %>
+                                                            <% if (item && item.productId) { %>
+                                                                <li>
+                                                                    <% const itemName = item.name || 'Назва товару невідома'; %>
+                                                                    <% const itemQty = (typeof item.quantity === 'number' ? item.quantity : '?'); %>
+                                                                    <%= itemName %> (x<%= itemQty %>)
+                                    
+                                                                    <% if (order.status === 'Виконано') { %>
+                                                                        <% if (reviewedProductIds && reviewedProductIds.has(item.productId.toString())) { %>
+                                                                            <span class="already-reviewed-text">(Відгук залишено)</span>
+                                                                        <% } else { %>
+                                                                            <a href="/product/<%= item.productId %>/review" class="btn btn-outline-secondary btn-sm review-link">
+                                                                                Залишити відгук
+                                                                            </a>
+                                                                        <% } %>
+                                                                    <% } %>
+                                                                </li>
+                                                            <% } %>
+                                                        <% }); %>
+                                                    <% } else { %>
+                                                        <li>Інформація про товари відсутня.</li>
+                                                    <% } %>
+                                                </ul>
+                                            </div>
+                                        </article>
+                                    <% } %>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <p>У вас ще немає замовлень.</p>
+                        <% } %>
+                    </div>
+                <% } else { %>
+                    <p>Не вдалося завантажити дані профілю.</p>
+                <% } %>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/main.js" defer></script>
+
+</body>
+</html>

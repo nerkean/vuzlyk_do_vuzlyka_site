@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Часті питання - Вузлик</title>
+    <meta name="description" content="Відповіді на часті питання про вишивку, замовлення, доставку та догляд за виробами від майстерні Вузлик.">
+
+    <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/faq-page.css"> </head>
+<body>
+    <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>
+
+    <main class="faq-page-main section-padding">
+        <div class="container">
+            <h1 class="page-title text-center">Часті питання (FAQ)</h1>
+
+            <div class="faq-list">
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-1">
+                        <span>Як зробити замовлення?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                    <div class="faq-answer" id="faq-answer-1">
+                        <div class="faq-answer-content">
+                            <p>Оберіть позицію з нашого каталогу, вкажіть ваші побажання щодо дизайну, розміру та кольорів. Залиште контактні дані, і ми незабаром зв’яжемося з вами, щоб обговорити деталі та підтвердити замовлення.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-2">
+                        <span>Який термін виконання замовлення?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-2">
+                        <div class="faq-answer-content">
+                            <p>Термін виконання залежить від складності та обсягу вашого замовлення. Зазвичай це займає від 3 до 5 робочих днів. Ми обов'язково повідомимо вам точний час після отримання замовлення.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-3">
+                        <span>Які способи оплати доступні?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-3">
+                        <div class="faq-answer-content">
+                            <p>Після виконання вашого замовлення ми надішлемо реквізити для оплати на рахунок ФОП.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-4">
+                        <span>Як я можу отримати замовлення?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Ми відправляємо замовлення через Нову Пошту чи Укрпоштою. Ви можете вибрати зручний для вас спосіб доставки під час оформлення замовлення.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-5">
+                        <span>Чи можна замовити вишивку за індивідуальним дизайном?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Так, ми приймаємо замовлення за індивідуальним дизайном. Напишіть нам свої побажання або надайте ескіз, і ми створимо для вас унікальну вишивку, що відповідає вашим вимогам.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-6">
+                        <span>Чи можна змінити кольори вишивки?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Так, ви можете вказати бажані кольори в замовленні, і ми адаптуємо дизайн під ваші уподобання.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-7">
+                        <span>Чи можна замовити подарункову упаковку?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Так, ми можемо упакувати ваше замовлення в подарункову упаковку за додаткову плату. Виберіть цю опцію під час оформлення замовлення.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-8">
+                        <span>Чи є знижки на оптові замовлення?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Так, ми пропонуємо знижки на оптові замовлення. Зв'яжіться з нами для отримання деталей та індивідуальної пропозиції.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <button class="faq-question" aria-expanded="false" aria-controls="faq-answer-9">
+                        <span>Чи можна замовити вишивку для команди або корпоративних заходів?</span>
+                        <svg class="faq-icon icon-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" fill="currentColor"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>
+                    </button>
+                     <div class="faq-answer" id="faq-answer-4">
+                        <div class="faq-answer-content">
+                            <p>Так, ми пропонуємо знижки на оптові замовлення. Зв'яжіться з нами для отримання деталей та індивідуальної пропозиції.</p>
+                        </div>
+                    </div>
+                </div>
+
+                </div> </div> </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/faq.js" defer></script>
+    </body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Помилка сервера - Вузлик</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        body { text-align: center; padding-top: 50px; }
+        h1 { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header') %> 
+
+    <main style="padding: 40px 15px;">
+         <div class="container">
+             <h1>Помилка 500 - Помилка сервера</h1>
+             <p>На жаль, на сервері сталася непередбачена помилка.</p>
+             <p>Ми вже працюємо над її усуненням. Спробуйте оновити сторінку пізніше.</p>
+             <a href="/" class="btn btn-primary" style="margin-top: 20px;">На Головну</a>
+         </div>
+    </main>
+
+     <%- include('partials/footer') %>
+</body>
+</html>

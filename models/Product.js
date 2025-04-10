@@ -46,8 +46,25 @@ const productSchema = new Schema({
     type: Boolean,
     default: false 
   },
+  ratingSum: { 
+    type: Number,
+    default: 0
+},
+ratingCount: {
+    type: Number,
+    default: 0
+},
 }, { timestamps: true });
 
-const Product = mongoose.model('Product', productSchema);
+productSchema.virtual('averageRating').get(function() {
+  if (this.ratingCount === 0) {
+      return 0;
+  }
+  return Math.round((this.ratingSum / this.ratingCount) * 10) / 10;
+});
 
-module.exports = Product;
+productSchema.set('toJSON', { virtuals: true });
+productSchema.set('toObject', { virtuals: true });
+
+
+module.exports = mongoose.model('Product', productSchema);

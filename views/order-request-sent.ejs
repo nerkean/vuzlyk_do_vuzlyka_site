@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запит відправлено - Вузлик</title>
+    <link rel="stylesheet" href="/css/common.css">
+    <style>
+        .confirmation-page {
+            text-align: center;
+            padding: 60px 15px;
+            min-height: calc(100vh - 200px); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .confirmation-icon {
+            font-size: 4em;
+            color: var(--color-accent);
+            margin-bottom: 20px;
+            animation: fadeInScale 0.5s ease-out;
+        }
+        .confirmation-page h1 {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: var(--color-text);
+        }
+        .confirmation-page p {
+            font-size: 1.1em;
+            color: var(--color-text-light);
+            max-width: 600px;
+            margin-bottom: 30px;
+            line-height: 1.7;
+        }
+        @keyframes fadeInScale {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+    </head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="confirmation-page">
+        <div class="confirmation-icon">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor" height="1em">
+                <path d="M256 48a208 208 0 1 1 0 416 208 208 0 1 1 0-416zm0 464A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209c9.4-9.4 9.4-24.6 0-33.9s-24.6-9.4-33.9 0l-111 111-47-47c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l64 64c9.4 9.4 24.6 9.4 33.9 0L369 209z"/>
+            </svg>
+            </div>
+        <h1>Дякуємо! Запит отримано.</h1>
+        <p>
+            Ваш запит на замовлення успішно відправлено. Ми зв'яжемося з вами найближчим часом
+            для уточнення всіх деталей, підтвердження наявності, розрахунку вартості
+            (особливо для індивідуальних замовлень) та узгодження зручного способу оплати і доставки.
+        </p>
+        <a href="/catalog" class="btn btn-primary">Повернутися до каталогу</a>
+    </main>
+
+    <%- include('partials/footer') %>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>
