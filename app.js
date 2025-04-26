@@ -20,6 +20,7 @@ const Review = require('./models/Review');
 const Order = require('./models/Order');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5500;
 const DB_URI = process.env.MONGODB_URI;
 
@@ -110,6 +111,17 @@ app.use(session({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        // Перевіряємо заголовок, який додає Render (або інший проксі)
+        if (req.headers['x-forwarded-proto'] !== 'https') {
+            console.log(`[HTTPS Redirect] Redirecting http://${req.headers.host}${req.originalUrl} to https`);
+            return res.redirect(['https://', req.get('Host'), req.originalUrl].join(''));
+        }
+        next();
+    });
+}
 
 passport.use(new LocalStrategy(
   { usernameField: 'email' },
