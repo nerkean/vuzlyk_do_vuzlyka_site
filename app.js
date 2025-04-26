@@ -189,6 +189,7 @@ const CURRENCY_SYMBOLS = {
     USD: '$',
     EUR: '€'
 };
+let currentRates = { ...EXCHANGE_RATES };
 
 async function fetchAndUpdateRates() {
     console.log('[LOG] Спроба оновити курси валют з API НБУ...');
