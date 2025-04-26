@@ -47,16 +47,15 @@ app.use(
             "https://www.googletagmanager.com",
             "https://www.google-analytics.com",
             "https://unpkg.com",
-            // --- >>> ДОБАВЛЕНО для Google Ads <<< ---
             "https://*.googleadservices.com",
-            "https://googleads.g.doubleclick.net",
-            "https://tpc.googlesyndication.com", // Может понадобиться
-            "https://static.doubleclick.net",    // Может понадобиться
-            // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
-            "'unsafe-inline'" // Оставляем пока, если у вас есть инлайн-скрипты
+            // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
+            "https://*.doubleclick.net", // Включает googleads.g.doubleclick.net, static.doubleclick.net и т.д.
+            "https://tpc.googlesyndication.com",
+            // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
+            "'unsafe-inline'"
           ],
           "script-src-attr": [
-            "'unsafe-inline'" // Оставляем, если используете атрибуты типа onclick=""
+            "'unsafe-inline'"
           ],
           "style-src": [
             "'self'",
@@ -64,10 +63,8 @@ app.use(
             "https://cdn.jsdelivr.net",
             "https://cdnjs.cloudflare.com",
             "https://unpkg.com",
-             // --- >>> ДОБАВЛЕНО для Google Ads (редко, но возможно) <<< ---
-             "https://fonts.gstatic.com", // Шрифты могут подгружаться через стили Ads
-             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
-            "'unsafe-inline'" // Оставляем пока, если есть инлайн-стили
+            "https://fonts.gstatic.com", // Оставим на всякий случай
+            "'unsafe-inline'"
           ],
           "font-src": [
             "'self'",
@@ -80,31 +77,30 @@ app.use(
             "data:",
             "https://www.google-analytics.com",
             "https://www.googletagmanager.com",
-            // --- >>> ДОБАВЛЕНО для Google Ads (пиксели и т.д.) <<< ---
-            "https://*.google.com", // Для общих ресурсов Google
+            "https://*.google.com",
             "https://*.googleadservices.com",
-            "https://googleads.g.doubleclick.net",
-             "https://*.googlesyndication.com",
-             "https://*.doubleclick.net"
-             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
+             "https://*.doubleclick.net", // Включает googleads.g.doubleclick.net и т.д.
+             "https://*.googlesyndication.com"
+             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
           ],
-          "connect-src": [ // Куда можно отправлять данные (fetch/XHR)
+          "connect-src": [
             "'self'",
             "https://www.google-analytics.com",
             "https://region1.google-analytics.com",
             "https://www.googletagmanager.com",
-             // --- >>> ДОБАВЛЕНО для Google Ads <<< ---
-             "https://*.google.com",
-             "https://*.googleadservices.com",
-             "https://googleads.g.doubleclick.net"
-             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+            "https://*.google.com",
+            "https://*.googleadservices.com",
+             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
+             "https://*.doubleclick.net" // Включает googleads.g.doubleclick.net и т.д.
+             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
           ],
-          "frame-src": [ // Откуда можно загружать фреймы
+          "frame-src": [
              "'self'",
-             // --- >>> ДОБАВЛЕНО для Google Ads (если использует iframe) <<< ---
              "https://*.google.com",
-             "https://googleads.g.doubleclick.net"
-             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
+             "https://*.doubleclick.net" // Включает googleads.g.doubleclick.net, bid.g.doubleclick.net и т.д.
+             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
              ],
           "object-src": ["'none'"]
         }
