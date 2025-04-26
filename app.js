@@ -47,10 +47,16 @@ app.use(
             "https://www.googletagmanager.com",
             "https://www.google-analytics.com",
             "https://unpkg.com",
-            "'unsafe-inline'"
+            // --- >>> ДОБАВЛЕНО для Google Ads <<< ---
+            "https://*.googleadservices.com",
+            "https://googleads.g.doubleclick.net",
+            "https://tpc.googlesyndication.com", // Может понадобиться
+            "https://static.doubleclick.net",    // Может понадобиться
+            // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+            "'unsafe-inline'" // Оставляем пока, если у вас есть инлайн-скрипты
           ],
           "script-src-attr": [
-            "'unsafe-inline'"
+            "'unsafe-inline'" // Оставляем, если используете атрибуты типа onclick=""
           ],
           "style-src": [
             "'self'",
@@ -58,30 +64,52 @@ app.use(
             "https://cdn.jsdelivr.net",
             "https://cdnjs.cloudflare.com",
             "https://unpkg.com",
-            "'unsafe-inline'"
+             // --- >>> ДОБАВЛЕНО для Google Ads (редко, но возможно) <<< ---
+             "https://fonts.gstatic.com", // Шрифты могут подгружаться через стили Ads
+             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+            "'unsafe-inline'" // Оставляем пока, если есть инлайн-стили
           ],
           "font-src": [
             "'self'",
             "https://fonts.gstatic.com",
-            "https://cdnjs.cloudflare.com", 
+            "https://cdnjs.cloudflare.com",
             "data:"
           ],
           "img-src": [
             "'self'",
             "data:",
             "https://www.google-analytics.com",
-            "https://www.googletagmanager.com"
+            "https://www.googletagmanager.com",
+            // --- >>> ДОБАВЛЕНО для Google Ads (пиксели и т.д.) <<< ---
+            "https://*.google.com", // Для общих ресурсов Google
+            "https://*.googleadservices.com",
+            "https://googleads.g.doubleclick.net",
+             "https://*.googlesyndication.com",
+             "https://*.doubleclick.net"
+             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
           ],
-          "connect-src": [
+          "connect-src": [ // Куда можно отправлять данные (fetch/XHR)
             "'self'",
             "https://www.google-analytics.com",
-            "https://region1.google-analytics.com", 
-            "https://www.googletagmanager.com"
+            "https://region1.google-analytics.com",
+            "https://www.googletagmanager.com",
+             // --- >>> ДОБАВЛЕНО для Google Ads <<< ---
+             "https://*.google.com",
+             "https://*.googleadservices.com",
+             "https://googleads.g.doubleclick.net"
+             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
           ],
-          "frame-src": ["'self'"],
+          "frame-src": [ // Откуда можно загружать фреймы
+             "'self'",
+             // --- >>> ДОБАВЛЕНО для Google Ads (если использует iframe) <<< ---
+             "https://*.google.com",
+             "https://googleads.g.doubleclick.net"
+             // --- >>> КОНЕЦ ДОБАВЛЕНИЯ <<< ---
+             ],
           "object-src": ["'none'"]
         }
       },
+      // Остальные настройки helmet остаются без изменений
       crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
       crossOriginEmbedderPolicy: false,
       referrerPolicy: { policy: "strict-origin-when-cross-origin" }
