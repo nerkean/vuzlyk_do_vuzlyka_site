@@ -9,8 +9,6 @@ function initCheckoutCustomFields() {
         return;
     }
 
-    console.log('Initializing custom embroidery fields on checkout page.');
-
     fileTriggerButton.addEventListener('click', () => {
         fileInput.click();
     });

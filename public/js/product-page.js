@@ -2,26 +2,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainImage = document.getElementById('mainProductImage');
     const thumbnails = document.querySelectorAll('.thumbnail-item img');
     const thumbnailItems = document.querySelectorAll('.thumbnail-item');
-
     if (mainImage && thumbnails.length > 0) {
         thumbnails.forEach((thumbnail, index) => {
             thumbnail.addEventListener('click', () => {
-                const largeImageSrc = thumbnail.dataset.large || thumbnail.src;
-                if (largeImageSrc) {
-                    mainImage.src = largeImageSrc;
+                const largeSrc = thumbnail.dataset.large;
+                const mediumSrc = thumbnail.dataset.medium;
+                const thumbSrc = thumbnail.dataset.thumb;
+                if (largeSrc && mediumSrc && thumbSrc) {
+                    const newSrcset = `${thumbSrc} 300w, ${mediumSrc} 600w, ${largeSrc} 1000w`;
+                    mainImage.srcset = newSrcset; 
+                    mainImage.src = mediumSrc;   
                     mainImage.alt = thumbnail.alt.replace('Мініатюра', 'Фото');
                     thumbnailItems.forEach(item => item.classList.remove('active'));
                     if (thumbnailItems[index]) {
                         thumbnailItems[index].classList.add('active');
                     }
-                }
+                } 
             });
         });
-    } else if (mainImage && thumbnails.length === 0) {
-         const thumbnailList = document.querySelector('.thumbnail-list');
-         if (thumbnailList) {
-             thumbnailList.style.display = 'none';
-         }
     }
 
     const customFileInput = document.getElementById('customFile');
@@ -119,8 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (submitButton) submitButton.disabled = false;
             }
         });
-    } else {
-        console.log('Review form not found on this page.');
     }
 
     if (typeof AOS !== 'undefined') {

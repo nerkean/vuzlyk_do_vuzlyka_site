@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/admin.css">
+    </head>
+<body class="admin-body"> <header class="admin-header">
+        <div class="container">
+            <h1>Панель Адміністратора</h1>
+            <nav>
+                <a href="/admin/orders">Замовлення</a>
+                <a href="/admin/products" class="active">Товари</a> <a href="/admin/logout">Вийти</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="container">
+            <h1><%= pageTitle %></h1> <a href="/admin/products/new" class="btn btn-success" style="margin-bottom: 1.5rem; display: inline-block;">Додати новий товар</a>
+
+            <% if (products && products.length > 0) { %>
+                <div class="table-responsive-wrapper"> <table class="product-list-table">
+                        <thead>
+                            <tr>
+                                <th>Фото</th>
+                                <th>Назва</th>
+                                <th>Ціна (грн)</th> <th>Категорія</th>
+                                <th>Статус</th>
+                                <th>Дії</th> </tr>
+                        </thead>
+                        <tbody>
+                            <% products.forEach(product => { %>
+                                <tr>
+                                    <td data-label="Фото">
+                                        <%# Проверяем наличие массива images, первого элемента и свойства thumb %>
+                                        <% if (product.images && product.images.length > 0 && product.images[0] && product.images[0].thumb) { %>
+                                            <%# Используем миниатюру (thumb) %>
+                                            <img src="<%= product.images[0].thumb %>" alt="<%= product.name %>">
+                                        <% } else { %>
+                                            <%# Заглушка, если нет картинки или нет миниатюры %>
+                                            <img src="/images/placeholder.png" alt="Фото відсутнє" style="width:50px; height:50px; object-fit:contain; background:#eee;"> <%# Используем свою заглушку %>
+                                        <% } %>
+                                     </td>
+                                    <td data-label="Назва"><%= product.name %></td> <td data-label="Ціна (грн)"> <%= product.price %>
+                                        <% if (typeof product.maxPrice === 'number' && product.maxPrice > product.price) { %>
+                                            - <%= product.maxPrice %>
+                                        <% } %>
+                                        грн
+                                    </td>
+                                    <td data-label="Категорія"><%= product.category %></td> <td data-label="Статус"><%= product.status %></td> <td data-label="Дії" class="product-actions"> <a href="/admin/products/<%= product._id %>/edit" class="btn btn-warning btn-sm">Ред.</a>
+                                        <% var safeName = product.name.replace(/"/g, '&quot;'); %>
+                                        <form action="/admin/products/<%= product._id %>/delete" method="POST" onsubmit="return confirm('Ви впевнені, що хочете видалити товар «<%= safeName %>»?');">
+                                            <button type="submit" class="btn btn-danger btn-sm">Видалити</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p>Ще немає жодного товару. <a href="/admin/products/new">Додайте перший</a>.</p>
+            <% } %>
+        </div>
+    </main>
+    </body>
+</html>
+

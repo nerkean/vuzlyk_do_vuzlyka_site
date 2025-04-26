@@ -184,7 +184,122 @@
     font-size: 0.8em;
 }
 
-@media (max-width: 576px) {
+.already-reviewed-text {
+    display: inline-block;
+    margin-left: 1rem;
+    font-size: 0.8em;
+    font-style: italic;
+    color: var(--color-text-light);
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.profile-edit-section {
+    margin-bottom: 2rem;
+}
+
+.profile-edit-section h2 {
+    text-align: left;
+    margin-bottom: 1.5rem;
+    font-size: 1.6em;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--color-accent-light);
+    position: relative;
+}
+.profile-edit-section h2::after { display: none; } 
+
+
+.profile-forms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; 
+    gap: 30px;
+    margin-top: 1.5rem;
+}
+
+.profile-form {
+    padding: 1.5rem;
+    background-color: var(--color-white);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-main);
+    box-shadow: var(--box-shadow-light);
+}
+
+.profile-form h3 {
+    font-size: 1.3em;
+    margin-top: 0;
+    margin-bottom: 1.5rem; 
+    color: var(--color-text);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--color-border);
+}
+
+.profile-form .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.profile-form label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9em;
+    color: var(--color-text);
+}
+.profile-form label .required {
+    color: #dc3545; 
+    margin-left: 2px;
+}
+
+.profile-form .form-control {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid var(--color-border);
+    border-radius: 4px; 
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    box-sizing: border-box; 
+}
+
+.profile-form .form-control:focus {
+    color: var(--color-text);
+    background-color: #fff;
+    border-color: var(--color-accent);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(185, 147, 108, 0.25); 
+}
+
+.profile-form .form-control:disabled,
+.profile-form .form-control[readonly] {
+    background-color: var(--color-light-bg);
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.profile-form .form-text {
+    font-size: 0.85em;
+    color: var(--color-text-light);
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.profile-form .btn {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .profile-forms-grid {
+        grid-template-columns: 1fr; 
+        gap: 25px; 
+    }
+    .profile-form {
+        padding: 1.25rem;
+    }
+
     .order-items-preview li {
         flex-direction: column;
         align-items: flex-start;
@@ -194,14 +309,15 @@
         margin-left: 0;
         align-self: flex-start;
     }
+    .already-reviewed-text {
+        margin-left: 0;
+        align-self: flex-start;
+        margin-top: 5px;
+    }
 }
 
-.already-reviewed-text {
-    display: inline-block;
-    margin-left: 1rem;
-    font-size: 0.8em;
-    font-style: italic;
-    color: var(--color-text-light);
-    white-space: nowrap;
-    vertical-align: middle;
+@media (max-width: 576px) {
+    .already-reviewed-text {
+       margin-top: 5px;
+    }
 }

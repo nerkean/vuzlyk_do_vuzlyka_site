@@ -1,3 +1,21 @@
+function formatPriceJS(amountUAH, targetCurrency, rates, symbols) {
+    const baseAmount = typeof amountUAH === 'number' ? amountUAH : 0;
+    const currency = (targetCurrency && rates[targetCurrency] && symbols[targetCurrency])
+                   ? targetCurrency
+                   : 'UAH';
+    const rate = rates[currency] || 1;
+    const symbol = symbols[currency] || '₴';
+
+    const convertedAmount = baseAmount * rate;
+    const formattedAmount = convertedAmount.toFixed(2);
+
+    if (currency === 'UAH') {
+        return `${formattedAmount} ${symbol}`;
+    } else {
+        return `${symbol}${formattedAmount}`;
+    }
+}
+
 function updateCartView(data) {
     const cartCountElement = document.querySelector('.header-cart .cart-count');
     const subtotalElement = document.querySelector('.cart-summary .subtotal-amount');
@@ -7,11 +25,16 @@ function updateCartView(data) {
         cartCountElement.textContent = data.cartItemCount;
     }
 
-    if (subtotalElement && typeof data.subtotal !== 'undefined') {
-        subtotalElement.textContent = `${data.subtotal} грн`;
+    if (subtotalElement && typeof data.subtotal === 'number' && data.selectedCurrency && data.exchangeRates && data.currencySymbols) {
+        subtotalElement.textContent = formatPriceJS(data.subtotal, data.selectedCurrency, data.exchangeRates, data.currencySymbols);
+    } else if (subtotalElement) {
+         subtotalElement.textContent = `${typeof data.subtotal === 'number' ? data.subtotal.toFixed(2) : '?'} грн`;
     }
-    if (totalElement && typeof data.total !== 'undefined') {
-        totalElement.textContent = `${data.total} грн`;
+
+    if (totalElement && typeof data.total === 'number' && data.selectedCurrency && data.exchangeRates && data.currencySymbols) {
+        totalElement.textContent = formatPriceJS(data.total, data.selectedCurrency, data.exchangeRates, data.currencySymbols);
+    } else if (totalElement) {
+        totalElement.textContent = `${typeof data.total === 'number' ? data.total.toFixed(2) : '?'} грн`;
     }
 
     if (data.cartItemCount === 0 && window.location.pathname === '/cart') {
@@ -24,22 +47,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainNavMenu = document.getElementById('main-nav-menu');
 
     if (navToggleBtn && mainNavMenu) {
-        console.log('Mobile nav elements found. Attaching listener.');
         navToggleBtn.addEventListener('click', () => {
             console.log('Toggle button clicked!');
             const isOpen = mainNavMenu.classList.toggle('nav-open');
             navToggleBtn.setAttribute('aria-expanded', isOpen);
         });
-    } else {
-         console.log('Mobile nav toggle button or menu not found.');
-    }
-
-    console.log('DOM fully loaded and parsed for main.js');
+    } 
 
     try {
         const heroSwiperElement = document.querySelector('.hero-swiper');
         if (typeof Swiper !== 'undefined' && heroSwiperElement) {
-            console.log('Initializing Hero Swiper...');
             const heroSwiper = new Swiper('.hero-swiper', {
                 loop: true,
                 effect: 'fade',
@@ -51,11 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 slidesPerView: 1,
                 spaceBetween: 0,
             });
-        } else if (!heroSwiperElement) {
-             console.log('Hero Swiper element not found on this page.');
-        } else {
-             console.warn('Swiper library was not found when trying to initialize.');
-        }
+        } 
     } catch (e) {
         console.error('Error initializing Swiper:', e);
     }
@@ -63,16 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         try {
             if (typeof AOS !== 'undefined') {
-                console.log('Initializing AOS (delayed)...');
                 AOS.init({
                     once: true,
                     duration: 600,
                     easing: 'ease-out-cubic',
                     offset: 50,
                 });
-            } else {
-                console.warn('AOS library was not found when trying to initialize (delayed).');
-            }
+            } 
         } catch (e) {
             console.error('Error initializing AOS (delayed):', e);
         }
@@ -157,9 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.success) {
                         const itemRow = target.closest('.cart-item');
                         const lineTotalElement = itemRow.querySelector('.cart-item-total');
-                        if (lineTotalElement && typeof data.itemLineTotal !== 'undefined') {
-                            lineTotalElement.textContent = `${data.itemLineTotal} грн`;
+                        
+                        if (lineTotalElement && typeof data.itemLineTotal === 'number' && data.selectedCurrency && data.exchangeRates && data.currencySymbols) {
+                             lineTotalElement.textContent = formatPriceJS(data.itemLineTotal, data.selectedCurrency, data.exchangeRates, data.currencySymbols);
+                        } else if (lineTotalElement) {
+                             lineTotalElement.textContent = `${typeof data.itemLineTotal === 'number' ? data.itemLineTotal.toFixed(2) : '?'} грн`;
                         }
+                        
                         updateCartView(data);
                     } else {
                          alert(`Помилка оновлення: ${data.message || 'Невідома помилка'}`);

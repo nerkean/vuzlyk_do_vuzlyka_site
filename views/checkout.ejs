@@ -3,9 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оформлення Замовлення - Вузлик</title>
-    <link rel="stylesheet" href="/css/common.css">
-    <link rel="stylesheet" href="/css/checkout-page.css">
+    <title>Оформлення Замовлення - Вузлик до вузлика</title>
+    <meta name="description" content="Оформлення замовлення вишивки ручної роботи в майстерні Вузлик до вузлика.">
+    <meta name="robots" content="noindex">
+
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/images/favicon/site.webmanifest" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+
+    <link rel="stylesheet" href="/css/common.css"> <link rel="preload" href="/css/checkout-page.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/css/checkout-page.css"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
+
 </head>
 <body>
     <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>
@@ -23,39 +39,62 @@
                             <h2>1. Контактна інформація</h2>
                             <div class="form-group">
                                 <label for="email">Email <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" required placeholder="Ваш email">
+                                <input type="email" id="email" name="email" class="form-control" required
+                                       value="<%= currentUser ? currentUser.email : '' %>" <%= currentUser ? 'readonly' : '' %>>
+                                       <% if (currentUser) { %> <small class="form-text">Email використовується з вашого профілю.</small> <% } %>
                             </div>
                             <div class="form-group">
                                 <label for="phone">Телефон <span class="required">*</span></label>
-                                <input type="tel" id="phone" name="phone" required placeholder="+380 XX XXX XX XX">
+                                <input type="tel" id="phone" name="phone" class="form-control" required placeholder="+380 XX XXX XX XX"
+                                       value="<%= currentUser && currentUser.defaultContactInfo ? currentUser.defaultContactInfo.phone : '' %>">
                             </div>
-                             <div class="form-group">
-                                <label for="full_name_contact">Прізвище та Ім'я отримувача <span class="required">*</span></label>
-                                <input type="text" id="full_name_contact" name="full_name" required placeholder="Прізвище Ім'я">
+                            <div class="form-group">
+                                <label for="full_name">Ім'я та прізвище <span class="required">*</span></label>
+                                <input type="text" id="full_name" name="full_name" class="form-control" required
+                                       value="<%= currentUser && currentUser.defaultContactInfo ? currentUser.defaultContactInfo.name : (currentUser ? currentUser.name : '') %>">
                             </div>
                         </section>
 
-                        <section class="checkout-section">
+                        <section class="checkout-section shipping-section">
                             <h2>2. Доставка</h2>
                             <div class="shipping-methods">
-                                <div class="form-group shipping-option">
-                                    <input type="radio" id="shipping-np-branch" name="shippingMethod" value="np_branch" required checked>
-                                    <label for="shipping-np-branch">Нова Пошта (на відділення)<span class="shipping-cost">За тарифами перевізника</span></label>
+                                <% const savedMethod = currentUser?.defaultShippingInfo?.method %>
+                                <div class="shipping-option <%= savedMethod === 'nova_poshta' ? 'selected' : '' %>">
+                                    <input type="radio" id="nova_poshta" name="shippingMethod" value="nova_poshta" required <%= savedMethod === 'nova_poshta' ? 'checked' : '' %>>
+                                    <label for="nova_poshta">Нова Пошта (на відділення або поштомат)</label>
+                                    <span class="shipping-cost">За тарифами перевізника</span>
                                 </div>
-                                <div class="form-group shipping-option">
-                                    <input type="radio" id="shipping-np-courier" name="shippingMethod" value="np_courier">
-                                    <label for="shipping-np-courier">Нова Пошта (кур'єром)<span class="shipping-cost">За тарифами перевізника</span></label>
+                                <div class="shipping-option <%= savedMethod === 'ukrposhta' ? 'selected' : '' %>">
+                                    <input type="radio" id="ukrposhta" name="shippingMethod" value="ukrposhta" required <%= savedMethod === 'ukrposhta' ? 'checked' : '' %>>
+                                    <label for="ukrposhta">Укрпошта</label>
+                                    <span class="shipping-cost">За тарифами перевізника</span>
                                 </div>
-                                <div class="form-group shipping-option">
-                                    <input type="radio" id="shipping-pickup" name="shippingMethod" value="pickup">
-                                    <label for="shipping-pickup">Самовивіз (м. Бровари)<span class="shipping-cost">Безкоштовно</span></label>
+                                 <div class="shipping-option <%= savedMethod === 'pickup' ? 'selected' : '' %>">
+                                    <input type="radio" id="pickup" name="shippingMethod" value="pickup" required <%= savedMethod === 'pickup' ? 'checked' : '' %>>
+                                    <label for="pickup">Самовивіз (м. Бровари)</label>
+                                    <span class="shipping-cost">Безкоштовно</span>
                                 </div>
                             </div>
-                            <div class="shipping-address-fields">
-                                <div class="form-group" data-shipping-methods="np_branch np_courier ukrposhta"><label for="shipping-city">Місто / Населений пункт <span class="required">*</span></label><input type="text" id="shipping-city" name="shipping_city" required placeholder="Наприклад, Київ"></div>
-                                <div class="form-group" data-shipping-methods="np_branch" style="display: block;"><label for="shipping-np-warehouse">Номер відділення Нової Пошти <span class="required">*</span></label><input type="text" id="shipping-np-warehouse" name="shipping_np_warehouse" placeholder="Введіть номер відділення"></div>
-                                <div class="form-group" data-shipping-methods="np_courier ukrposhta" style="display: none;"><label for="shipping-address1">Вулиця, будинок, квартира <span class="required">*</span></label><input type="text" id="shipping-address1" name="shipping_address1" placeholder="Вулиця Незалежності, 10, кв. 5"></div>
-                                <div class="form-group pickup-note" data-shipping-methods="pickup" style="display: none;"><p>Ми зв'яжемося з вами для узгодження часу та місця зустрічі в м. Бровари.</p></div>
+
+                            <div id="shipping-address-fields-container" class="shipping-address-fields" style="display: none;">
+                                <div class="form-group" id="city-group" style="display: none;">
+                                    <label for="shipping_city">Місто <span class="required">*</span></label>
+                                    <input type="text" id="shipping_city" name="shipping_city" class="form-control"
+                                           value="<%= currentUser && currentUser.defaultShippingInfo ? currentUser.defaultShippingInfo.city : '' %>">
+                                </div>
+                                <div class="form-group" id="warehouse-group" style="display: none;">
+                                    <label for="shipping_np_warehouse">Номер відділення Нової Пошти <span class="required">*</span></label>
+                                    <input type="text" id="shipping_np_warehouse" name="shipping_np_warehouse" class="form-control"
+                                           value="<%= currentUser && currentUser.defaultShippingInfo ? currentUser.defaultShippingInfo.warehouse : '' %>">
+                                </div>
+                                 <div class="form-group" id="address-group" style="display: none;">
+                                    <label for="shipping_address1">Повна адреса (вулиця, будинок, квартира) <span class="required">*</span></label>
+                                    <input type="text" id="shipping_address1" name="shipping_address1" class="form-control"
+                                           value="<%= currentUser && currentUser.defaultShippingInfo ? currentUser.defaultShippingInfo.address : '' %>">
+                                </div>
+                            </div>
+                             <div id="pickup-note-container" class="pickup-note" style="display: none; margin-top: 15px;">
+                                <p>Ми зв'яжемося з вами для узгодження часу та місця зустрічі в м. Бровари.</p>
                             </div>
                         </section>
 
@@ -98,6 +137,14 @@
                                 <label for="order-comments">Ваші побажання</label>
                                 <textarea id="order-comments" name="comments" rows="4" placeholder="Додаткова інформація, побажання щодо доставки..."></textarea>
                             </div>
+                            <% if (currentUser) { %>
+                                <section class="checkout-section save-data-section">
+                                     <div class="form-group checkbox-group">
+                                        <input type="checkbox" id="saveInfo" name="saveInfo" value="on">
+                                        <label for="saveInfo">Зберегти мої контактні дані та адресу доставки для наступних замовлень?</label>
+                                    </div>
+                                </section>
+                            <% } %>
                         </section>
                     </div> <div class="checkout-summary">
                         <aside class="checkout-sidebar">
@@ -108,7 +155,7 @@
                                         <% cartItems.forEach(item => { %>
                                             <div class="summary-item">
                                                 <span class="summary-item-name"><%= item.name %> x <%= item.quantity %></span>
-                                                <span class="summary-item-price"><%= typeof item.lineTotal === 'number' ? item.lineTotal.toFixed(2) : '0.00' %> грн</span>
+                                                <span class="summary-item-price"><%= formatPrice(item.lineTotal, selectedCurrency, exchangeRates, currencySymbols) %></span>
                                             </div>
                                         <% }); %>
                                     <% } else { %>
@@ -117,7 +164,7 @@
                                 </div>
                                 <div class="summary-row">
                                     <span>Проміжний підсумок:</span>
-                                    <span class="subtotal-amount"><%= subtotal %> грн</span>
+                                    <span class="subtotal-amount"><%= formatPrice(subtotal, selectedCurrency, exchangeRates, currencySymbols) %></span>
                                 </div>
                                 <div class="summary-row shipping-note">
                                     <span>Доставка:</span>
@@ -125,7 +172,7 @@
                                 </div>
                                 <div class="summary-row total-row">
                                     <span>До сплати (орієнтовно):</span>
-                                    <span class="grand-total-amount"><%= total %> грн</span>
+                                    <span class="grand-total-amount"><%= formatPrice(total, selectedCurrency, exchangeRates, currencySymbols) %></span>
                                 </div>
                                 <p class="final-price-note">Точна вартість буде розрахована після узгодження всіх деталей.</p>
                             </section>

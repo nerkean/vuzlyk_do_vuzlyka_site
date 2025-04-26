@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+const imageSetSchema = new Schema({
+  large: { type: String, required: true },
+  medium: { type: String, required: true },
+  thumb: { type: String, required: true }
+}, { _id: false });
+
 const productSchema = new Schema({
   name: {
     type: String,
@@ -10,25 +16,36 @@ const productSchema = new Schema({
     type: String,
     required: [true, 'Опис товару є обов\'язковим']
   },
-  price: {
+  metaDescription: {
+    type: String,
+    trim: true,
+    maxlength: [170, 'Meta Description не може перевищувати 170 символів']
+  },
+  price: { 
     type: Number,
     required: [true, 'Ціна товару є обов\'язковою'],
-    min: [0, 'Ціна не може бути негативною'] 
-  },
-  images: {
-    type: [String], 
-    required: [true, 'Потрібно хоча б одне зображення'],
-    validate: [val => val.length > 0, 'Має бути хоча б одне зображення'] 
-  },
+    min: [0, 'Ціна не може бути негативною']
+},
+maxPrice: {
+  type: Number,
+  min: [0, 'Ціна не може бути негативною'],
+},
+images: {
+  type: [imageSetSchema], 
+  required: [true, 'Потрібно хоча б одне зображення'],
+  validate: [val => Array.isArray(val) && val.length > 0 && val.every(img => img.large && img.medium && img.thumb), 'Має бути хоча б одне зображення з усіма розмірами']
+},
   category: {
     type: String,
     required: [true, 'Категорія є обов\'язковою'],
+    default: 'Вишивка'
   },
   status: {
     type: String,
-    required: [true, 'Статус товару є обов\'язковим'],
-    enum: ['В наявності', 'Під замовлення', 'Немає в наявності'] 
+    enum: ['Під замовлення', 'В наявності'], 
+    default: 'Під замовлення' 
   },
+
   tags: {
     type: [String],
     index: true 
@@ -41,11 +58,15 @@ const productSchema = new Schema({
   },
   colors: [String],
   care_instructions: String,
-  creation_time_info: String, 
+  creation_time_info: {
+    type: String,
+    required: [true, 'Термін виготовлення є обов\'язковим'] 
+ },
   isFeatured: {
     type: Boolean,
     default: false 
   },
+  
   ratingSum: { 
     type: Number,
     default: 0

@@ -11,7 +11,5 @@ document.addEventListener('DOMContentLoaded', () => {
         passwordInput.addEventListener('blur', () => {
             iconContainer.classList.remove('eyes-closed');
         });
-    } else {
-        console.warn('Password input or login icon container not found.');
     }
 });

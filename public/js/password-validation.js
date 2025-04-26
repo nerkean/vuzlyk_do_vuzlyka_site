@@ -9,26 +9,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const requirements = [reqLength, reqUppercase, reqDigit];
 
-    if (!passwordInput || requirements.some(el => !el)) {
-        console.warn('Password requirements elements not found.');
-        return;
-    }
-
-    passwordInput.addEventListener('input', () => {
-        const password = passwordInput.value;
-        console.log(`--- Input: "${password}" ---`);
-        const isLengthMet = password.length >= 5;
-        console.log(`Length Check (${password.length} >= 5):`, isLengthMet);
-        updateRequirement(reqLength, isLengthMet);
-        const isUpperMet = password.toLowerCase() !== password;
-        console.log(`Upper Check ("${password}".toLowerCase() !== "${password}"):`, isUpperMet);
-        updateRequirement(reqUppercase, isUpperMet);
-        const isDigitMet = /[0-9]/.test(password);
-        console.log(`Digit Check (/[0-9]/.test("${password}"))`, isDigitMet);
-        updateRequirement(reqDigit, isDigitMet);
-        console.log(`-------------------------`);
-    });
-
     function updateRequirement(element, isValid) {
         if (isValid) {
             element.classList.remove('invalid');

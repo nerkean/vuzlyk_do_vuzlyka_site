@@ -13,6 +13,38 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceToInput = document.getElementById('price-to');
     const activeFiltersContainer = document.getElementById('active-filters-container');
 
+    let selectedCurrency = 'UAH';
+    let exchangeRates = { UAH: 1, USD: 1 / 41.0, EUR: 1 / 47.0 };
+    let currencySymbols = { UAH: '₴', USD: '$', EUR: '€' };
+
+    if (productGrid) {
+        selectedCurrency = productGrid.dataset.currency || 'UAH';
+        try {
+            exchangeRates = JSON.parse(productGrid.dataset.rates) || exchangeRates;
+            currencySymbols = JSON.parse(productGrid.dataset.symbols) || currencySymbols;
+        } catch (e) {
+            console.error("Error parsing currency data from dataset:", e);
+        }
+    }
+
+    function formatPriceJS(amountUAH, targetCurrency, rates, symbols) {
+        const baseAmount = typeof amountUAH === 'number' ? amountUAH : 0;
+        const currency = (targetCurrency && rates[targetCurrency] && symbols[targetCurrency])
+                       ? targetCurrency
+                       : 'UAH';
+        const rate = rates[currency] || 1;
+        const symbol = symbols[currency] || '₴';
+        const convertedAmount = baseAmount * rate;
+        const formattedAmount = convertedAmount.toFixed(2);
+        let resultString = '';
+        if (currency === 'UAH') {
+            resultString = `${formattedAmount} ${symbol}`;
+        } else {
+            resultString = `${symbol}${formattedAmount}`;
+        }
+        return resultString;
+    }
+
     let currentPage = 1;
     let debounceTimer;
 
@@ -24,27 +56,79 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tagsFromUrl = urlParams.getAll('tags');
+    const initialParams = {};
+
+    if (tagsFromUrl.length > 0) {
+        console.log('catalog.js: Tags found in URL on load:', tagsFromUrl);
+        initialParams.tags = tagsFromUrl;
+        if (filterForm) {
+            tagsFromUrl.forEach(tag => {
+                const escapedTagValue = CSS.escape(tag);
+                const checkbox = filterForm.querySelector(`input[name="tags"][value="${escapedTagValue}"]`);
+                if (checkbox) {
+                    console.log(`catalog.js: Checking checkbox for tag from URL: ${tag}`);
+                    checkbox.checked = true;
+                } else {
+                    console.warn(`catalog.js: Checkbox for tag "${tag}" not found in filter form.`);
+                }
+            });
+            if (typeof updateActiveFiltersDisplay === 'function') {
+                console.log('catalog.js: Calling updateActiveFiltersDisplay after setting checkboxes from URL');
+                updateActiveFiltersDisplay();
+            } else {
+                 console.warn('catalog.js: updateActiveFiltersDisplay function is not defined.');
+            }
+        } else {
+             console.warn('catalog.js: Filter form not found, cannot check boxes from URL params.');
+        }
+    }
+
     async function fetchProducts(page = 1, params = {}, scroll = true) {
         if (loadingIndicator) loadingIndicator.style.display = 'block';
         if (productGrid) productGrid.innerHTML = '';
         if (noProductsMessageEl) noProductsMessageEl.classList.add('is-hidden');
         if (paginationContainer) paginationContainer.innerHTML = '';
 
-        const queryParams = new URLSearchParams(params);
+        const queryParams = new URLSearchParams();
         queryParams.set('page', page);
         queryParams.set('limit', 12);
 
-        if (filterForm) {
-            const formData = new FormData(filterForm);
-            const priceFrom = formData.get('price_from');
-            const priceTo = formData.get('price_to');
-            if (priceFrom) queryParams.set('price_from', priceFrom);
-            if (priceTo) queryParams.set('price_to', priceTo);
-            formData.getAll('status').forEach(status => queryParams.append('status', status));
-            formData.getAll('tags').forEach(tag => queryParams.append('tags', tag));
+        for (const key in params) {
+             if (Array.isArray(params[key])) {
+                 params[key].forEach(value => queryParams.append(key, value));
+             } else if (params[key]) {
+                  queryParams.set(key, params[key]);
+             }
         }
-        if (sortSelect) {
+
+        if (filterForm) {
+            const currentFormData = new FormData(filterForm);
+            const priceFrom = currentFormData.get('price_from');
+            const priceTo = currentFormData.get('price_to');
+            const statuses = currentFormData.getAll('status');
+            const tagsFromForm = currentFormData.getAll('tags');
+
+            if (priceFrom && !queryParams.has('price_from')) queryParams.set('price_from', priceFrom);
+            if (priceTo && !queryParams.has('price_to')) queryParams.set('price_to', priceTo);
+            if (statuses.length > 0 && !queryParams.has('status')) {
+                 statuses.forEach(status => queryParams.append('status', status));
+            }
+            if (tagsFromForm.length > 0 && !initialParams.tags) {
+                 tagsFromForm.forEach(tag => {
+                     if (!queryParams.getAll('tags').includes(tag)) { 
+                         queryParams.append('tags', tag);
+                     }
+                 });
+            }
+        }
+
+        if (sortSelect && !queryParams.has('sort')) {
             queryParams.set('sort', sortSelect.value);
+        }
+        if (typeof selectedCurrency !== 'undefined' && !queryParams.has('currency')) {
+             queryParams.set('currency', selectedCurrency);
         }
 
         try {
@@ -85,7 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderProducts(products) {
-        if (!productGrid) return;
+        if (!productGrid) {
+            console.error("productGrid element not found!");
+            return;
+        }
         productGrid.innerHTML = '';
 
         if (!products || products.length === 0) {
@@ -100,34 +187,55 @@ document.addEventListener('DOMContentLoaded', () => {
         products.forEach((product, index) => {
             const productId = product._id || '';
             const productName = product.name || 'Назва товару';
-            const productPrice = product.price || 'N/A';
-            const productImage = product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.png';
+            const productImage = product.images && product.images.length > 0 && product.images[0].medium
+                               ? product.images[0].medium
+                               : (product.images && product.images.length > 0 && product.images[0].thumb ? product.images[0].thumb : '/images/placeholder.png');
+
+            let priceDisplayHTML = '';
+            if (typeof formatPriceJS === 'function') {
+                const minPrice = product.price;
+                const maxPrice = product.maxPrice;
+                priceDisplayHTML = formatPriceJS(minPrice, selectedCurrency, exchangeRates, currencySymbols);
+                if (typeof maxPrice === 'number' && maxPrice > minPrice) {
+                    priceDisplayHTML += ` - ${formatPriceJS(maxPrice, selectedCurrency, exchangeRates, currencySymbols)}`;
+                }
+            } else {
+                console.warn('formatPriceJS function is not defined!');
+                priceDisplayHTML = `${typeof product.price === 'number' ? product.price : '?'} грн`;
+                if (typeof product.maxPrice === 'number' && product.maxPrice > product.price) {
+                    priceDisplayHTML += ` - ${product.maxPrice} грн`;
+                }
+            }
+
             productHTML += `
                 <article class="product-card" data-aos="fade-up" data-aos-delay="${index * 50}" data-aos-once="true">
                     <div class="product-image-wrapper">
                         <a href="/product/${productId}" aria-label="Переглянути деталі товару ${productName}">
-                             <img class="product-card-image" src="${productImage}"
-                                  alt="${productName}"
-                                  loading="lazy"
-                                  ${index === 0 ? 'fetchpriority="high"' : ''}
-                                  onerror="this.onerror=null; this.src='/images/placeholder.png';">
+                            <img class="product-card-image" src="${productImage}"
+                                 alt="${productName}"
+                                 loading="lazy"
+                                 ${index === 0 ? 'fetchpriority="high"' : ''}
+                                 onerror="this.onerror=null; this.src='/images/placeholder.png';">
                             <div class="product-overlay"><span class="view-details-btn">Детальніше</span></div>
                         </a>
                     </div>
                     <div class="product-info">
                          <a href="/product/${productId}"><h3>${productName}</h3></a>
-                        <p class="price">${productPrice} грн</p>
-                        <button class="btn btn-tertiary add-to-cart-button" data-product-id="${productId}" aria-label="Додати ${productName} в кошик">
-                            <svg class="icon icon-cart-plus" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor">
-                                <path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/>
-                            </svg>
-                            В кошик
-                        </button>
-                    </div>
+                         <p class="price">${priceDisplayHTML}</p>
+                         <button class="btn btn-tertiary add-to-cart-button" data-product-id="${productId}" aria-label="Додати ${productName} в кошик">
+                             <svg class="icon icon-cart-plus" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" fill="currentColor"><path d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z"/></svg>
+                             В кошик
+                         </button>
+                     </div>
                 </article>
             `;
         });
+
         productGrid.innerHTML = productHTML;
+
+        if (typeof AOS !== 'undefined') {
+             AOS.refreshHard();
+        }
     }
 
     function renderPagination(currentPage, totalPages) {
@@ -213,7 +321,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (event.target.type === 'checkbox' || event.target.tagName === 'SELECT') {
                 const isMobileView = window.innerWidth <= 992;
                 const shouldScroll = !(isMobileView && filterSidebar?.classList.contains('filter-sidebar-visible'));
-                fetchProducts(1, {}, shouldScroll);
+                const formData = new FormData(filterForm);
+                const currentParams = {};
+                const priceFrom = formData.get('price_from');
+                const priceTo = formData.get('price_to');
+                const statuses = formData.getAll('status');
+                const tags = formData.getAll('tags');
+                if (priceFrom) currentParams.price_from = priceFrom;
+                if (priceTo) currentParams.price_to = priceTo;
+                if (statuses.length > 0) currentParams.status = statuses;
+                if (tags.length > 0) currentParams.tags = tags;
+
+                fetchProducts(1, currentParams, shouldScroll);
+
                 if (isMobileView && filterSidebar?.classList.contains('filter-sidebar-visible')) {
                     setTimeout(() => {
                        filterSidebar.classList.remove('filter-sidebar-visible');
@@ -227,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
              clearFiltersButton.addEventListener('click', () => {
                 filterForm.reset();
                 updateActiveFiltersDisplay();
-                fetchProducts(1);
+                fetchProducts(1, {}, true); 
                 const isMobileView = window.innerWidth <= 992;
                  if (isMobileView && filterSidebar?.classList.contains('filter-sidebar-visible')) {
                      filterSidebar.classList.remove('filter-sidebar-visible');
@@ -243,7 +363,19 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             const isMobileView = window.innerWidth <= 992;
             const shouldScroll = !(isMobileView && filterSidebar?.classList.contains('filter-sidebar-visible'));
-            fetchProducts(1, {}, shouldScroll);
+            const formData = new FormData(filterForm);
+            const currentParams = {};
+            const priceFrom = formData.get('price_from');
+            const priceTo = formData.get('price_to');
+            const statuses = formData.getAll('status');
+            const tags = formData.getAll('tags');
+            if (priceFrom) currentParams.price_from = priceFrom;
+            if (priceTo) currentParams.price_to = priceTo;
+            if (statuses.length > 0) currentParams.status = statuses;
+            if (tags.length > 0) currentParams.tags = tags;
+
+            fetchProducts(1, currentParams, shouldScroll);
+
             event.target.blur();
             if (isMobileView && filterSidebar?.classList.contains('filter-sidebar-visible')) {
                  setTimeout(() => {
@@ -262,7 +394,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (sortSelect && !filterForm?.contains(sortSelect)) {
-        sortSelect.addEventListener('change', () => fetchProducts(1));
+        sortSelect.addEventListener('change', () => {
+             const formData = new FormData(filterForm);
+             const currentParams = {};
+             const priceFrom = formData.get('price_from');
+             const priceTo = formData.get('price_to');
+             const statuses = formData.getAll('status');
+             const tags = formData.getAll('tags');
+             if (priceFrom) currentParams.price_from = priceFrom;
+             if (priceTo) currentParams.price_to = priceTo;
+             if (statuses.length > 0) currentParams.status = statuses;
+             if (tags.length > 0) currentParams.tags = tags;
+             fetchProducts(1, currentParams, true);
+        });
     }
 
     if (paginationContainer) {
@@ -271,7 +415,20 @@ document.addEventListener('DOMContentLoaded', () => {
            if (targetButton && !targetButton.closest('.page-item.disabled') && !targetButton.closest('.page-item.active')) {
                event.preventDefault();
                const page = parseInt(targetButton.dataset.page);
-               if (!isNaN(page)) fetchProducts(page);
+               if (!isNaN(page)) {
+                    const formData = new FormData(filterForm);
+                    const currentParams = {};
+                    const priceFrom = formData.get('price_from');
+                    const priceTo = formData.get('price_to');
+                    const statuses = formData.getAll('status');
+                    const tags = formData.getAll('tags');
+                    if (priceFrom) currentParams.price_from = priceFrom;
+                    if (priceTo) currentParams.price_to = priceTo;
+                    if (statuses.length > 0) currentParams.status = statuses;
+                    if (tags.length > 0) currentParams.tags = tags;
+
+                    fetchProducts(page, currentParams, true); 
+               }
            }
        });
     }
@@ -287,7 +444,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (checkboxToUncheck) {
                         checkboxToUncheck.checked = false;
                         updateActiveFiltersDisplay();
-                        fetchProducts(1);
+                        const formData = new FormData(filterForm);
+                        const currentParams = {};
+                        const priceFrom = formData.get('price_from');
+                        const priceTo = formData.get('price_to');
+                        const statuses = formData.getAll('status');
+                        const tags = formData.getAll('tags');
+                        if (priceFrom) currentParams.price_from = priceFrom;
+                        if (priceTo) currentParams.price_to = priceTo;
+                        if (statuses.length > 0) currentParams.status = statuses;
+                        if (tags.length > 0) currentParams.tags = tags;
+
+                        fetchProducts(1, currentParams, true);
                     } else {
                         console.warn(`Checkbox for tag value "${tagValueToRemove}" not found.`);
                     }
@@ -316,9 +484,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (!response.ok) {
                     let errorMsg = `HTTP error ${response.status}`;
-                    try { 
-                        const errorData = await response.json(); 
-                        errorMsg = errorData.message || errorMsg; 
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.message || errorMsg;
                     } catch (e) {}
                     throw new Error(errorMsg);
                 }
@@ -384,8 +552,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    fetchProducts(currentPage, {}, false);
-    updateActiveFiltersDisplay();
+    fetchProducts(currentPage, initialParams, false);
+
 });
 
 function updateCartCounter(count) {
@@ -398,50 +566,4 @@ function updateCartCounter(count) {
             setTimeout(() => { if(cartCountElement) cartCountElement.classList.remove('updated'); }, 600);
         }
     }
-}
-
-function renderPagination(currentPage, totalPages) {
-     if (!paginationContainer || totalPages <= 1) { if (paginationContainer) paginationContainer.innerHTML = ''; return; }
-     paginationContainer.innerHTML = '';
-     const delta = 1;
-     const range = [];
-     const rangeWithDots = [];
-     range.push(1);
-     if (totalPages > 1) {
-         let left = Math.max(2, currentPage - delta);
-         let right = Math.min(totalPages - 1, currentPage + delta);
-         if (currentPage - delta <= 2) right = Math.min(totalPages - 1, 1 + delta * 2);
-         if (currentPage + delta >= totalPages - 1) left = Math.max(2, totalPages - delta * 2);
-         left = Math.min(left, right);
-         for (let i = left; i <= right; i++) range.push(i);
-         range.push(totalPages);
-     }
-     const uniqueRange = [...new Set(range)].sort((a, b) => a - b);
-     let l;
-     uniqueRange.forEach(i => {
-         if (l) {
-             if (i - l === 2)
-                 rangeWithDots.push(l + 1);
-             else if (i - l > 1)
-                 rangeWithDots.push('...');
-         }
-         rangeWithDots.push(i);
-         l = i;
-     });
-     const fragment = document.createDocumentFragment();
-     const prevLi = document.createElement('li');
-     prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-     prevLi.innerHTML = `<button type="button" class="page-link prev" data-page="${currentPage - 1}" aria-label="Попередня">&laquo;</button>`;
-     fragment.appendChild(prevLi);
-     rangeWithDots.forEach(page => {
-         const li = document.createElement('li');
-         li.className = `page-item ${page === currentPage ? 'active' : ''} ${page === '...' ? 'disabled' : ''}`;
-         li.innerHTML = page === '...' ? `<span class="page-link dots">...</span>` : `<button type="button" class="page-link" data-page="${page}">${page}</button>`;
-         fragment.appendChild(li);
-     });
-     const nextLi = document.createElement('li');
-     nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-     nextLi.innerHTML = `<button type="button" class="page-link next" data-page="${currentPage + 1}" aria-label="Наступна">&raquo;</button>`;
-     fragment.appendChild(nextLi);
-     paginationContainer.appendChild(fragment);
 }

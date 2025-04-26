@@ -4,7 +4,6 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    background: url('/images/embroidery-texture-light.webp') repeat center center;
     background-color: var(--color-light-bg);
     text-align: center;
     color: var(--color-text);
@@ -31,9 +30,10 @@
     color: var(--color-text-light); margin-bottom: 0;
 }
 
-.timeline-section { background-color: var(--color-light-bg); }
+.timeline-section { background-color: var(--color-light-bg); overflow-x: hidden; 
+    position: relative; }
 .timeline-section .section-title { margin-bottom: 60px; }
-.timeline { position: relative; max-width: 900px; margin: 0 auto; padding: 30px 0; }
+.timeline { position: relative; max-width: 900px; margin: 0 auto; padding: 30px 0; overflow-x: hidden; }
 .timeline::after {
     content: ''; position: absolute; width: 3px; background-color: var(--color-accent-light);
     top: 0; bottom: 0; left: 50%; margin-left: -1.5px; z-index: 1; border-radius: 3px;
@@ -62,6 +62,8 @@
 .timeline-content h3 { margin-top: 0; color: var(--color-accent-dark); font-size: 1.4em; margin-bottom: 8px; }
 .timeline-content p { margin-bottom: 10px; font-size: 0.95em; line-height: 1.6; color: var(--color-text-light); }
 .timeline-content img { max-width: 100%; margin-top: 15px; border-radius: 4px; }
+
+
 
 .meet-artisan-section { background-color: var(--color-white); }
 .artisan-content {

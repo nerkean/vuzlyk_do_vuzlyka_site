@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle %></title>
+    <link rel="stylesheet" href="/css/common.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+    <header class="admin-header">
+        <div class="container">
+            <h1>Панель Адміністратора</h1>
+            <nav>
+                <a href="/admin/orders">Замовлення</a>
+                <a href="/admin/products" class="active">Товари</a>
+                <a href="/admin/logout">Вийти</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="container">
+            <h1><%= pageTitle %></h1>
+            <hr style="margin-bottom: 25px;">
+
+            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                <div class="error-message" style="margin-bottom: 20px; text-align: center;">
+                    <%= errorMessage %>
+                </div>
+            <% } %>
+
+
+            <% if (typeof productData !== 'undefined') { %>
+                <div class="admin-form-container">
+                     <form method="POST" action="/admin/products/<%= productData._id %>?_method=PUT">
+
+                        <div class="admin-form-group">
+                            <label for="name">Назва товару <span style="color:red;">*</span></label>
+                            <input type="text" id="name" name="name" required value="<%= productData.name %>">
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="description">Опис <span style="color:red;">*</span></label>
+                            <textarea id="description" name="description" rows="5" required><%= productData.description %></textarea>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="metaDescription">Meta Опис (для SEO)</label>
+                            <textarea id="metaDescription" name="metaDescription" rows="3" maxlength="170" placeholder="Короткий опис для пошуку Google (до 170 симв.)"><%= productData.metaDescription || '' %></textarea>
+                            <small>Цей текст буде показано в результатах пошуку. Має бути коротким і привабливим.</small>
+                            <div id="metaDescCounter" style="font-size: 0.8em; text-align: right; color: #6c757d; margin-top: 3px;">0 / 170</div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="admin-form-group">
+                                <label for="price">Мін. ціна (грн) <span style="color:red;">*</span></label>
+                                <input type="number" id="price" name="price" required min="0" step="0.01" value="<%= productData.price %>">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="maxPrice">Макс. ціна (грн) <small>(необов'язково)</small></label>
+                                <input type="number" id="maxPrice" name="maxPrice" min="0" step="0.01" value="<%= productData.maxPrice || '' %>">
+                                <small>Якщо пусто або 0, ціна буде фіксована.</small>
+                            </div>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="category">Категорія <span style="color:red;">*</span></label>
+                            <select id="category" name="category" required>
+                                <option value="">-- Виберіть категорію --</option>
+                                <% if (typeof categories !== 'undefined' && Array.isArray(categories)) { %>
+                                    <% categories.forEach(cat => { %>
+                                        <option value="<%= cat %>" <%= (productData.category === cat) ? 'selected' : '' %> ><%= cat %></option>
+                                    <% }); %>
+                                <% } else { %>
+                                    <option value="" disabled>Помилка: список категорій не завантажено.</option>
+                                <% } %>
+                            </select>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="status">Статус товару <span style="color:red;">*</span></label>
+                            <select id="status" name="status" required>
+                                <%# Для форми редагування (edit-product.ejs) використовуємо productData %>
+                                <% if (typeof productData !== 'undefined') { %>
+                                    <option value="Під замовлення" <%= (productData.status === 'Під замовлення') ? 'selected' : '' %>>Під замовлення</option>
+                                    <option value="В наявності" <%= (productData.status === 'В наявності') ? 'selected' : '' %>>В наявності</option>
+                                <%# Для форми створення (new-product.ejs) можна встановити значення за замовчуванням %>
+                                <% } else { %>
+                                     <option value="Під замовлення" selected>Під замовлення</option> <%# За замовчуванням %>
+                                     <option value="В наявності">В наявності</option>
+                                <% } %>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="creation_time_info">Термін виготовлення <small>(напр., 'до 10 роб. днів')</small> <span style="color:red;">*</span></label>
+                            <input type="text" id="creation_time_info" name="creation_time_info" required placeholder="Наприклад: 5-7 робочих днів" value="<%= productData.creation_time_info || '' %>">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Поточні зображення товару <small>(Редагування/видалення окремих фото поки не реалізовано)</small></label>
+                             <div class="current-images-preview" style="margin-bottom: 10px; display:flex; flex-wrap:wrap; gap:8px;">
+                                  <%# Проверяем наличие массива images и его длину %>
+                                  <% if(typeof productData !== 'undefined' && productData.images && productData.images.length > 0) { %>
+                                      <%# Перебираем массив объектов с изображениями %>
+                                      <% productData.images.forEach((imgObj, index) => { %>
+                                          <%# Проверяем, что imgObj это объект и у него есть свойство thumb %>
+                                          <% if (imgObj && typeof imgObj === 'object' && imgObj.thumb) { %>
+                                              <img src="<%= imgObj.thumb %>"
+                                                   alt="Зображення <%= index + 1 %> для <%= productData.name %>"
+                                                   title="Мініатюра <%= index + 1 %>"
+                                                   style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
+                                          <% } else { %>
+                                               <%# Если структура неожиданная, можно вывести заглушку или сообщение %>
+                                               <div style="width:60px; height:60px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999; border-radius:4px;">?</div>
+                                          <% } %>
+                                      <% }); %>
+                                  <% } else { %>
+                                      <p><small>Зображень немає.</small></p>
+                                  <% } %>
+                              </div>
+                             <small>Щоб змінити набір зображень, видаліть товар і створіть новий з потрібними файлами.</small>
+                        </div>
+
+
+                        <div class="admin-form-group">
+                            <label for="tags">Теги <small>(через кому)</small></label>
+                             <input type="text" id="tags" name="tags" placeholder="квіти, традиційний, подарунок" value="<%= productData.tags ? productData.tags.join(', ') : '' %>">
+                        </div>
+
+                         <div class="admin-form-group">
+                            <label for="materials">Матеріали <small>(через кому)</small></label>
+                             <input type="text" id="materials" name="materials" placeholder="Льон 100%, Бавовна" value="<%= productData.materials ? productData.materials.join(', ') : '' %>">
+                        </div>
+
+                         <div class="admin-form-group">
+                            <label for="colors">Кольори <small>(через кому)</small></label>
+                             <input type="text" id="colors" name="colors" placeholder="Білий, Червоний, Чорний" value="<%= productData.colors ? productData.colors.join(', ') : '' %>">
+                        </div>
+
+                         <div class="admin-form-group">
+                            <label for="care_instructions">Інструкції по догляду</label>
+                            <textarea id="care_instructions" name="care_instructions" rows="3"><%= productData.care_instructions || '' %></textarea>
+                        </div>
+
+                         <div class="admin-form-group checkbox-group">
+                             <label>
+                                 <input type="checkbox" name="isFeatured" <%= productData.isFeatured ? 'checked' : '' %>>
+                                 <span>Показати в "Наші Хіти" на головній?</span>
+                             </label>
+                         </div>
+
+                        <hr>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Оновити товар</button>
+                            <a href="/admin/products" class="btn btn-secondary">До списку товарів</a>
+                        </div>
+
+                    </form>
+
+                    <form method="POST" action="/admin/products/<%= productData._id %>/delete" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ccc;" onsubmit="return confirm('Ви впевнені, що хочете видалити цей товар? Цю дію не можна скасувати.');">
+                         <button type="submit" class="btn btn-danger btn-sm">Видалити товар</button>
+                     </form>
+
+                </div>
+
+            <% } else { %>
+                <div class="admin-form-container">
+                    <p>Помилка: Дані про товар не знайдено.</p>
+                    <a href="/admin/products" class="btn btn-secondary">Повернутись до списку</a>
+                </div>
+            <% } %>
+        </div>
+    </main>
+    <script>
+        const metaDescTextarea = document.getElementById('metaDescription');
+        const metaDescCounter = document.getElementById('metaDescCounter');
+        const maxLength = 170;
+    
+        function updateCounter() {
+            const currentLength = metaDescTextarea.value.length;
+            metaDescCounter.textContent = `${currentLength} / ${maxLength}`;
+            if (currentLength > maxLength) {
+                metaDescCounter.style.color = 'red';
+            } else if (currentLength > 150) {
+                 metaDescCounter.style.color = 'orange';
+            }
+             else {
+                metaDescCounter.style.color = '#6c757d';
+            }
+        }
+    
+        if (metaDescTextarea && metaDescCounter) {
+            metaDescTextarea.addEventListener('input', updateCounter);
+            updateCounter();
+        }
+    </script>
+    </body>
+</html>

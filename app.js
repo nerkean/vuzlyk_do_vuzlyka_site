@@ -10,6 +10,9 @@ const LocalStrategy = require('passport-local').Strategy;
 const bcrypt = require('bcrypt');
 const MongoStore = require('connect-mongo');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const methodOverride = require('method-override');
+const helmet = require('helmet');
+const axios = require('axios');
 
 const User = require('./models/User');
 const Product = require('./models/Product');
@@ -31,13 +34,66 @@ mongoose.connection.on('error', err => {
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          "script-src": [
+            "'self'",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://www.googletagmanager.com",
+            "https://www.google-analytics.com",
+            "https://unpkg.com",
+            "'unsafe-inline'"
+          ],
+          "script-src-attr": [
+            "'unsafe-inline'"
+          ],
+          "style-src": [
+            "'self'",
+            "https://fonts.googleapis.com",
+            "https://cdn.jsdelivr.net",
+            "https://cdnjs.cloudflare.com",
+            "https://unpkg.com",
+            "'unsafe-inline'"
+          ],
+          "font-src": [
+            "'self'",
+            "https://fonts.gstatic.com",
+            "https://cdnjs.cloudflare.com", 
+            "data:"
+          ],
+          "img-src": [
+            "'self'",
+            "data:",
+            "https://www.google-analytics.com",
+            "https://www.googletagmanager.com"
+          ],
+          "connect-src": [
+            "'self'",
+            "https://www.google-analytics.com",
+            "https://region1.google-analytics.com", 
+            "https://www.googletagmanager.com"
+          ],
+          "frame-src": ["'self'"],
+          "object-src": ["'none'"]
+        }
+      },
+      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+      crossOriginEmbedderPolicy: false,
+      referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+    })
+  );
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); 
+app.use(methodOverride('_method'))
 app.use(express.json());
 
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'replace_this_with_a_real_secret_key_in_env',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -122,22 +178,91 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+const AVAILABLE_CURRENCIES = ['UAH', 'EUR', 'USD'];
+const EXCHANGE_RATES = {
+    UAH: 1,
+    USD: 1 / 41.0,
+    EUR: 1 / 46.8 
+};
+const CURRENCY_SYMBOLS = {
+    UAH: '₴',
+    USD: '$',
+    EUR: '€'
+};
+
+async function fetchAndUpdateRates() {
+    console.log('[LOG] Спроба оновити курси валют з API НБУ...');
+    try {
+        const response = await axios.get('https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?json');
+        const nbuRates = response.data;
+
+        const usdRate = nbuRates.find(rate => rate.cc === 'USD')?.rate;
+        const eurRate = nbuRates.find(rate => rate.cc === 'EUR')?.rate;
+
+        if (usdRate && eurRate) {
+            currentRates = {
+                UAH: 1,
+                USD: 1 / usdRate,
+                EUR: 1 / eurRate
+            };
+            console.log('[LOG] Курси валют успішно оновлено:', currentRates);
+        } else {
+            console.warn('[WARN] Не вдалося знайти USD або EUR у відповіді API НБУ. Використовуються старі курси.');
+        }
+    } catch (error) {
+        console.error('[ERROR] Помилка отримання курсів валют з API НБУ:', error.message);
+    }
+}
+fetchAndUpdateRates();
+
+const updateInterval = 6 * 60 * 60 * 1000;
+setInterval(fetchAndUpdateRates, updateInterval);
+
 app.use((req, res, next) => {
-  res.locals.cartItemCount = req.session.cart ? req.session.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
-  res.locals.currentUser = req.user;
-  res.locals.isAdmin = req.session.isAdmin || false;
-  next();
+    res.locals.gaMeasurementId = process.env.GA_MEASUREMENT_ID;
+    res.locals.isProduction = process.env.NODE_ENV === 'production';
+    res.locals.cartItemCount = req.session.cart ? req.session.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    res.locals.currentUser = req.user;
+    res.locals.isAdmin = req.session.isAdmin || false;
+    res.locals.selectedCurrency = req.session.currency || 'UAH'; 
+    res.locals.exchangeRates = EXCHANGE_RATES; 
+    res.locals.currencySymbols = CURRENCY_SYMBOLS; 
+    res.locals.formatPrice = app.locals.formatPrice;
+    next();
 });
 
-function checkAdminAuth(req, res, next) {
-  if (req.session && req.session.isAdmin) {
-      res.locals.isAdmin = true;
-      return next();
-  } else {
-      console.log('Спроба доступу до адмін-ресурсу без авторизації.');
-      res.redirect('/admin/login');
-  }
-}
+
+app.use((req, res, next) => {
+    let currentCurrency = 'UAH';
+    const queryCurrency = req.query.currency?.toUpperCase();
+
+    if (queryCurrency && AVAILABLE_CURRENCIES.includes(queryCurrency)) {
+        req.session.currency = queryCurrency;
+        currentCurrency = queryCurrency;
+    } else if (req.session.currency && AVAILABLE_CURRENCIES.includes(req.session.currency)) {
+        currentCurrency = req.session.currency;
+    }
+
+    const currentIndex = AVAILABLE_CURRENCIES.indexOf(currentCurrency);
+    const nextIndex = (currentIndex + 1) % AVAILABLE_CURRENCIES.length;
+    res.locals.nextCurrency = AVAILABLE_CURRENCIES[nextIndex];
+
+    res.locals.selectedCurrency = currentCurrency;
+    res.locals.exchangeRates = currentRates;
+    res.locals.currencySymbols = CURRENCY_SYMBOLS;
+    next();
+});
+
+app.use((req, res, next) => {
+    res.locals.cartItemCount = req.session.cart ? req.session.cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    res.locals.currentUser = req.user;
+    res.locals.isAdmin = req.session.isAdmin || false;
+    res.locals.gaMeasurementId = process.env.GA_MEASUREMENT_ID;
+    res.locals.isProduction = process.env.NODE_ENV === 'production';
+    res.locals.formatPrice = app.locals.formatPrice; 
+
+    next();
+});
 
 function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
@@ -148,6 +273,8 @@ function isLoggedIn(req, res, next) {
 }
 
 const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+app.use('/admin', adminRoutes); 
 app.use('/', authRoutes);
 
 app.get('/', async (req, res) => {
@@ -198,45 +325,91 @@ app.get('/product/:id', async (req, res, next) => {
           _id: { $ne: product._id }
       }).limit(4).lean() : [];
       const isCustomProduct = productId === process.env.CUSTOM_PRODUCT_ID;
-      res.render('product-detail', {
-          product: product,
-          reviews: reviews,
-          averageRating: averageRating,
-          ratingCount: ratingCount,
-          similarProducts: similarProducts,
-          isCustomProduct: isCustomProduct,
-          canReview: canReview,
-          hasReviewed: hasReviewed,
-          currentUser: req.user,
-          infoMessage: null
-      });
+      const metaDesc = product.metaDescription
+      ? product.metaDescription.substring(0, 170) 
+      : `${product.name} - вишивка ручної роботи від Вузлик. ${product.description ? product.description.substring(0, 100) + '...' : ''}`; 
+
+  res.render('product-detail', {
+      product: product,
+      reviews: reviews,
+      averageRating: averageRating,
+      ratingCount: ratingCount,
+      similarProducts: similarProducts,
+      isCustomProduct: isCustomProduct,
+      canReview: canReview,
+      hasReviewed: hasReviewed,
+      currentUser: req.user,
+      infoMessage: null,
+      metaDescription: metaDesc, 
+      pageTitle: product.name 
+  });
   } catch (error) {
       console.error(`Помилка отримання товару ${productId}:`, error);
       next(error);
   }
 });
 
-app.get('/catalog', async (req, res) => {
-  try {
-      const initialProducts = await Product.find({}).limit(12);
-      const catalogDescription = "Каталог...";
-      const catalogHeading = "Каталог";
-      let firstProductImageUrl = null;
-      if (initialProducts.length > 0 && initialProducts[0].images?.length > 0) {
-          firstProductImageUrl = initialProducts[0].images[0];
-      }
-      res.render('catalog', {
-          pageHeading: catalogHeading,
-          metaDescription: catalogDescription,
-          products: initialProducts,
-          count: initialProducts.length,
-          firstProductImageUrl: firstProductImageUrl
-      });
-  } catch (error) {
-      console.error("Помилка отримання товарів для каталогу:", error);
-      res.status(500).render('500');
-  }
+app.get('/catalog', async (req, res, next) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12; 
+    const sortOption = req.query.sort || 'default';
+    const filters = {};
+    if (req.query.price_from) filters.price_from = req.query.price_from;
+    if (req.query.price_to) filters.price_to = req.query.price_to;
+    if (req.query.status) filters.status = Array.isArray(req.query.status) ? req.query.status : [req.query.status];
+    if (req.query.tags) filters.tags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
+
+    try {
+        const skip = (page - 1) * limit;
+        const sortQuery = getSortQuery(sortOption); 
+
+        const filterQuery = {}; 
+
+        const products = await Product.find(filterQuery)
+            .sort(sortQuery)
+            .skip(skip)
+            .limit(limit)
+            .lean(); 
+
+        const totalProducts = await Product.countDocuments(filterQuery);
+        const totalPages = Math.ceil(totalProducts / limit);
+
+        const firstProductImageUrl = (products.length > 0 && products[0].images && products[0].images.length > 0)
+                                   ? (products[0].images[0].medium || products[0].images[0].thumb)
+                                   : null;
+
+        const pageTitle = 'Каталог Вишивки Ручної Роботи';
+        const pageHeading = pageTitle; 
+
+        res.render('catalog', {
+            pageTitle: pageTitle,
+            pageHeading: pageHeading,
+            products: products,
+            currentPage: page,
+            totalPages: totalPages,
+            limit: limit,
+            count: totalProducts, 
+            firstProductImageUrl: firstProductImageUrl,
+            originalUrl: req.originalUrl,
+            selectedCurrency: res.locals.selectedCurrency,
+            exchangeRates: res.locals.exchangeRates,
+            currencySymbols: res.locals.currencySymbols,
+            query: req.query 
+        });
+    } catch (error) {
+        console.error("Помилка при завантаженні каталогу:", error);
+        next(error);
+    }
 });
+
+function getSortQuery(sortOption) {
+    switch (sortOption) {
+        case 'price_asc': return { price: 1 };
+        case 'price_desc': return { price: -1 };
+        case 'newest': return { createdAt: -1 };
+        default: return { createdAt: -1 }; 
+    }
+}
 
 app.post('/cart/add', async (req, res) => {
   const { productId, quantity } = req.body;
@@ -245,29 +418,53 @@ app.post('/cart/add', async (req, res) => {
       if (!req.session.cart) {
           req.session.cart = [];
       }
-      const product = await Product.findById(productId);
+      const product = await Product.findById(productId).lean();
+
       if (!product) {
+          console.warn(`[WARN] Спроба додати неіснуючий товар ${productId} до кошика.`);
           return res.status(404).json({ success: false, message: 'Товар не знайдено' });
       }
+
+      let imageForCart = '/images/placeholder.png'; 
+      if (product.images && product.images.length > 0 && product.images[0].thumb) {
+           imageForCart = product.images[0].thumb;
+      } else if (product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
+           imageForCart = product.images[0];
+      }
+
       const existingItemIndex = req.session.cart.findIndex(item => item.productId === productId);
+
       if (existingItemIndex > -1) {
           req.session.cart[existingItemIndex].quantity += qty;
+          req.session.cart[existingItemIndex].image = imageForCart;
+          req.session.cart[existingItemIndex].price = product.price; 
+          req.session.cart[existingItemIndex].name = product.name; 
       } else {
           req.session.cart.push({
               productId: productId,
               name: product.name,
-              price: product.price,
-              image: product.images && product.images.length > 0 ? product.images[0] : '/images/placeholder.png',
+              price: product.price, 
+              image: imageForCart, 
               quantity: qty
           });
       }
-      const newCartItemCount = req.session.cart.reduce((sum, item) => sum + item.quantity, 0);
-      console.log('Оновлений кошик в сесії:', req.session.cart);
-      res.json({ success: true, message: 'Товар додано до кошика', cartItemCount: newCartItemCount });
-  } catch (error) {
-      console.error('Помилка додавання товару в кошик:', error);
-      res.status(500).json({ success: false, message: 'Помилка сервера' });
-  }
+
+       const newCartItemCount = req.session.cart.reduce((sum, item) => sum + item.quantity, 0);
+        console.log('Оновлений кошик в сесії:', req.session.cart);
+
+        res.json({
+            success: true,
+            message: 'Товар додано до кошика',
+            cartItemCount: newCartItemCount,
+            selectedCurrency: res.locals.selectedCurrency,
+            exchangeRates: res.locals.exchangeRates,
+            currencySymbols: res.locals.currencySymbols
+        });
+
+    } catch (error) {
+        console.error('Помилка додавання товару в кошик:', error);
+        res.status(500).json({ success: false, message: 'Помилка сервера' });
+    }
 });
 
 app.get('/cart', (req, res) => {
@@ -289,13 +486,11 @@ app.get('/cart', (req, res) => {
       };
   }).filter(item => item && item.productId);
   const total = subtotal;
-  const finalSubtotal = (typeof subtotal === 'number' && isFinite(subtotal)) ? subtotal.toFixed(2) : '0.00';
-  const finalTotal = (typeof total === 'number' && isFinite(total)) ? total.toFixed(2) : '0.00';
   res.render('cart', {
       pageTitle: 'Ваш кошик - Вузлик',
       cartItems: cartItemsForRender,
-      subtotal: finalSubtotal,
-      total: finalTotal
+      subtotal: subtotal, 
+      total: total,     
   });
 });
 
@@ -327,9 +522,12 @@ app.post('/cart/update', (req, res) => {
           success: true,
           message: 'Кількість оновлено',
           cartItemCount: newCartItemCount,
-          subtotal: subtotal.toFixed(2),
-          total: total.toFixed(2),
-          itemLineTotal: itemLineTotal.toFixed(2)
+          itemLineTotal: itemLineTotal, 
+          subtotal: subtotal,     
+          total: total,         
+          selectedCurrency: res.locals.selectedCurrency,
+          exchangeRates: res.locals.exchangeRates,
+          currencySymbols: res.locals.currencySymbols
       });
   } else {
       res.status(404).json({ success: false, message: 'Товар не знайдено в кошику' });
@@ -361,230 +559,330 @@ app.post('/cart/remove', (req, res) => {
 });
 
 app.get('/api/products', async (req, res) => {
-  console.log('[LOG] Обробка API запиту GET /api/products');
-  console.log('Query params:', req.query);
-  try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 12;
-      const skip = (page - 1) * limit;
-      const filterQuery = {};
-      if (req.query.price_from || req.query.price_to) {
-          filterQuery.price = {};
-          if (req.query.price_from) {
-              filterQuery.price.$gte = parseInt(req.query.price_from);
-          }
-          if (req.query.price_to) {
-              filterQuery.price.$lte = parseInt(req.query.price_to);
-          }
-      }
-      if (req.query.status) {
-          const statuses = Array.isArray(req.query.status) ? req.query.status : [req.query.status];
-          if (statuses.length > 0) {
-               const mappedStatuses = statuses.map(s => s === 'available' ? 'В наявності' : (s === 'order' ? 'Під замовлення' : null)).filter(Boolean);
-               if(mappedStatuses.length > 0) {
-                   filterQuery.status = { $in: mappedStatuses };
-               }
-          }
-      }
-      if (req.query.tags) {
-          const tags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
-          if (tags.length > 0) {
-              filterQuery.tags = { $in: tags };
-          }
-      }
-      console.log('Mongo Filter Query:', JSON.stringify(filterQuery));
-      let sortQuery = {};
-      const sortOption = req.query.sort || 'default';
-      switch (sortOption) {
-          case 'price_asc':
-              sortQuery = { price: 1 };
-              break;
-          case 'price_desc':
-              sortQuery = { price: -1 };
-              break;
-          case 'newest':
-              sortQuery = { createdAt: -1 };
-              break;
-          default:
-              sortQuery = {};
-      }
-      console.log('Mongo Sort Query:', sortQuery);
-      const totalProducts = await Product.countDocuments(filterQuery);
-      console.log('Total products found:', totalProducts);
-      const products = await Product.find(filterQuery)
-          .sort(sortQuery)
-          .skip(skip)
-          .limit(limit);
-      res.json({
-          success: true,
-          products: products,
-          currentPage: page,
-          totalPages: Math.ceil(totalProducts / limit),
-          totalProducts: totalProducts
-      });
-  } catch (error) {
-      console.error("Помилка API отримання товарів для каталогу:", error);
-      res.status(500).json({ success: false, message: "Помилка сервера" });
-  }
+    const rates = res.locals.exchangeRates || { UAH: 1, USD: 1/39.5, EUR: 1/41.0 };
+    const filterCurrency = res.locals.selectedCurrency || 'UAH';
+
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 12;
+        const skip = (page - 1) * limit;
+        const filterQuery = {};
+
+        const filterCurrency = (req.query.currency || 'UAH').toUpperCase();
+        const priceFromInput = req.query.price_from;
+        const priceToInput = req.query.price_to;
+
+        if (priceFromInput || priceToInput) {
+            filterQuery.price = {};
+            const rateFromUAH = rates[filterCurrency] || 1;
+            const rateToUAH = rateFromUAH !== 0 ? (1 / rateFromUAH) : null;
+
+            if (rateToUAH) {
+                if (priceFromInput) {
+                    const priceFromNum = parseFloat(priceFromInput);
+                    if (!isNaN(priceFromNum)) {
+                        filterQuery.price.$gte = Math.floor(priceFromNum * rateToUAH);
+                    }
+                }
+                if (priceToInput) {
+                    const priceToNum = parseFloat(priceToInput);
+                    if (!isNaN(priceToNum)) {
+                        filterQuery.price.$lte = Math.ceil(priceToNum * rateToUAH);
+                    }
+                }
+            } else if (filterCurrency === 'UAH') {
+                if (priceFromInput) {
+                    const priceFromNum = parseInt(priceFromInput);
+                    if (!isNaN(priceFromNum)) filterQuery.price.$gte = priceFromNum;
+                }
+                if (priceToInput) {
+                    const priceToNum = parseInt(priceToInput);
+                    if (!isNaN(priceToNum)) filterQuery.price.$lte = priceToNum;
+                }
+            } else {
+                delete filterQuery.price;
+            }
+
+            if (Object.keys(filterQuery.price || {}).length === 0) {
+                delete filterQuery.price;
+            }
+        }
+        if (req.query.status) {
+            const statuses = Array.isArray(req.query.status) ? req.query.status : [req.query.status];
+            if (statuses.length > 0) {
+                const mappedStatuses = statuses.map(s => s === 'available' ? 'В наявності' : (s === 'pid_zamovlennya' ? 'Під замовлення' : null)).filter(Boolean);
+                if(mappedStatuses.length > 0) {
+                    filterQuery.status = { $in: mappedStatuses };
+                }
+            }
+        }
+        if (req.query.tags) {
+            const tags = Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags];
+            if (tags.length > 0) {
+                filterQuery.tags = { $in: tags };
+            }
+        }
+        let sortQuery = {};
+        const sortOption = req.query.sort || 'default';
+        switch (sortOption) {
+            case 'price_asc':
+                sortQuery = { price: 1 };
+                break;
+            case 'price_desc':
+                sortQuery = { price: -1 };
+                break;
+            case 'newest':
+                sortQuery = { createdAt: -1 };
+                break;
+            default:
+                sortQuery = {};
+        }
+        const totalProducts = await Product.countDocuments(filterQuery);
+        const products = await Product.find(filterQuery)
+            .sort(sortQuery)
+            .skip(skip)
+            .limit(limit);
+        res.json({
+            success: true,
+            products: products,
+            currentPage: page,
+            totalPages: Math.ceil(totalProducts / limit),
+            totalProducts: totalProducts
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Помилка сервера" });
+    }
 });
 
 app.get('/checkout', (req, res) => {
-  console.log('[LOG] Обробка маршруту GET /checkout');
-  const cart = req.session.cart || [];
-  let subtotal = 0;
-  const cartItemsForRender = cart.map(item => {
-      const price = parseFloat(item.price);
-      const quantity = parseInt(item.quantity);
-      const validPrice = (typeof price === 'number' && isFinite(price) && price >= 0) ? price : 0;
-      const validQuantity = (typeof quantity === 'number' && isFinite(quantity) && quantity >= 0) ? quantity : 0;
-      const lineTotal = validPrice * validQuantity;
-      subtotal += lineTotal;
-      return { ...item, price: validPrice, quantity: validQuantity, lineTotal: lineTotal };
-  }).filter(item => item && item.productId);
-  const total = subtotal;
-  const finalSubtotal = (typeof subtotal === 'number' && isFinite(subtotal)) ? subtotal.toFixed(2) : '0.00';
-  const finalTotal = (typeof total === 'number' && isFinite(total)) ? total.toFixed(2) : '0.00';
-  res.render('checkout', {
-      cartItems: cartItemsForRender,
-      subtotal: finalSubtotal,
-      total: finalTotal
-  });
+    const cart = req.session.cart || [];
+    let subtotal = 0;
+    const cartItemsForRender = cart.map(item => {
+        const price = parseFloat(item.price);
+        const quantity = parseInt(item.quantity);
+        const validPrice = (typeof price === 'number' && isFinite(price) && price >= 0) ? price : 0;
+        const validQuantity = (typeof quantity === 'number' && isFinite(quantity) && quantity >= 0) ? quantity : 0;
+        const lineTotal = validPrice * validQuantity;
+        subtotal += lineTotal;
+        return { ...item, price: validPrice, quantity: validQuantity, lineTotal: lineTotal };
+    }).filter(item => item && item.productId);
+
+    const total = subtotal;
+
+    res.render('checkout', {
+        pageTitle: 'Оформлення Замовлення - Вузлик',
+        cartItems: cartItemsForRender,
+        subtotal: subtotal,
+        total: total,
+        currentUser: req.user
+    });
 });
 
 app.post('/order/place', async (req, res) => {
-  console.log('[LOG] Обробка POST /order/place (новий флоу з email)');
-  const cart = req.session.cart || [];
-  if (!cart || cart.length === 0) {
-      return res.redirect('/cart');
-  }
-  const {
-      email, phone, full_name,
-      shippingMethod, shipping_city, shipping_np_warehouse, shipping_address1,
-      custom_description, comments
-  } = req.body;
-  if (!email || !phone || !full_name || !shippingMethod) {
-       console.error('Помилка валідації форми оформлення');
-       return res.redirect('/checkout?error=validation');
-  }
-  const orderData = {
-      contactInfo: { email, phone, name: full_name },
-      shipping: {
-          method: shippingMethod, city: shipping_city,
-          warehouse: shipping_np_warehouse, address: shipping_address1,
-      },
-      items: cart.map(item => ({
-          name: item.name, productId: item.productId,
-          quantity: item.quantity, price: item.price
-      })),
-      customDescription: custom_description || 'Не вказано',
-      comments: comments || 'Немає',
-      receivedAt: new Date(),
-      status: 'Новий'
-  };
-  orderData.totalAmount = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  if (req.isAuthenticated()) {
-      orderData.userId = req.user._id;
-      console.log(`Замовлення буде пов'язане з користувачем: ${req.user.email} (ID: ${req.user._id})`);
-  } else {
-      console.log('Замовлення від гостя (користувач не залогінений).');
-  }
-  try {
-      const newOrder = new Order(orderData);
-      await newOrder.save();
-      console.log(`Замовлення ${newOrder._id} збережено в БД.`);
-      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
-          console.error('ПОМИЛКА: Не встановлені змінні середовища для відправки email.');
-          throw new Error('Email configuration missing.');
-      } else {
-          const transporter = nodemailer.createTransport({
-              service: 'gmail',
-              auth: {
-                  user: process.env.EMAIL_USER,
-                  pass: process.env.EMAIL_PASS
-              }
-          });
-          const accentColor = '#b9936c';
-          const accentDarkColor = '#a07e5a';
-          const textColor = '#333333';
-          const lightTextColor = '#555555';
-          const bgColor = '#f4f4f4';
-          const borderColor = '#dddddd';
-          const whiteColor = '#ffffff';
-          const headingFont = 'Montserrat, Arial, sans-serif';
-          const bodyFont = 'Roboto, Arial, sans-serif';
-          const emailHtml = `
-            <!DOCTYPE html>
-            <html lang="uk">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Новий запит на замовлення</title>
-                <style>
-                    body { margin: 0; padding: 0; background-color: ${bgColor}; font-family: ${bodyFont}; }
-                    .email-wrapper { background-color: ${bgColor}; padding: 20px 10px; }
-                    .email-container { background-color: ${whiteColor}; max-width: 600px; margin: 0 auto; padding: 25px 30px; border-radius: 8px; border: 1px solid ${borderColor}; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-                    h1 { color: ${textColor}; font-family: ${headingFont}; font-size: 22px; margin-top: 0; margin-bottom: 20px; text-align: center; }
-                    h2 { color: ${accentDarkColor}; font-family: ${headingFont}; font-size: 18px; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid ${borderColor}; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-                    p { color: ${lightTextColor}; font-size: 15px; line-height: 1.65; margin: 5px 0 12px 0; }
-                    p strong { color: ${textColor}; font-weight: 600; }
-                    ul { list-style: none; padding: 0; margin: 10px 0 15px 0; }
-                    li { margin-bottom: 10px; padding-left: 18px; position: relative; color: ${lightTextColor}; font-size: 15px; line-height: 1.6; }
-                    li::before { content: '•'; color: ${accentColor}; position: absolute; left: 0; top: 1px; font-weight: bold; font-size: 16px; }
-                    a { color: ${accentColor}; text-decoration: underline; }
-                    a:hover { color: ${accentDarkColor}; }
-                    hr { border: none; border-top: 1px solid ${borderColor}; margin: 30px 0; }
-                    .footer { font-size: 12px; color: #aaaaaa; text-align: center; margin-top: 30px; }
-                </style>
-            </head>
-            <body>
-                <div class="email-wrapper">
-                    <div class="email-container">
-                        <h1>Новий запит на замовлення (#${Date.now()})</h1>
-                        <h2>Контактна інформація</h2>
-                        <p><strong>Ім'я:</strong> ${orderData.contactInfo.name}</p>
-                        <p><strong>Email:</strong> <a href="mailto:${orderData.contactInfo.email}">${orderData.contactInfo.email}</a></p>
-                        <p><strong>Телефон:</strong> <a href="tel:${orderData.contactInfo.phone}">${orderData.contactInfo.phone}</a></p>
-                        <h2>Доставка</h2>
-                        <p><strong>Метод:</strong> ${orderData.shipping.method || 'не вказано'}</p>
-                        <p><strong>Місто:</strong> ${orderData.shipping.city || 'не вказано'}</p>
-                        <p><strong>Відділення НП:</strong> ${orderData.shipping.warehouse || 'не вказано'}</p>
-                        <p><strong>Адреса:</strong> ${orderData.shipping.address || 'не вказано'}</p>
-                        <h2>Товари</h2>
-                        <ul>
-                            ${orderData.items.map(item => `<li><strong>${item.name}</strong> (ID: ${item.productId || 'N/A'}) <br> Кількість: ${item.quantity} шт. x ${item.price} грн</li>`).join('')}
-                        </ul>
-                        ${orderData.customDescription !== 'Не вказано' ? `
-                        <h2>Опис для "Своя вишивка"</h2>
-                        <p>${orderData.customDescription.replace(/\n/g, '<br>')}</p>
-                        ` : ''}
-                        ${orderData.comments !== 'Немає' ? `
-                        <h2>Коментар клієнта</h2>
-                        <p>${orderData.comments.replace(/\n/g, '<br>')}</p>
-                        ` : ''}
-                        <p><strong>Отримано:</strong> ${orderData.receivedAt.toLocaleString('uk-UA', { dateStyle: 'long', timeStyle: 'short' })}</p>
-                        <hr>
-                        <p class="footer">Це автоматично згенерований лист з сайту Vuzlyk.</p>
+    const cart = req.session.cart || [];
+    if (!cart || cart.length === 0) {
+        return res.redirect('/cart');
+    }
+    const {
+        email, phone, full_name,
+        shippingMethod, shipping_city, shipping_np_warehouse, shipping_address1,
+        custom_description, comments,
+        saveInfo
+    } = req.body;
+    if (!email || !phone || !full_name || !shippingMethod) {
+        return res.redirect('/checkout?error=' + encodeURIComponent('Будь ласка, заповніть всі обов\'язкові поля.'));
+    }
+    const orderData = {
+        contactInfo: { email, phone, name: full_name },
+        shipping: {
+            method: shippingMethod,
+            city: shipping_city || null,
+            warehouse: shipping_np_warehouse || null,
+            address: shipping_address1 || null,
+        },
+        items: cart.map(item => ({
+            name: item.name, productId: item.productId,
+            quantity: item.quantity, price: item.price
+        })),
+        customDescription: custom_description || 'Не вказано',
+        comments: comments || 'Немає',
+        receivedAt: new Date(),
+        status: 'Новий'
+    };
+    orderData.totalAmount = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    if (req.isAuthenticated() && req.user) {
+        orderData.userId = req.user._id;
+        if (saveInfo === 'on') {
+            const contactToSave = {
+                name: orderData.contactInfo.name,
+                phone: orderData.contactInfo.phone
+            };
+            const shippingToSave = {
+                method: orderData.shipping.method,
+                city: orderData.shipping.city,
+                warehouse: orderData.shipping.warehouse,
+                address: orderData.shipping.address
+            };
+            try {
+                await User.findByIdAndUpdate(req.user._id, {
+                    $set: {
+                        defaultContactInfo: contactToSave,
+                        defaultShippingInfo: shippingToSave
+                    }
+                });
+            } catch (updateError) {}
+        }
+    }
+    try {
+        const newOrder = new Order(orderData);
+        await newOrder.save();
+        if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
+            throw new Error('Email configuration missing.');
+        } else {
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USER,
+                    pass: process.env.EMAIL_PASS
+                }
+            });
+            const accentColor = '#b9936c';
+            const accentDarkColor = '#a07e5a';
+            const textColor = '#333333';
+            const lightTextColor = '#555555';
+            const bgColor = '#f4f4f4';
+            const borderColor = '#dddddd';
+            const whiteColor = '#ffffff';
+            const headingFont = 'Montserrat, Arial, sans-serif';
+            const bodyFont = 'Roboto, Arial, sans-serif';
+            const emailHtmlAdmin = `
+                <!DOCTYPE html>
+                <html lang="uk">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Новий запит на замовлення</title>
+                    <style>
+                        body { margin: 0; padding: 0; background-color: ${bgColor}; font-family: ${bodyFont}; }
+                        .email-wrapper { background-color: ${bgColor}; padding: 20px 10px; }
+                        .email-container { background-color: ${whiteColor}; max-width: 600px; margin: 0 auto; padding: 25px 30px; border-radius: 8px; border: 1px solid ${borderColor}; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                        h1 { color: ${textColor}; font-family: ${headingFont}; font-size: 22px; margin-top: 0; margin-bottom: 20px; text-align: center; }
+                        h2 { color: ${accentDarkColor}; font-family: ${headingFont}; font-size: 18px; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid ${borderColor}; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+                        p { color: ${lightTextColor}; font-size: 15px; line-height: 1.65; margin: 5px 0 12px 0; }
+                        p strong { color: ${textColor}; font-weight: 600; }
+                        ul { list-style: none; padding: 0; margin: 10px 0 15px 0; }
+                        li { margin-bottom: 10px; padding-left: 18px; position: relative; color: ${lightTextColor}; font-size: 15px; line-height: 1.6; }
+                        li::before { content: '•'; color: ${accentColor}; position: absolute; left: 0; top: 1px; font-weight: bold; font-size: 16px; }
+                        a { color: ${accentColor}; text-decoration: underline; }
+                        a:hover { color: ${accentDarkColor}; }
+                        hr { border: none; border-top: 1px solid ${borderColor}; margin: 30px 0; }
+                        .footer { font-size: 12px; color: #aaaaaa; text-align: center; margin-top: 30px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-wrapper">
+                        <div class="email-container">
+                            <h1>Новий запит на замовлення (#${Date.now()})</h1>
+                            <h2>Контактна інформація</h2>
+                            <p><strong>Ім'я:</strong> ${orderData.contactInfo.name}</p>
+                            <p><strong>Email:</strong> <a href="mailto:${orderData.contactInfo.email}">${orderData.contactInfo.email}</a></p>
+                            <p><strong>Телефон:</strong> <a href="tel:${orderData.contactInfo.phone}">${orderData.contactInfo.phone}</a></p>
+                            <h2>Доставка</h2>
+                            <p><strong>Метод:</strong> ${orderData.shipping.method || 'не вказано'}</p>
+                            <p><strong>Місто:</strong> ${orderData.shipping.city || 'не вказано'}</p>
+                            <p><strong>Відділення НП:</strong> ${orderData.shipping.warehouse || 'не вказано'}</p>
+                            <p><strong>Адреса:</strong> ${orderData.shipping.address || 'не вказано'}</p>
+                            <h2>Товари</h2>
+                            <ul>
+                                ${orderData.items.map(item => `<li><strong>${item.name}</strong> (ID: ${item.productId || 'N/A'}) <br> Кількість: ${item.quantity} шт. x ${item.price} грн</li>`).join('')}
+                            </ul>
+                            ${orderData.customDescription !== 'Не вказано' ? `
+                            <h2>Опис для "Своя вишивка"</h2>
+                            <p>${orderData.customDescription.replace(/\n/g, '<br>')}</p>
+                            ` : ''}
+                            ${orderData.comments !== 'Немає' ? `
+                            <h2>Коментар клієнта</h2>
+                            <p>${orderData.comments.replace(/\n/g, '<br>')}</p>
+                            ` : ''}
+                            <p><strong>Отримано:</strong> ${orderData.receivedAt.toLocaleString('uk-UA', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                            <hr>
+                            <p class="footer">Це автоматично згенерований лист з сайту Vuzlyk.</p>
+                        </div>
                     </div>
-                </div>
-            </body>
-            </html>
-          `;
-          const mailOptionsAdmin = {
-              from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`,
-              to: process.env.ADMIN_EMAIL,
-              subject: `Новий запит на замовлення з сайту Vuzlyk (${orderData.contactInfo.name})`,
-              html: emailHtml
-          };
-          await transporter.sendMail(mailOptionsAdmin);
-          console.log('Email адміністратору відправлено.');
-      }
-      req.session.cart = [];
-      console.log('Кошик очищено.');
-      res.redirect('/order/request-sent');
-  } catch (error) {
-      console.error('Помилка при відправці email або обробці запиту:', error);
-      return res.redirect('/checkout?error=submission');
-  }
+                </body>
+                </html>
+            `;
+            const mailOptionsAdmin = {
+                from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`,
+                to: process.env.ADMIN_EMAIL,
+                subject: `Новий запит на замовлення з сайту Vuzlyk (${orderData.contactInfo.name})`,
+                html: emailHtmlAdmin
+            };
+            await transporter.sendMail(mailOptionsAdmin);
+
+            const customerSubject = `Ваш запит на замовлення #${newOrder._id} на Vuzlyk отримано!`;
+            const customerEmailHtml = `
+                <!DOCTYPE html>
+                <html lang="uk">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Ваш запит отримано</title>
+                    <style>
+                        body { margin: 0; padding: 0; background-color: ${bgColor}; font-family: ${bodyFont}; }
+                        .email-wrapper { background-color: ${bgColor}; padding: 20px 10px; }
+                        .email-container { background-color: ${whiteColor}; max-width: 600px; margin: 0 auto; padding: 25px 30px; border-radius: 8px; border: 1px solid ${borderColor}; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+                        h1 { color: ${textColor}; font-family: ${headingFont}; font-size: 20px; margin-top: 0; margin-bottom: 20px; text-align: center; }
+                        h2 { color: ${accentDarkColor}; font-family: ${headingFont}; font-size: 18px; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid ${borderColor}; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+                        p { color: ${lightTextColor}; font-size: 15px; line-height: 1.65; margin: 10px 0 15px 0; }
+                        p strong { color: ${textColor}; font-weight: 600; }
+                        ul { list-style: none; padding: 0; margin: 15px 0; }
+                        li { margin-bottom: 8px; padding-left: 18px; position: relative; color: ${lightTextColor}; font-size: 14px; line-height: 1.5; }
+                        li::before { content: '•'; color: ${accentColor}; position: absolute; left: 0; top: 1px; font-weight: bold; font-size: 16px; }
+                        a { color: ${accentColor}; text-decoration: underline; }
+                        a:hover { color: ${accentDarkColor}; }
+                        hr { border: none; border-top: 1px solid ${borderColor}; margin: 25px 0; }
+                        .footer { font-size: 12px; color: #aaaaaa; text-align: center; margin-top: 25px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-wrapper">
+                        <div class="email-container">
+                            <h1>Дякуємо за ваш запит, ${orderData.contactInfo.name}!</h1>
+                            <p>Ми отримали ваш запит на замовлення №${newOrder._id} на сайті Vuzlyk.</p>
+                            <p><strong>Ваш запит містить наступні позиції:</strong></p>
+                            <ul>
+                                ${orderData.items.map(item => `<li>${item.name} (${item.quantity} шт.)</li>`).join('')}
+                            </ul>
+                            ${orderData.customDescription !== 'Не вказано' ? `<p><strong>Ваш опис для "Своя вишивка":</strong> <em>${orderData.customDescription.replace(/\n/g, '<br>')}</em></p>` : ''}
+                            ${orderData.comments !== 'Немає' ? `<p><strong>Ваш коментар:</strong> <em>${orderData.comments.replace(/\n/g, '<br>')}</em></p>` : ''}
+                            <hr>
+                            <p><strong>Що далі?</strong></p>
+                            <p>Ми зв'яжемося з вами найближчим робочим часом за вказаними контактами (${orderData.contactInfo.email} або ${orderData.contactInfo.phone}) для уточнення всіх деталей, узгодження остаточної вартості та термінів виконання.</p>
+                            <p>Будь ласка, очікуйте на наш дзвінок або лист.</p>
+                            <p class="footer">З найкращими побажаннями, <br>Команда Vuzlyk</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            const mailOptionsCustomer = {
+                from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`,
+                to: orderData.contactInfo.email,
+                subject: customerSubject,
+                html: customerEmailHtml
+            };
+
+            try {
+                await transporter.sendMail(mailOptionsCustomer);
+            } catch (customerMailError) {}
+        }
+        req.session.cart = [];
+        res.redirect('/order/request-sent');
+    } catch (error) {
+        return res.redirect('/checkout?error=submission');
+    }
 });
 
 app.get('/order/request-sent', (req, res) => {
@@ -651,106 +949,96 @@ app.post('/api/products/:id/reviews', isLoggedIn, async (req, res) => {
   }
 });
 
-app.get('/admin/login', (req, res) => {
-  if (req.session.isAdmin) return res.redirect('/admin/orders');
-  res.render('admin/login', { error: req.query.error === '1' ? 'Неправильний логін або пароль.' : null });
-});
-
-app.post('/admin/login', async (req, res) => {
-  const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USER;
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  if (!adminUser || !adminPassword) {
-      console.error("ПОМИЛКА: ADMIN_USER або ADMIN_PASSWORD не встановлені в .env");
-      return res.redirect('/admin/login?error=2');
-  }
-  if (username === adminUser && password === adminPassword) {
-      req.session.isAdmin = true;
-      console.log('Admin logged in successfully.');
-      res.redirect('/admin/orders');
-  } else {
-      console.log('Admin login failed.');
-      res.redirect('/admin/login?error=1');
-  }
-});
-
-app.get('/admin/logout', (req, res) => {
-  req.session.destroy(err => {
-      if (err) {
-          console.error("Помилка при виході:", err);
-      }
-      res.clearCookie('connect.sid');
-      console.log('Admin logged out.');
-      res.redirect('/admin/login');
-  });
-});
-
-app.get('/admin/orders', checkAdminAuth, async (req, res) => {
-  try {
-      const orders = await Order.find().sort({ receivedAt: -1 }).lean();
-      res.render('admin/orders', { orders: orders });
-  } catch (error) {
-      console.error("Помилка завантаження замовлень для адмін-панелі:", error);
-      res.status(500).render('admin/error', { message: 'Не вдалося завантажити замовлення' });
-  }
-});
-
-app.post('/admin/orders/:id/update-status', checkAdminAuth, async (req, res) => {
-  const orderId = req.params.id;
-  const { newStatus } = req.body;
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ success: false, message: 'Неправильний ID замовлення.' });
-  }
-  const allowedStatuses = ['Новий', 'В обробці', 'Узгоджено', 'Виконано', 'Скасовано'];
-  if (!newStatus || !allowedStatuses.includes(newStatus)) {
-      return res.status(400).json({ success: false, message: 'Неприпустимий статус замовлення.' });
-  }
-  console.log(`Запит на оновлення статусу замовлення ${orderId} на ${newStatus}`);
-  try {
-      const updatedOrder = await Order.findByIdAndUpdate(
-          orderId,
-          { status: newStatus },
-          { new: true }
-      );
-      if (!updatedOrder) {
-          return res.status(404).json({ success: false, message: 'Замовлення не знайдено.' });
-      }
-      console.log(`Статус замовлення ${orderId} оновлено на ${newStatus}`);
-      res.json({ success: true, message: 'Статус оновлено', newStatus: updatedOrder.status });
-  } catch (error) {
-      console.error(`Помилка оновлення статусу замовлення ${orderId}:`, error);
-      res.status(500).json({ success: false, message: 'Помилка сервера при оновленні статусу.' });
-  }
-});
-
-app.delete('/admin/orders/:id', checkAdminAuth, async (req, res) => {
-  const orderId = req.params.id;
-  if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ success: false, message: 'Неправильний ID замовлення.' });
-  }
-  console.log(`Запит на видалення замовлення ${orderId}`);
-  try {
-      const deletedOrder = await Order.findByIdAndDelete(orderId);
-      if (!deletedOrder) {
-          return res.status(404).json({ success: false, message: 'Замовлення не знайдено.' });
-      }
-      console.log(`Замовлення ${orderId} видалено.`);
-      res.json({ success: true, message: 'Замовлення видалено' });
-  } catch (error) {
-      console.error(`Помилка видалення замовлення ${orderId}:`, error);
-      res.status(500).json({ success: false, message: 'Помилка сервера при видаленні замовлення.' });
-  }
-});
-
 app.use((req, res, next) => {
   console.log(`[LOG] Запит ${req.url} не знайдено (404)`);
   res.status(404).render('404');
 });
 
 app.use((err, req, res, next) => {
-  console.error("Сталася помилка сервера:", err.stack);
-  res.status(500).render('500');
-});
+    const timestamp = new Date().toISOString();
+    console.error(`[ERROR HANDLER] Timestamp: ${timestamp}`);
+    console.error(`[ERROR HANDLER] Route: ${req.method} ${req.originalUrl}`);
+    if (req.user) {
+      console.error(`[ERROR HANDLER] User ID: ${req.user._id}`);
+    }
+    console.error(`[ERROR HANDLER] Error: ${err.name || 'UnknownError'} | Status: ${err.status || 500} | Message: ${err.message || 'No message'}`);
+  
+    if (process.env.NODE_ENV !== 'production') {
+         console.error('[ERROR HANDLER] Stack:', err.stack);
+    } else if (err.stack) {
+         console.error('[ERROR HANDLER] Stack (first line):', err.stack.split('\n')[0]);
+    }
+  
+    let statusCode = typeof err.status === 'number' && err.status >= 400 && err.status < 600 ? err.status : 500;
+    let userMessage = 'На жаль, на сервері сталася несподівана помилка. Будь ласка, спробуйте пізніше.';
+    let errorDetailsForJson = { message: userMessage }; 
+  
+    if (err.name === 'ValidationError' && mongoose?.Error?.ValidationError && err instanceof mongoose.Error.ValidationError) {
+         statusCode = 400;
+         userMessage = 'Будь ласка, перевірте правильність введених даних.';
+         errorDetailsForJson = {
+              message: userMessage,
+              errors: Object.values(err.errors).map(el => ({ field: el.path, message: el.message }))
+         };
+         console.error('[ERROR HANDLER] Mongoose Validation Errors:', JSON.stringify(errorDetailsForJson.errors));
+    } else if (err.name === 'CastError' && mongoose?.Error?.CastError && err instanceof mongoose.Error.CastError) {
+         statusCode = 400; 
+         userMessage = 'Неправильний формат запитуваних даних.';
+         errorDetailsForJson = { message: userMessage, reason: 'Invalid data format, possibly ID.' };
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+        userMessage = err.message || userMessage;
+        if (!errorDetailsForJson.errors) { 
+            errorDetailsForJson = { message: userMessage, stack: err.stack };
+        }
+    }
+  
+    res.status(statusCode);
+  
+    if (req.accepts(['html', 'json']) === 'json' || req.originalUrl.startsWith('/api/')) {
+        res.json({ success: false, ...errorDetailsForJson });
+    } else {
+        if (statusCode === 404) { 
+            res.render('404', {
+                pageTitle: 'Сторінку Не Знайдено',
+                message: userMessage 
+            });
+        } else { 
+            res.render('500', { 
+                pageTitle: 'Помилка',
+                message: userMessage 
+            });
+        }
+    }
+  });
+
+/**
+ * @param {number} amountUAH 
+ * @param {string} targetCurrency 
+ * @param {object} rates 
+ * @param {object} symbols 
+ * @returns {string} 
+ */
+app.locals.formatPrice = (amountUAH, targetCurrency, rates, symbols) => {
+    const baseAmount = typeof amountUAH === 'number' ? amountUAH : 0;
+    const currency = (targetCurrency && rates && rates[targetCurrency]) ? targetCurrency : 'UAH';
+    const rate = (rates && rates[currency]) ? rates[currency] : 1;
+    const symbol = (symbols && symbols[currency]) ? symbols[currency] : 'грн'; 
+
+    const convertedAmount = baseAmount * rate;
+    const formattedAmount = convertedAmount.toFixed(2);
+
+    if (currency === 'UAH') {
+        return `${formattedAmount} ${symbol}`;
+    } else if (currency === 'USD') {
+        return `${symbol}${formattedAmount}`;
+    } else if (currency === 'EUR') {
+        return `${symbol}${formattedAmount}`;
+    } else {
+        return `${formattedAmount} ${currency}`;
+    }
+};
 
 app.listen(PORT, () => {
   console.log(`Сервер запущено на порту ${PORT}`);

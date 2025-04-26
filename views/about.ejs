@@ -3,14 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Про майстерню "Вузлик" - Наша історія та цінності</title> <meta name="description" content="Історія створення майстерні 'Вузлик', наш підхід до ручної вишивки, цінності та любов до українських традицій. Дізнайтеся більше про нашу майстриню."> <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
+    <title>Про майстерню "Вузлик до вузлика" — Історія, цінності, майстриня Валентина Юрченко</title>
+    <meta name="description" content="Дізнайтеся історію створення майстерні 'Вузлик до вузлика', познайомтеся з майстринею Валентиною Юрченко, нашими цінностями, підходом до ручної вишивки та українськими традиціями.">
+    <meta name="keywords" content="українська вишивка, ручна робота, вишиванки, майстерня, Валентина Юрченко, купити вишиванку, ексклюзивна вишивка, українські орнаменти, індивідуальне замовлення, традиції, ручна вишивка, майстриня, етно, подарунок, український стиль">
+    <meta property="og:title" content="Про майстерню 'Вузлик до вузлика' — Історія, цінності, майстриня Валентина Юрченко">
+    <meta property="og:description" content="Познайомтеся з історією майстерні, нашими цінностями та майстринею Валентиною Юрченко. Дізнайтеся, чому обирають 'Вузлик до вузлика' для унікальної української вишивки.">
+    <meta property="og:image" content="https://vuzlyk.com/images/og-image.jpg">
+    <meta property="og:url" content="https://vuzlyk.com/about">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Про майстерню 'Вузлик до вузлика' — Історія, цінності, майстриня Валентина Юрченко">
+    <meta name="twitter:description" content="Дізнайтеся більше про історію, цінності та майстриню Валентину Юрченко. Унікальна ручна вишивка з душею.">
+    <meta name="twitter:image" content="https://vuzlyk.com/images/og-image.jpg">
+    <link rel="canonical" href="https://vuzlyk.com/about">
+
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+    <link rel="icon" type="image/png" href="/images/favicon/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/images/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/images/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/images/favicon/site.webmanifest" />
+
+    <% if (locals.isProduction && locals.gaMeasurementId) { %>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<%= locals.gaMeasurementId %>"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '<%= locals.gaMeasurementId %>');
+          console.log('GA4 Initialized with ID:', '<%= gaMeasurementId %>');
+        </script>
+    <% } else { %>
+        <% } %>
+
+    <link rel="preload" href="/fonts/montserrat-v29-cyrillic_latin-700.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="/fonts/roboto-v47-cyrillic_latin-regular.woff2" as="font" type="font/woff2" crossorigin>
-
     <link rel="stylesheet" href="/css/common.css">
-    <link rel="stylesheet" href="/css/about-page.css"> <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+    <link rel="preload" href="/css/about-page.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/css/about-page.css"></noscript>
+    <link rel="preload" href="https://unpkg.com/aos@next/dist/aos.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <link rel="alternate" href="https://vuzlyk.com/about" hreflang="uk-UA" />
 
+    <meta name="author" content="Валентина Юрченко, Вузлик до вузлика">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "Вузлик до вузлика",
+          "url": "https://vuzlyk.com",
+          "logo": "https://vuzlyk.com/images/logo.webp",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Service",
+            "email": "info@vuzlyk.com.ua"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Бровари",
+            "addressRegion": "Київська область",
+            "addressCountry": "UA"
+          },
+          "founder": {
+            "@type": "Person",
+            "name": "Валентина Юрченко",
+            "jobTitle": "Майстриня",
+            "image": "https://vuzlyk.com/images/maystrynya.webp",
+            "knowsAbout": ["Вишивка", "Ручна робота", "Українські традиції", "Вишиванки"]
+          },
+          "description": "Онлайн-майстерня української вишивки ручної роботи. Унікальні вишиванки, створені з любов’ю та дотриманням традицій."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Головна",
+              "item": "https://vuzlyk.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Про нас",
+              "item": "https://vuzlyk.com/about"
+            }
+          ]
+        },
+        {
+          "@type": "Person",
+          "name": "Валентина Юрченко",
+          "jobTitle": "Майстриня",
+          "image": "https://vuzlyk.com/images/maystrynya.webp",
+          "sameAs": [
+            "https://vuzlyk.com/about"
+          ],
+          "worksFor": {
+            "@type": "Organization",
+            "name": "Вузлик до вузлика"
+          }
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
     <%- include('partials/header') %>
@@ -20,7 +125,7 @@
         <section class="about-hero-v2">
             <div class="about-hero-v2-overlay"></div>
             <div class="container text-center">
-                <h1 class="about-hero-v2-title" data-aos="fade-down">Вузлик</h1>
+                <h1 class="about-hero-v2-title" data-aos="fade-down">Вузлик до вузлика</h1>
                 <p class="about-hero-v2-subtitle" data-aos="fade-up" data-aos-delay="100">Ними єднаємо минуле та майбутнє</p>
             </div>
         </section>
@@ -28,43 +133,42 @@
         <section class="intro-text-section section-padding">
              <div class="container medium-container">
                  <p class="intro-text" data-aos="fade-up">
-                     Lorem ipsum dolor sit, amet consectetur adipisicing elit. Molestias impedit est, dolore, culpa quis illo, quidem sit dicta facere incidunt voluptatibus quam laborum. Velit, deleniti cumque qui dolore harum ipsum.
+                     Ласкаво просимо до "Вузлик до вузлика" – онлайн-майстерні, де кожен стібок єднає тепло дбайливих рук та багатовікові традиції української вишивки. Ми віримо, що вишиті візерунки – це не просто орнамент, а жива нитка, що простягається крізь покоління, оберігає та надихає. Тут народжуються речі з душею, створені для того, щоб стати частиною вашої історії.
                  </p>
              </div>
         </section>
-
 
         <section class="timeline-section section-padding bg-light">
             <div class="container">
                 <h2 class="section-title text-center" data-aos="fade-up">Наша Історія у Вузликах Часу</h2>
                 <div class="timeline">
-                    <div class="timeline-item" data-aos="fade-right">
+                    <div class="timeline-item" data-aos="fade-left">
                         <div class="timeline-icon"><i class="fas fa-seedling"></i></div>
                         <div class="timeline-content">
                             <h3>Зародження Ідеї</h3>
-                            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Rem possimus beatae nobis incidunt recusandae numquam. Eius sit tempora ex minus voluptatibus, voluptate neque deleniti, natus eos eum hic earum! Dolore.</p>
-                            </div>
+                            <p>Все почалося ще з дитинства — з теплих вечорів, коли я спостерігала, як моя бабуся вишиває. Її стібки здавались магічними — в них жила пам’ять, турбота й краса. Тоді я ще не знала, що ці вузлики часу проростуть у моєму серці на все життя.</p>
+                        </div>
                     </div>
-                    <div class="timeline-item" data-aos="fade-left">
+                    <div class="timeline-item" data-aos="fade-right" data-aos-delay="100">
                         <div class="timeline-icon"><i class="fas fa-scroll"></i></div>
                         <div class="timeline-content">
                             <h3>Перші Замовлення</h3>
-                            <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Eum cumque quidem tempora consectetur laudantium eos, iste cum vitae? Odit, veniam enim error voluptas mollitia dolores illo harum cumque eligendi quaerat.</p>
+                            <p>Деякий час вишивка була просто хобі. Але з початком повномаштабної війни вона набула для мене особливого значення — як спосіб триматися, зберігати внутрішню рівновагу й віддавати тепло іншим. Перші замовлення прийшли несподівано — від друзів, знайомих, а згодом — і від людей, які шукали щось справжнє та душевне.</p>
                         </div>
                     </div>
-                     <div class="timeline-item" data-aos="fade-right">
+                     <div class="timeline-item" data-aos="fade-left" data-aos-delay="200">
                         <div class="timeline-icon"><i class="fas fa-store"></i></div>
                         <div class="timeline-content">
                             <h3>Народження "Вузлика"</h3>
-                            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Temporibus pariatur praesentium eius quibusdam similique dignissimos velit! Expedita assumenda numquam dolor error laborum, nemo incidunt delectus praesentium quia. Dolore, itaque doloribus!</p>
-                             <img src="https://placehold.co/400x250/f7f5f2/a07e5a?text=Майстерня+або+Бровари" alt="Майстерня">
+                            <p>Коли вишивка стала невід’ємною частиною мого щоденного життя, народилась ідея створити простір, де кожен стібок — не просто нитка на полотні, а історія. Так з’явився "Вузлик до вузлика" — майстерня, де вишиваються емоції, пам’ять і любов.</p>
+                            <img src="/images/Brovary.webp" width="600" height="400" alt="Майстерня Вузлик до вузлика" loading="lazy">
                         </div>
                     </div>
-                     <div class="timeline-item" data-aos="fade-left">
+                     <div class="timeline-item" data-aos="fade-right" data-aos-delay="300">
                         <div class="timeline-icon"><i class="fas fa-heart"></i></div>
                         <div class="timeline-content">
                             <h3>Сьогодні та Завтра</h3>
-                            <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Temporibus, alias. Enim harum esse iste magnam tempore inventore iusto facilis dolore numquam exercitationem atque sequi voluptatem quo sunt maiores, aliquid fugit?</p>
+                            <p>Сьогодні "Вузлик до вузлика" — це більше, ніж про вишивку. Це про зв’язок поколінь, про збереження традицій, про нове життя в кожному візерунку. Ми продовжуємо творити, дослухаючись до ваших історій — і мріємо, щоб завтра кожен стібок ніс ще більше любові, сенсу й краси.</p>
                         </div>
                     </div>
                 </div>
@@ -74,70 +178,74 @@
         <section class="meet-artisan-section section-padding">
             <div class="container">
                  <div class="artisan-content">
-                     <div class="artisan-photo" data-aos="fade-right">
-                         <img src="https://placehold.co/400x450/b9936c/FFFFFF?text=Фото+Майстрині" alt="[Ім'я Мами] - Майстриня Вузлик">
+                     <div class="artisan-photo" data-aos="fade-up">
+                         <img src="/images/maystrynya.webp" width="400" height="550" alt="Валентина Юрченко - Майстриня 'Вузлик до вузлика'" loading="lazy">
                      </div>
-                     <div class="artisan-bio" data-aos="fade-left">
+                     <div class="artisan-bio" data-aos="fade-up" data-aos-delay="100">
                          <h2 class="section-title-left">Знайомство з Майстринею</h2>
-                         <h3>[Ім'я Прізвище]</h3>
-                         <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. In quo natus reprehenderit fugiat quas voluptate iusto explicabo ducimus quia perferendis? Quidem culpa eaque modi aut, sed suscipit necessitatibus et facilis.</p>
+                         <h3>Валентина Юрченко</h3>
+                         <p>Мене звати Валентина, і я — майстриня, яка оживляє ваші емоції, спогади й мрії у вишивці. Моє захоплення почалося з бабусиних рук і стіжків, а з часом переросло у справу життя. У кожній роботі — частинка моєї душі, терпіння й любові до традиції та краси.</p>
+                         <p>Я вірю, що вишивка — це не просто прикраса. Це мова без слів, здатна передавати історії, почуття і тепло. Саме тому кожен стібок я роблю з думкою про вас і для вас.</p>
                          <blockquote class="artisan-quote">
-                             <p>"Lorem"</p>
+                              <p>"Кожен стібок — це ваша вишита історія."</p>
                          </blockquote>
                      </div>
                  </div>
             </div>
         </section>
-        <section class="craft-section-v2 section-padding bg-light"> <div class="container">
+
+        <section class="craft-section-v2 section-padding bg-light">
+            <div class="container">
                  <h2 class="section-title text-center" data-aos="fade-up">Магія Ручної Роботи</h2>
                  <div class="craft-showcase">
                      <div class="craft-item" data-aos="fade-up">
-                         <img src="https://placehold.co/600x400/b9936c/FFFFFF?text=Льон+та+Бавовна" alt="Натуральні тканини">
-                         <div class="craft-item-overlay">
-                             <h3>Натуральні Матеріали</h3>
-                             <p>Основа наших виробів – якісний льон, бавовна, домоткане полотно. Приємні до тіла та довговічні.</p>
-                         </div>
+                          <img src="/images/process_2.webp" width="600" height="400" alt="Натуральні тканини для вишивки" loading="lazy">
+                          <div class="craft-item-overlay">
+                              <h3>Натуральні Матеріали</h3>
+                              <p>Основа наших виробів – якісний льон, бавовна, домоткане полотно. Приємні до тіла та довговічні.</p>
+                          </div>
                      </div>
                       <div class="craft-item" data-aos="fade-up" data-aos-delay="100">
-                         <img src="https://placehold.co/600x400/a07e5a/FFFFFF?text=Процес+вишивання" alt="Руки вишивають">
-                          <div class="craft-item-overlay">
-                             <h3>Дбайливі Руки</h3>
-                             <p>Від розробки схеми до останнього вузлика – весь процес виконується вручну з незмінною увагою.</p>
-                         </div>
+                          <img src="/images/process_1.webp" width="600" height="400" alt="Руки майстрині вишивають" loading="lazy">
+                           <div class="craft-item-overlay">
+                              <h3>Дбайливі Руки</h3>
+                              <p>Від розробки схеми до останнього вузлика – весь процес виконується вручну з незмінною увагою.</p>
+                          </div>
                      </div>
                       <div class="craft-item" data-aos="fade-up" data-aos-delay="200">
-                         <img src="https://placehold.co/600x400/e1c8a0/333333?text=Орнамент+крупним+планом" alt="Деталі орнаменту">
-                          <div class="craft-item-overlay">
-                             <h3>Унікальні Візерунки</h3>
-                             <p>Поєднуємо автентичні орнаменти з власним баченням, створюючи неповторні дизайни.</p>
-                         </div>
+                          <img src="/images/process_3.webp" width="600" height="400" alt="Деталі вишитого орнаменту" loading="lazy">
+                           <div class="craft-item-overlay">
+                              <h3>Унікальні Візерунки</h3>
+                              <p>Поєднуємо автентичні орнаменти з власним баченням, створюючи неповторні дизайни.</p>
+                          </div>
                      </div>
                  </div>
             </div>
         </section>
 
-        <section class="our-values-section section-padding"> <div class="container text-center">
-                <h2 class="section-title" data-aos="fade-up">Що для нас важливо</h2>
+        <section class="our-values-section section-padding">
+            <div class="container text-center">
+                 <h2 class="section-title" data-aos="fade-up">Що для нас важливо</h2>
                 <div class="values-grid">
                     <div class="value-item" data-aos="zoom-in" data-aos-delay="0">
-                        <div class="value-icon"><i class="fas fa-landmark"></i></div>
-                        <h3>Традиції</h3>
-                        <p>Шануємо та відроджуємо українське вишивальне мистецтво.</p>
+                         <div class="value-icon"><i class="fas fa-landmark"></i></div>
+                         <h3>Традиції</h3>
+                         <p>Шануємо та відроджуємо українське вишивальне мистецтво.</p>
                     </div>
                     <div class="value-item" data-aos="zoom-in" data-aos-delay="100">
                          <div class="value-icon"><i class="fas fa-gem"></i></div>
-                        <h3>Якість</h3>
-                        <p>Безкомпромісна увага до матеріалів, технік та деталей.</p>
+                         <h3>Якість</h3>
+                         <p>Безкомпромісна увага до матеріалів, технік та деталей.</p>
                     </div>
                     <div class="value-item" data-aos="zoom-in" data-aos-delay="200">
-                         <div class="value-icon"><i class="fas fa-hand-holding-heart"></i></div>
-                        <h3>Ручна Робота</h3>
-                        <p>Тепло рук та унікальність у кожному створеному виробі.</p>
+                          <div class="value-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                         <h3>Ручна Робота</h3>
+                         <p>Тепло рук та унікальність у кожному створеному виробі.</p>
                     </div>
                      <div class="value-item" data-aos="zoom-in" data-aos-delay="300">
-                         <div class="value-icon"><i class="fas fa-heart-pulse"></i></div>
-                        <h3>Душевність</h3>
-                        <p>Вкладаємо частинку серця у все, що робимо для вас.</p>
+                          <div class="value-icon"><i class="fas fa-heart-pulse"></i></div>
+                         <h3>Душевність</h3>
+                         <p>Вкладаємо частинку серця у все, що робимо для вас.</p>
                     </div>
                 </div>
             </div>
@@ -145,21 +253,22 @@
 
         <section class="why-choose-us-section section-padding bg-light">
             <div class="container medium-container">
-                <h2 class="section-title text-center" data-aos="fade-up">Чому обирають "Вузлик"?</h2>
+                 <h2 class="section-title text-center" data-aos="fade-up">Чому обирають "Вузлик до вузлика"?</h2>
                 <ul class="why-choose-us-list">
-                    <li data-aos="fade-left"><i class="fas fa-check-circle"></i> <strong>Ексклюзивність:</strong> Кожен виріб унікальний, адже створений вручну.</li>
-                    <li data-aos="fade-left" data-aos-delay="50"><i class="fas fa-check-circle"></i> <strong>Якість:</strong> Тільки натуральні тканини та перевірені матеріали.</li>
-                    <li data-aos="fade-left" data-aos-delay="100"><i class="fas fa-check-circle"></i> <strong>Традиції:</strong> Автентичні українські візерунки та техніки.</li>
-                    <li data-aos="fade-left" data-aos-delay="150"><i class="fas fa-check-circle"></i> <strong>Індивідуальний підхід:</strong> Можливість замовити виріб за власним дизайном.</li>
-                    <li data-aos="fade-left" data-aos-delay="200"><i class="fas fa-check-circle"></i> <strong>Зроблено в Україні:</strong> Підтримка місцевого виробника та культури.</li>
+                    <li data-aos="fade-up" data-aos-delay="0"><i class="fas fa-check-circle"></i> <strong>Ексклюзивність:</strong> Кожен виріб унікальний, адже створений вручну.</li>
+                    <li data-aos="fade-up" data-aos-delay="50"><i class="fas fa-check-circle"></i> <strong>Якість:</strong> Тільки натуральні тканини та перевірені матеріали.</li>
+                    <li data-aos="fade-up" data-aos-delay="100"><i class="fas fa-check-circle"></i> <strong>Традиції:</strong> Автентичні українські візерунки та техніки.</li>
+                    <li data-aos="fade-up" data-aos-delay="150"><i class="fas fa-check-circle"></i> <strong>Індивідуальний підхід:</strong> Можливість замовити виріб за власним дизайном.</li>
+                    <li data-aos="fade-up" data-aos-delay="200"><i class="fas fa-check-circle"></i> <strong>Зроблено в Україні:</strong> Підтримка місцевого виробника та культури.</li>
                 </ul>
             </div>
         </section>
+
          <section class="location-cta-section section-padding">
             <div class="container text-center">
-                <h2 data-aos="fade-up">Готові обрати свою вишиванку?</h2>
-                <p data-aos="fade-up" data-aos-delay="100">Перегляньте наш каталог або зв'яжіться з нами, щоб створити щось особливе разом!</p>
-                <div class="cta-buttons" data-aos="fade-up" data-aos-delay="200">
+                 <h2 data-aos="fade-up">Готові обрати свою вишиванку?</h2>
+                 <p data-aos="fade-up" data-aos-delay="100">Перегляньте наш каталог або зв'яжіться з нами, щоб створити щось особливе разом!</p>
+                 <div class="cta-buttons" data-aos="fade-up" data-aos-delay="200">
                     <a href="/catalog" class="btn btn-primary">Переглянути каталог</a>
                     <a href="/contact" class="btn btn-secondary">Обговорити ідею</a>
                 </div>
@@ -170,15 +279,22 @@
 
     <%- include('partials/footer') %>
 
-    <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
-    <script>
-        AOS.init({
-            once: true,
-            duration: 700,
-            easing: 'ease-out-cubic',
-            offset: 50
-        });
-    </script>
     <script src="/js/main.js" defer></script>
-    </body>
+    <script src="https://unpkg.com/aos@next/dist/aos.js" defer></script>
+    <script defer>
+      document.addEventListener('DOMContentLoaded', function() {
+          if (typeof AOS !== 'undefined') {
+              console.log('Initializing AOS from about.ejs');
+              AOS.init({
+                  once: true,
+                  duration: 700,
+                  easing: 'ease-out-cubic',
+                  offset: 50
+              });
+          } else {
+              console.error('AOS library not loaded before init attempt.');
+          }
+      });
+    </script>
+</body>
 </html>
