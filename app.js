@@ -13,6 +13,8 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const axios = require('axios');
+const { SitemapStream, streamToPromise } = require('sitemap');
+const { Readable } = require('stream');
 
 const User = require('./models/User');
 const Product = require('./models/Product');
@@ -714,6 +716,39 @@ app.get('/checkout', (req, res) => {
         currentUser: req.user
     });
 });
+
+
+app.get('/sitemap.xml', async (req, res) => {
+    res.header('Content-Type', 'application/xml');
+    const links = [
+      { url: '/', changefreq: 'daily', priority: 1.0 },
+      { url: '/catalog', changefreq: 'daily', priority: 0.8 },
+      { url: '/about', changefreq: 'monthly', priority: 0.5 },
+      { url: '/faq', changefreq: 'monthly', priority: 0.5 },
+      { url: '/terms', changefreq: 'yearly', priority: 0.3 },
+      { url: '/privacy-policy', changefreq: 'yearly', priority: 0.3 },
+    ];
+  
+    try {
+      const products = await Product.find({}).select('_id updatedAt').lean();
+      products.forEach(product => {
+        links.push({
+          url: `/product/${product._id}`,
+          changefreq: 'weekly',
+          priority: 0.7,
+          lastmod: product.updatedAt 
+        });
+      });
+  
+      const stream = new SitemapStream({ hostname: 'https://vuzlyk.com' }); 
+      const data = await streamToPromise(Readable.from(links).pipe(stream));
+      res.send(data.toString());
+  
+    } catch (error) {
+      console.error("Помилка генерації sitemap:", error);
+      res.status(500).end();
+    }
+  });
 
 app.post('/order/place', async (req, res) => {
     const cart = req.session.cart || [];
