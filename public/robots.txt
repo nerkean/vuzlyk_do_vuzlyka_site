@@ -11,5 +11,6 @@ Disallow: /order/place
 Disallow: /order/request-sent
 Allow: /
 Allow: /catalog
+Allow: /about
 Allow: /product/
 Sitemap: https://vuzlyk.com/sitemap.xml
