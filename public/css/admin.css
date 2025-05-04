@@ -67,6 +67,7 @@
     box-sizing: border-box;
 }
 
+
 .login-box .login-button {
     width: 100%;
     padding: 12px;
@@ -100,6 +101,64 @@ body.admin-body {
     color: var(--color-text);
     margin: 0;
     font-size: 16px;
+}
+
+.current-images-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+.current-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #eee;
+    padding: 5px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    position: relative; /* Для позиціонування кнопки видалення */
+}
+.current-image-item img {
+    width: 80px; /* Збільшено для кращого перегляду */
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+ .current-image-item label {
+    font-size: 0.8em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+ }
+ .current-image-item input[type="checkbox"] {
+     margin: 0;
+ }
+.file-input-label {
+     display: block;
+     padding: 10px 15px;
+     background-color: #f0f0f0;
+     border: 1px dashed #ccc;
+     border-radius: 4px;
+     cursor: pointer;
+     text-align: center;
+     margin-top: 5px;
+     transition: background-color 0.3s ease;
+}
+.file-input-label:hover {
+    background-color: #e9e9e9;
+}
+#newImages {
+    display: none; /* Ховаємо стандартний інпут */
+}
+#file-chosen {
+    margin-top: 8px;
+    font-style: italic;
+    font-size: 0.9em;
+    color: #555;
 }
 
 .container {
@@ -603,3 +662,4 @@ body.admin-body {
         width: calc(50% - 10px); min-width: 0;
     }
 }
+

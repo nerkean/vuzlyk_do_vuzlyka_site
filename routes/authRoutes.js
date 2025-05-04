@@ -89,7 +89,7 @@ async function sendVerificationEmail(email, code) {
     const mailOptions = {
         from: `"Вузлик" <${process.env.EMAIL_USER}>`,
         to: email,
-        subject: 'Код підтвердження реєстрації на сайті Вузлик до вузлика',
+        subject: 'Код підтвердження реєстрації на сайті Вузлик',
         html: `
             <div style="font-family: Arial, sans-serif; line-height: 1.6;">
                 <h2>Вітаємо у Вузлик до вузлика!</h2>
@@ -101,6 +101,7 @@ async function sendVerificationEmail(email, code) {
                 <p style="font-size: 0.9em; color: #777;">З повагою,<br>Майстерня Вузлик до вузлика</p>
             </div>
         `,
+        text: `Вітаємо у Вузлик! Ваш код підтвердження: ${code}. Цей код дійсний протягом 15 хвилин. Якщо ви не реєструвалися, проігноруйте цей лист.`
     };
 
     try {

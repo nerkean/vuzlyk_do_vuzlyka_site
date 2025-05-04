@@ -316,20 +316,15 @@ const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes); 
 app.use('/', authRoutes);
 
-app.get('/', async (req, res, next) => {
-    try {
-      const featuredProducts = await Product.find({ isFeatured: true }).limit(4).lean();
-      const canonicalUrl = process.env.BASE_URL || 'https://vuzlyk.com/'; // URL без параметров
-      res.render('index', {
-         featuredProducts,
-         pageTitle: 'Вузлик - Вишивка Ручної Роботи', // Пример Title
-         canonicalUrl: canonicalUrl // Передаем канонический URL
-       });
-    } catch (error) {
-       // ... обработка ошибок
-       next(error);
-    }
-  });
+app.get('/', async (req, res) => {
+  try {
+      const featuredProducts = await Product.find({ isFeatured: true }).limit(4);
+      res.render('index', { featuredProducts });
+  } catch (error) {
+      console.error("Помилка отримання товарів для головної:", error);
+      res.status(500).render('500');
+  }
+});
 
 app.get('/product/:id', async (req, res, next) => {
   console.log(`[LOG] Обробка маршруту /product/${req.params.id}`);
