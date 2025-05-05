@@ -76,80 +76,94 @@
 <body>
     <%- include('partials/header') %>
 
-    <script type="application/ld+json">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
     {
-      "@context": "https://schema.org",
-      "@graph": [
+      "@type": "WebPage",
+      "@id": "<%= canonicalUrl %>",
+      "url": "<%= canonicalUrl %>",
+      "name": "<%- pageTitle %>",
+      "description": "<%- metaDescription %>",
+      "isPartOf": {
+        "@type": "WebSite",
+        "url": "<%= baseUrl %>/",
+        "name": "Вузлик до вузлика"
+      },
+      "breadcrumb": {
+        "@id": "<%= canonicalUrl %>#breadcrumb"
+      },
+      "mainEntity": { "@id": "<%= canonicalUrl %>#itemlist" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "<%= canonicalUrl %>#breadcrumb",
+      "itemListElement": [
         {
-          "@type": "WebPage",
-          "@id": "<%= canonicalUrl %>",
-          "url": "<%= canonicalUrl %>",
-          "name": "<%- pageTitle %>",
-          "description": "<%- metaDescription %>",
-          "isPartOf": {
-            "@type": "WebSite",
-            "url": "<%= baseUrl %>/",
-            "name": "Вузлик до вузлика"
-          },
-          "breadcrumb": {
-            "@id": "<%= canonicalUrl %>#breadcrumb"
-          },
-          "mainEntity": { "@id": "<%= canonicalUrl %>#itemlist" },
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Головна",
+          "item": "<%= baseUrl %>/"
         },
         {
-          "@type": "BreadcrumbList",
-          "@id": "<%= canonicalUrl %>#breadcrumb",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Головна",
-              "item": "<%= baseUrl %>/"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "<%= pageHeading %>",
-              "item": "<%= canonicalUrl %>"
-            }
-          ]
+          "@type": "ListItem",
+          "position": 2,
+          "name": "<%= pageHeading %>",
+          "item": "<%= canonicalUrl %>"
         }
-        <% if (typeof locals.products !== 'undefined' && locals.products.length > 0 && typeof locals.currentPage !== 'undefined' && typeof locals.limit !== 'undefined') { %>
-        ,{
-          "@type": "ItemList",
-          "@id": "<%= canonicalUrl %>#itemlist", 
-          "name": "Список товарів каталогу",
-          "numberOfItems": <%= typeof locals.count !== 'undefined' ? locals.count : locals.products.length %>,
-          "itemListElement": [
-            <% locals.products.forEach((product, index) => { %>
-              {
-                "@type": "ListItem",
-                "position": <%= (currentPage - 1) * limit + index + 1 %>, 
-                "item": {
-                   "@type": "Product",
-                   "@id": "<%= baseUrl %>/product/<%= product._id %>", 
-                   "url": "<%= baseUrl %>/product/<%= product._id %>",
-                   "name": "<%- product.name %>"
-                   <% if (product.images && product.images.length > 0 && (product.images[0].thumb || product.images[0].medium)) { %>
-                   ,"image": "<%= new URL(product.images[0].thumb || product.images[0].medium, baseUrl).href %>"
-                   <% } %>
-                   <% if (product.price) { %>
-                   ,"offers": {
-                       "@type": "Offer",
-                       "price": "<%= (product.price * (locals.exchangeRates[locals.selectedCurrency] || 1)).toFixed(2) %>",
-                       "priceCurrency": "<%= locals.selectedCurrency || 'UAH' %>",
-                       "availability": "https://schema.org/PreOrder"
-                   }
-                   <% } %>
-                }
-              }<% if (index < locals.products.length - 1) { %>,<% } %>
-            <% }); %>
-          ]
-        }
-        <% } %>
       ]
     }
-    </script>
+    <%# Условие для добавления блока ItemList %>
+    <% if (typeof locals.products !== 'undefined' && locals.products.length > 0 && typeof locals.currentPage !== 'undefined' && typeof locals.limit !== 'undefined') { %>
+    , <%# Запятая, отделяющая ItemList от предыдущего элемента в @graph %>
+    {
+      "@type": "ItemList",
+      "@id": "<%= canonicalUrl %>#itemlist",
+      "name": "Список товарів каталогу",
+      "numberOfItems": <%= typeof locals.count !== 'undefined' ? locals.count : locals.products.length %>,
+      "itemListElement": [
+        <%# Цикл по продуктам для генерации ListItem %>
+        <% locals.products.forEach((product, index) => { %>
+          {
+            "@type": "ListItem",
+            "position": <%= (currentPage - 1) * limit + index + 1 %>,
+            "item": {
+               "@type": "Product",
+               "@id": "<%= baseUrl %>/product/<%= product._id %>",
+               "url": "<%= baseUrl %>/product/<%= product._id %>",
+               "name": "<%- product.name %>" <%# Конец ключа name. Запятая после него ставится УСЛОВНО %>
+               <%# Ставим запятую после name, ТОЛЬКО ЕСЛИ дальше будет image ИЛИ offers %>
+               <% if ((product.images && product.images.length > 0 && (product.images[0].thumb || product.images[0].medium)) || product.price) { %>,<% } %>
+
+               <%# Добавляем image, если он есть (БЕЗ запятой ПЕРЕД ним) %>
+               <% if (product.images && product.images.length > 0 && (product.images[0].thumb || product.images[0].medium)) { %>
+                 "image": "<%= new URL(product.images[0].thumb || product.images[0].medium, baseUrl).href %>" <%# Конец ключа image. Запятая после него ставится УСЛОВНО %>
+                 <%# Ставим запятую после image, ТОЛЬКО ЕСЛИ дальше будет offers %>
+                 <% if (product.price) { %>,<% } %>
+               <% } %>
+
+               <%# Добавляем offers, если цена есть (БЕЗ запятой ПЕРЕД ним) %>
+               <% if (product.price) { %>
+                 "offers": {
+                     "@type": "Offer",
+                     "price": "<%= (product.price * (locals.exchangeRates[locals.selectedCurrency] || 1)).toFixed(2) %>",
+                     "priceCurrency": "<%= locals.selectedCurrency || 'UAH' %>",
+                     "availability": "https://schema.org/PreOrder" <%# Или другая логика доступности, если нужно %>
+                 }
+               <% } %>
+            } <%# Конец объекта item %>
+          } <%# Конец объекта ListItem %>
+          <%# Запятая между элементами ListItem %>
+          <% if (index < locals.products.length - 1) { %>,<% } %>
+        <% }); %>
+      ] <%# Конец itemListElement %>
+    } <%# Конец объекта ItemList %>
+    <% } %> <%# Конец условия if для ItemList %>
+  ] <%# Конец @graph %>
+} <%# Конец всего JSON-LD %>
+</script>
+
 
     <main class="catalog-page-main">
         <div class="container">
