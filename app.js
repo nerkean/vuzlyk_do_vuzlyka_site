@@ -317,14 +317,25 @@ app.use('/admin', adminRoutes);
 app.use('/', authRoutes);
 
 app.get('/', async (req, res) => {
-  try {
-      const featuredProducts = await Product.find({ isFeatured: true }).limit(4);
-      res.render('index', { featuredProducts });
-  } catch (error) {
-      console.error("Помилка отримання товарів для головної:", error);
-      res.status(500).render('500');
-  }
-});
+    try {
+        // Определяем базовый URL (лучше брать из настроек или определить автоматически)
+        // Используем process.env.BASE_URL если он задан, иначе используем стандартный
+        const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com';
+        const canonicalUrlForHomepage = baseUrl + '/'; // Canonical для главной - это базовый URL со слешем
+  
+        const featuredProducts = await Product.find({ isFeatured: true }).limit(4);
+  
+        // Передаем canonicalUrl и baseUrl в объект данных для шаблона
+        res.render('index', {
+           featuredProducts: featuredProducts,
+           canonicalUrl: canonicalUrlForHomepage,
+           baseUrl: baseUrl                
+        });
+    } catch (error) {
+        console.error("Помилка отримання товарів для головної:", error);
+        res.status(500).render('500');
+    }
+  });
 
 app.get('/product/:id', async (req, res, next) => {
   console.log(`[LOG] Обробка маршруту /product/${req.params.id}`);
