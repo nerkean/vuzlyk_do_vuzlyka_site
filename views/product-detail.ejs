@@ -80,75 +80,8 @@
     <%- include('partials/header') %>
 
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org/",
-      "@type": "Product",
-      "name": "<%- product.name %>",
-      "description": "<%- product.description %>",
-      <% if (product.images && product.images.length > 0 && product.images[0].large) { %>
-      "image": [
-         "<%= new URL(product.images[0].large, process.env.BASE_URL || 'https://vuzlyk.com').href %>"
-         <% product.images.slice(1).forEach(img => { if(img.large) { %>,"<%= new URL(img.large, process.env.BASE_URL || 'https://vuzlyk.com').href %>"<% }}); %>
-      ],
-      <% } else { %>
-       "image": ["<%= new URL('/images/placeholder.png', process.env.BASE_URL || 'https://vuzlyk.com').href %>"],
-      <% } %>
-      <% if (product.sku) { %> "sku": "<%= product.sku %>", <% } %>
-      "brand": {
-        "@type": "Organization",
-        "name": "Вузлик до вузлика"
-      },
-      <% if (reviews && reviews.length > 0 && averageRating > 0 && ratingCount > 0) { %>
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "<%= averageRating.toFixed(1) %>",
-        "reviewCount": "<%= ratingCount %>"
-      },
-      "review": [
-        <% reviews.forEach((review, index) => { %>
-          {
-            "@type": "Review",
-            "author": {
-              "@type": "Person",
-              "name": "<%- (review.userId && review.userId.name) ? review.userId.name : 'Анонім' %>"
-            },
-            "datePublished": "<%= review.createdAt.toISOString().split('T')[0] %>",
-            <% if (review.text) { %>"reviewBody": "<%- review.text %>",<% } %>
-            "reviewRating": {
-              "@type": "Rating",
-              "ratingValue": "<%= review.rating %>"
-            }
-          }<% if (index < reviews.length - 1) { %>,<% } %>
-        <% }); %>
-      ],
-     <% } %>
-     <%
-        const schemaCurrency = selectedCurrency || 'UAH';
-        const schemaRate = exchangeRates[schemaCurrency] || 1;
-        const schemaPrice = (product.price * schemaRate).toFixed(2);
-        const schemaMaxPrice = (product.maxPrice && product.maxPrice > product.price) ? (product.maxPrice * schemaRate).toFixed(2) : null;
-     %>
-      "offers": {
-        "@type": "Offer",
-        "url": "<%= canonicalUrl %>",
-        <% if (schemaMaxPrice) { %>
-            "priceSpecification": {
-                "@type": "UnitPriceSpecification",
-                "priceCurrency": "<%= schemaCurrency %>",
-                "minPrice": "<%= schemaPrice %>",
-                "maxPrice": "<%= schemaMaxPrice %>"
-            },
-        <% } else { %>
-            "priceCurrency": "<%= schemaCurrency %>",
-            "price": "<%= schemaPrice %>",
-        <% } %>
-        "availability": "https://schema.org/PreOrder", 
-        "itemCondition": "https://schema.org/NewCondition"
-      }
-      <% if (product.materials && product.materials.length > 0) { %>, "material": "<%- product.materials.join(', ') %>" <% } %>
-      <% if (product.colors && product.colors.length > 0) { %>, "color": "<%- product.colors.join(', ') %>" <% } %>
-    }
-    </script>
+        <%- JSON.stringify(productLD, null, 2) %>
+      </script>
     <main class="product-page-main">
         <div class="container">
             <section class="product-main-section" data-aos="fade-up">

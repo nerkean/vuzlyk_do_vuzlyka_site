@@ -379,6 +379,37 @@ app.get('/product/:id', async (req, res, next) => {
       ? product.metaDescription.substring(0, 170) 
       : `${product.name} - вишивка ручної роботи від Вузлик. ${product.description ? product.description.substring(0, 100) + '...' : ''}`; 
 
+      const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com'; // Убедитесь, что baseUrl определен
+
+      // Очищаем описание от HTML для JSON-LD
+      let descriptionForJsonLd = product.description || '';
+      descriptionForJsonLd = descriptionForJsonLd.replace(/<[^>]*>?/gm, ''); // Удаляем все HTML-теги
+      descriptionForJsonLd = descriptionForJsonLd.replace(/\s+/g, ' ').trim(); // Заменяем множественные пробелы на один и обрезаем по краям
+  
+      const productSchema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.name, // Используем оригинальное имя
+        "description": descriptionForJsonLd, // Очищенное описание
+        "image": product.images && product.images.length > 0
+          ? product.images.map(img => new URL(img.large || img.medium || img.thumb, baseUrl).href) // Формируем полные URL
+          : [], // Пустой массив, если нет изображений
+        "brand": {
+          "@type": "Organization",
+          "name": "Вузлик до вузлика"
+        },
+        "offers": {
+          "@type": "Offer",
+          "url": `${baseUrl}/product/${productId}`,
+          "priceCurrency": res.locals.selectedCurrency || "UAH", // Валюта из res.locals или по умолчанию
+          "price": (product.price * (res.locals.exchangeRates[res.locals.selectedCurrency || "UAH"] || 1)).toFixed(2), // Цена с учетом валюты
+          "availability": "https://schema.org/PreOrder", // Или реальная доступность
+          "itemCondition": "https://schema.org/NewCondition"
+        },
+        // Здесь добавьте SKU, gtin, aggregateRating и т.д., если есть
+        "sku": product.sku || `VUZLYK-${productId}` // Пример SKU
+      };
+
   res.render('product-detail', {
       product: product,
       reviews: reviews,
@@ -390,8 +421,9 @@ app.get('/product/:id', async (req, res, next) => {
       hasReviewed: hasReviewed,
       currentUser: req.user,
       infoMessage: null,
-      metaDescription: metaDesc, 
-      pageTitle: product.name 
+      pageTitle: product.name,
+      metaDescription: descriptionForJsonLd.substring(0, 160), 
+      productLD: productSchema
   });
   } catch (error) {
       console.error(`Помилка отримання товару ${productId}:`, error);
