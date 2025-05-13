@@ -1,95 +1,95 @@
-// process-image.js
-const sharp = require('sharp');
 const fs = require('fs').promises;
 const path = require('path');
+const sharp = require('sharp');
 
-// --- Конфигурация ---
-// Размеры и качество, как в вашем adminRoutes.js
-const SIZES = {
+// 1. Определяем конфигурацию размеров и качества (аналогично твоему коду)
+const SIZES_CONFIG = {
     large: { width: 1000, quality: 80 },
     medium: { width: 600, quality: 75 },
     thumb: { width: 300, quality: 70 }
 };
-const OUTPUT_FORMAT = 'webp'; // Формат вывода
 
-// --- Получение аргументов командной строки ---
-// process.argv[0] = 'node'
-// process.argv[1] = 'process-image.js'
-// process.argv[2] = inputImagePath
-// process.argv[3] = outputDirectory (необязательно)
+// 2. Определяем папку для сохранения обработанных изображений
+// Можешь изменить 'processed_images_output' на любое другое имя или путь
+const outputDir = path.join(__dirname, 'images', 'uploads');
 
-const inputImagePath = process.argv[2];
-const outputDirectory = process.argv[3] || path.join(__dirname, 'processed_images'); // Папка по умолчанию
-
-// --- Валидация аргументов ---
-if (!inputImagePath) {
-    console.error('\x1b[31m%s\x1b[0m', 'Помилка: Не вказано шлях до вхідного зображення.');
-    console.log('\x1b[36m%s\x1b[0m', 'Використання: node process-image.js <шлях_до_вхідного_файлу> [шлях_до_вихідної_папки]');
-    process.exit(1); // Выход с кодом ошибки
-}
-
-// --- Основная функция обработки ---
-async function processImage() {
+/**
+ * Обрабатывает одно изображение, создавая его версии в разных размерах.
+ * @param {string} inputImagePath - Путь к исходному изображению.
+ * @param {string} targetOutputDir - Папка, куда будут сохранены обработанные изображения.
+ */
+async function processImage(inputImagePath, targetOutputDir) {
     try {
-        // 1. Проверка существования входного файла
-        console.log(`\x1b[34m%s\x1b[0m`, `Перевірка файлу: ${inputImagePath}`);
-        await fs.access(inputImagePath, fs.constants.R_OK); // Проверяем доступность для чтения
-        console.log(`\x1b[32m%s\x1b[0m`, 'Вхідний файл знайдено.');
+        // Проверяем, существует ли файл и доступен ли он
+        await fs.access(inputImagePath);
 
-        // 2. Создание выходной папки, если ее нет
-        console.log(`\x1b[34m%s\x1b[0m`, `Перевірка/створення вихідної папки: ${outputDirectory}`);
-        await fs.mkdir(outputDirectory, { recursive: true });
-        console.log(`\x1b[32m%s\x1b[0m`, 'Вихідна папка готова.');
+        const originalFilename = path.basename(inputImagePath);
+        const baseFilename = path.parse(originalFilename).name; // Имя файла без расширения
 
-        // 3. Чтение входного файла в буфер
-        console.log(`\x1b[34m%s\x1b[0m`, 'Читання вхідного файлу...');
+        console.log(`Обработка файла: ${originalFilename}...`);
+        console.log(`Результаты будут сохранены в: ${targetOutputDir}`);
+
+        // Читаем исходное изображение
         const imageBuffer = await fs.readFile(inputImagePath);
-        console.log(`\x1b[32m%s\x1b[0m`, 'Файл успішно прочитано.');
+        const imageProcessor = sharp(imageBuffer);
 
-        // 4. Подготовка базового имени файла для вывода
-        const inputFileBasename = path.parse(inputImagePath).name;
-        const timestamp = Date.now(); // Добавляем временную метку для уникальности
-        const baseOutputFilename = `${inputFileBasename}-${timestamp}`;
+        // Обрабатываем для каждого заданного размера
+        for (const [sizeName, options] of Object.entries(SIZES_CONFIG)) {
+            const newFilename = `${baseFilename}-${sizeName}.webp`; // Новое имя файла, например, "myimage-large.webp"
+            const outputPath = path.join(targetOutputDir, newFilename);
 
-        // 5. Обработка и сохранение разных размеров
-        console.log(`\x1b[34m%s\x1b[0m`, 'Обробка зображення за допомогою Sharp...');
-        const imageProcessor = sharp(imageBuffer); // Создаем объект sharp
-
-        const outputPaths = {};
-
-        for (const [sizeName, options] of Object.entries(SIZES)) {
-            const outputFilename = `${baseOutputFilename}-${sizeName}.${OUTPUT_FORMAT}`;
-            const outputPath = path.join(outputDirectory, outputFilename);
-
-            console.log(` -> Створення версії '${sizeName}' (${options.width}px, quality: ${options.quality})...`);
+            console.log(`  Создание версии "${sizeName}": ${newFilename}`);
 
             await imageProcessor
-                .clone() // Важно клонировать для каждой операции!
-                .resize({ width: options.width, withoutEnlargement: true }) // Изменяем размер
-                .toFormat(OUTPUT_FORMAT, { quality: options.quality }) // Устанавливаем формат и качество
+                .clone() // Клонируем объект sharp для каждой операции, чтобы избежать модификации исходного
+                .resize({ width: options.width, withoutEnlargement: true }) // Изменяем размер, не увеличивая, если изображение меньше
+                .webp({ quality: options.quality }) // Конвертируем в WebP с заданным качеством
                 .toFile(outputPath); // Сохраняем файл
 
-            outputPaths[sizeName] = outputPath;
-            console.log(`    \x1b[32mЗбережено:\x1b[0m ${outputPath}`);
+            console.log(`    Сохранено: ${outputPath}`);
         }
 
-        console.log('\n\x1b[1m\x1b[32m%s\x1b[0m', 'Обробку завершено успішно!');
-        console.log('\x1b[33m%s\x1b[0m', 'Створені файли:');
-        for(const sizeName in outputPaths) {
-            console.log(` - ${sizeName.padEnd(6)}: ${outputPaths[sizeName]}`);
-        }
+        console.log(`Файл ${originalFilename} успешно обработан.`);
 
     } catch (error) {
-        console.error('\x1b[31m%s\x1b[0m', '\nСталася помилка під час обробки:');
+        console.error(`Ошибка при обработке изображения ${inputImagePath}:`, error.message);
         if (error.code === 'ENOENT') {
-            console.error(`Помилка: Вхідний файл не знайдено за шляхом "${inputImagePath}"`);
-        } else {
-            console.error(error.message);
-            // console.error(error.stack); // Раскомментируйте для детального стека ошибки
+            console.error('Исходный файл не найден.');
         }
-        process.exit(1); // Выход с кодом ошибки
+        // Здесь можно добавить логику для очистки частично созданных файлов при ошибке, если это необходимо
     }
 }
 
-// --- Запуск обработки ---
-processImage();
+/**
+ * Главная функция скрипта.
+ */
+async function main() {
+    // Получаем пути к изображениям из аргументов командной строки
+    const args = process.argv.slice(2); // Исключаем 'node' и путь к скрипту
+
+    if (args.length === 0) {
+        console.error('Использование: node process-images.js <путь_к_изображению_1> [путь_к_изображению_2 ...]');
+        console.error('Пример: node process-images.js ./мое-фото.jpg ./другое-фото.png');
+        process.exit(1); // Выход с кодом ошибки
+    }
+
+    // Создаем папку для выходных файлов, если она еще не существует
+    try {
+        await fs.mkdir(outputDir, { recursive: true });
+        console.log(`Папка для результатов (${outputDir}) создана или уже существует.`);
+    } catch (err) {
+        console.error(`Ошибка при создании папки ${outputDir}:`, err);
+        process.exit(1); // Выход, если не удалось создать папку
+    }
+
+    // Обрабатываем каждое указанное изображение
+    for (const imagePath of args) {
+        // path.resolve преобразует относительный путь в абсолютный
+        await processImage(path.resolve(imagePath), outputDir);
+    }
+
+    console.log('Все указанные изображения обработаны.');
+}
+
+// Запускаем главную функцию
+main();
