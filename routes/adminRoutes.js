@@ -1,9 +1,10 @@
+// --- vuzlyk/routes/adminRoutes.js ---
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
-const Post = require('../models/Post');
+// const Post = require('../models/Post'); 
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -53,7 +54,7 @@ const fileFilter = (req, file, cb) => {
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, 
+    limits: { fileSize: 10 * 1024 * 1024 },
     fileFilter: fileFilter
 });
 
@@ -106,11 +107,56 @@ router.get('/logout', (req, res) => {
     });
 });
 
+
 router.get('/orders', checkAdminAuth, async (req, res) => {
     try {
-        const orders = await Order.find().sort({ receivedAt: -1 }).lean();
+        const ordersFromDB = await Order.find().sort({ receivedAt: -1 }).lean();
+        
+        const ordersWithProductDetails = await Promise.all(ordersFromDB.map(async (order) => {
+            console.log(`[Admin Orders] Processing order ID: ${order._id}`);
+            const itemsWithDetails = await Promise.all(order.items.map(async (item) => {
+                let productImageUrl = '/images/placeholder-small.webp'; // Default placeholder
+                console.log(`[Admin Orders] Item: "${item.name}", ProductID: "${item.productId}"`);
+
+                if (item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
+                    const product = await Product.findById(item.productId).select('images name').lean();
+                    if (product) {
+                        console.log(`[Admin Orders] Found product in DB: "${product.name}" (ID: ${product._id})`);
+                        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+                            const firstImageSet = product.images[0];
+                            console.log(`[Admin Orders] First image set for "${product.name}":`, JSON.stringify(firstImageSet, null, 2));
+                            if (firstImageSet.thumb && typeof firstImageSet.thumb === 'object' && firstImageSet.thumb.url) {
+                                productImageUrl = firstImageSet.thumb.url;
+                                console.log(`[Admin Orders] SUCCESS: Using thumb.url for "${item.name}": ${productImageUrl}`);
+                            } else if (firstImageSet.medium && typeof firstImageSet.medium === 'object' && firstImageSet.medium.url) {
+                                productImageUrl = firstImageSet.medium.url; // Fallback to medium
+                                console.log(`[Admin Orders] INFO: Using medium.url for "${item.name}": ${productImageUrl}`);
+                            } else if (firstImageSet.large && typeof firstImageSet.large === 'object' && firstImageSet.large.url) {
+                                productImageUrl = firstImageSet.large.url; // Fallback to large
+                                console.log(`[Admin Orders] INFO: Using large.url for "${item.name}": ${productImageUrl}`);
+                            } else if (typeof firstImageSet === 'string') { // Fallback for very old structure (if images was an array of strings)
+                                productImageUrl = firstImageSet;
+                                console.log(`[Admin Orders] INFO: Using direct string from images array for "${item.name}": ${productImageUrl}`);
+                            }
+                            else {
+                                console.log(`[Admin Orders] WARNING: No valid thumb, medium, or large URL in first image set for "${product.name}".`);
+                            }
+                        } else {
+                            console.log(`[Admin Orders] WARNING: Product "${product.name}" has no images array or it's empty.`);
+                        }
+                    } else {
+                        console.log(`[Admin Orders] WARNING: Product not found in DB for ID: ${item.productId} (item name: "${item.name}")`);
+                    }
+                } else {
+                     console.log(`[Admin Orders] WARNING: Invalid or missing ProductID for item: "${item.name}". ProductID value: "${item.productId}"`);
+                }
+                return { ...item, imageUrl: productImageUrl };
+            }));
+            return { ...order, items: itemsWithDetails };
+        }));
+
         res.render('admin/orders', {
-            orders: orders,
+            orders: ordersWithProductDetails,
             pageTitle: "Керування Замовленнями"
         });
     } catch (error) {
@@ -119,6 +165,7 @@ router.get('/orders', checkAdminAuth, async (req, res) => {
     }
 });
 
+// ... (решта маршрутів: update-status, delete order, products, generate-meta-description) ...
 router.post('/orders/:id/update-status', checkAdminAuth, async (req, res) => {
     const orderId = req.params.id;
     const { newStatus } = req.body;
@@ -157,6 +204,7 @@ router.delete('/orders/:id', checkAdminAuth, async (req, res) => {
         res.status(500).json({ success: false, message: 'Помилка сервера при видаленні замовлення.' });
     }
 });
+
 
 router.get('/products', checkAdminAuth, async (req, res, next) => {
     try {
@@ -269,12 +317,13 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
 
             try {
                 const imageBuffer = await fs.readFile(originalPath);
+                const imageProcessor = sharp(imageBuffer).rotate();
+
                 const sizes = {
                     large: { width: 1000, quality: 80 },
                     medium: { width: 600, quality: 75 },
                     thumb: { width: 300, quality: 70 }
                 };
-                const imageProcessor = sharp(imageBuffer);
 
                 for (const [sizeName, options] of Object.entries(sizes)) {
                     const processedBuffer = await imageProcessor.clone().resize({ width: options.width, withoutEnlargement: true }).webp({ quality: options.quality }).toBuffer();
@@ -303,7 +352,7 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
                 }
             } catch (fileProcessingError) {
                 console.error(`[Admin Routes] Помилка обробки основного файлу ${file.originalname}:`, fileProcessingError.message);
-                try { await fs.unlink(originalPath); } catch (e) { }
+                try { await fs.unlink(originalPath); } catch (e) { /* ігнор */ }
                 throw fileProcessingError; 
             }
         }
@@ -335,7 +384,7 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
                 }
             } catch (livePhotoError) {
                 console.error(`[Admin Routes] POST: Помилка завантаження "живого" фото ${livePhotoFile.originalname}:`, livePhotoError.message);
-                try { await fs.unlink(livePhotoTempPath); } catch(e) { }
+                try { await fs.unlink(livePhotoTempPath); } catch(e) { /* ігнор */ }
             }
         }
 
@@ -394,6 +443,7 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
     }
 });
 
+
 router.get('/products/:id/edit', checkAdminAuth, async (req, res, next) => {
     try {
         const productId = req.params.id;
@@ -424,52 +474,34 @@ router.get('/products/:id/edit', checkAdminAuth, async (req, res, next) => {
 
 router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => {
     const productId = req.params.id;
-    const categories = ['Вишивка']; 
-    let productToUpdate; 
-    
+    const categories = ['Вишивка'];
+    let productToUpdate;
+
     const newMainImageTempPaths = req.files && req.files.imageFiles ? req.files.imageFiles.map(f => f.path) : [];
     const newLivePhotoTempPath = req.files && req.files.livePhotoFile && req.files.livePhotoFile[0] ? req.files.livePhotoFile[0].path : null;
     
     let successfullyProcessedNewMainPaths = [];
     let successfullyProcessedNewLivePath = null;
+    let tempUploadedFilePaths = [...newMainImageTempPaths];
+    if (newLivePhotoTempPath) {
+        tempUploadedFilePaths.push(newLivePhotoTempPath);
+    }
 
-    console.log(`[Admin Routes] PUT /products/${productId} - Початок обробки.`);
     const mainImagesReceived = req.files && req.files.imageFiles ? req.files.imageFiles : [];
     const livePhotoReceived = req.files && req.files.livePhotoFile ? req.files.livePhotoFile[0] : null;
 
-    if (mainImagesReceived.length > 0) {
-        console.log(`[Admin Routes] PUT: Отримано ${mainImagesReceived.length} нових ОСНОВНИХ файлів:`, mainImagesReceived.map(f=>f.originalname).join(', '));
-    } else {
-        console.log(`[Admin Routes] PUT: Нові ОСНОВНІ файли для завантаження відсутні.`);
-    }
-    if (livePhotoReceived) {
-        console.log(`[Admin Routes] PUT: Отримано новий LIVE PHOTO файл:`, livePhotoReceived.originalname);
-    } else {
-        console.log(`[Admin Routes] PUT: Новий LIVE PHOTO файл для завантаження відсутній.`);
-    }
-
-    if (req.body.images_to_delete && req.body.images_to_delete.length > 0) {
-        console.log(`[Admin Routes] PUT: Запит на видалення ОСНОВНИХ зображень (public_ids):`, req.body.images_to_delete);
-    } else {
-        console.log(`[Admin Routes] PUT: Запит на видалення старих ОСНОВНИХ зображень відсутній або порожній.`);
-    }
-     if (req.body.delete_live_photo) {
-        console.log(`[Admin Routes] PUT: Отримано запит на видалення LIVE PHOTO.`);
-    }
-
-
     try {
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
-             if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
-            return res.redirect('/admin/products?error=invalid_id_update');
+            if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p => fs.unlink(p).catch(e => {})));
+            if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e => {});
+            return res.redirect(`/admin/products?error=invalid_id_update`);
         }
 
         productToUpdate = await Product.findById(productId);
         if (!productToUpdate) {
-             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
-             if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
-            return res.redirect('/admin/products?error=notfound_update');
+            if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p => fs.unlink(p).catch(e => {})));
+            if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e => {});
+            return res.redirect(`/admin/products?error=notfound_update`);
         }
         
         const {
@@ -509,21 +541,17 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
         productToUpdate.creation_time_info = creation_time_info;
         productToUpdate.isFeatured = isFeatured === 'on';
 
-        let newMainImagesDataArray = []; 
-        let allNewMainFilesProcessedSuccessfully = true; 
+        let newCloudinaryImagesData = []; 
 
         if (mainImagesReceived.length > 0) {
-            console.log(`[Admin Routes] PUT: Обробка ${mainImagesReceived.length} нових ОСНОВНИХ файлів для ЗАМІНИ.`);
-            
             for (const file of mainImagesReceived) {
                 const originalPath = file.path; 
                 const baseFilename = path.parse(file.filename).name;
                 const imageSetUrlsAndIds = { large: null, medium: null, thumb: null };
-                console.log(`[Admin Routes] PUT: Обробка нового основного файлу: ${file.originalname}`);
                 try {
                     const imageBuffer = await fs.readFile(originalPath);
+                    const imageProcessor = sharp(imageBuffer).rotate(); 
                     const sizes = { large: { width: 1000, quality: 80 }, medium: { width: 600, quality: 75 }, thumb: { width: 300, quality: 70 } };
-                    const imageProcessor = sharp(imageBuffer);
                     for (const [sizeName, options] of Object.entries(sizes)) {
                         const processedBuffer = await imageProcessor.clone().resize({ width: options.width, withoutEnlargement: true }).webp({ quality: options.quality }).toBuffer();
                         const publicIdForUpload = `${baseFilename}-${sizeName}-${Date.now()}`;
@@ -534,47 +562,77 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
                             ).end(processedBuffer);
                         });
                         if (!uploadResult || !uploadResult.secure_url || !uploadResult.public_id) {
-                            throw new Error(`Помилка завантаження ${sizeName} для ${file.originalname} (немає URL або public_id)`);
+                            throw new Error(`Помилка завантаження ${sizeName} для ${file.originalname}`);
                         }
                         imageSetUrlsAndIds[sizeName] = { url: uploadResult.secure_url, public_id: uploadResult.public_id };
                     }
-                    
-                    if (imageSetUrlsAndIds.large && imageSetUrlsAndIds.large.url && imageSetUrlsAndIds.large.public_id &&
-                        imageSetUrlsAndIds.medium && imageSetUrlsAndIds.medium.url && imageSetUrlsAndIds.medium.public_id &&
-                        imageSetUrlsAndIds.thumb && imageSetUrlsAndIds.thumb.url && imageSetUrlsAndIds.thumb.public_id) {
-                        newMainImagesDataArray.push(imageSetUrlsAndIds);
+                    if (imageSetUrlsAndIds.large && imageSetUrlsAndIds.medium && imageSetUrlsAndIds.thumb) {
+                        newCloudinaryImagesData.push(imageSetUrlsAndIds);
                         successfullyProcessedNewMainPaths.push(originalPath); 
                     } else {
-                        allNewMainFilesProcessedSuccessfully = false;
-                        console.error(`[Admin Routes] PUT: Неповний набір для нового основного файлу ${file.originalname}. Пропускаємо.`);
-                        try { await fs.unlink(originalPath); } catch (e) { }
+                         try { await fs.unlink(originalPath); } catch (e) { /* ігнор */ }
                     }
                 } catch (fileProcessingError) {
-                    allNewMainFilesProcessedSuccessfully = false;
                     console.error(`[Admin Routes] PUT: Помилка обробки нового основного файлу ${file.originalname}:`, fileProcessingError.message);
-                    try { await fs.unlink(originalPath); } catch (e) {  }
+                    try { await fs.unlink(originalPath); } catch (e) { /* ігнор */ }
                 }
             }
-
-            if (!allNewMainFilesProcessedSuccessfully && newMainImagesDataArray.length === 0 && mainImagesReceived.length > 0) {
-                throw new Error('Жоден з нових основних файлів не вдалося обробити. Зміни зображень не застосовано.');
-            }
-            
-            if (newMainImagesDataArray.length > 0) {
-                 if (productToUpdate.images && productToUpdate.images.length > 0) {
-                    console.log(`[Admin Routes] PUT: Видалення ${productToUpdate.images.length} старих наборів ОСНОВНИХ зображень.`);
-                    for (const imgSet of productToUpdate.images) { }
-                }
-                productToUpdate.images = newMainImagesDataArray; 
-                console.log(`[Admin Routes] PUT: productToUpdate.images оновлено ${newMainImagesDataArray.length} новими наборами.`);
-            } else if (mainImagesReceived.length > 0 && newMainImagesDataArray.length === 0) {
-                console.warn("[Admin Routes] PUT: Нові основні файли були, але жоден не оброблено. Масив images не змінено.");
-            }
-        } 
-        else if (images_to_delete && images_to_delete.length > 0) {
-            const publicIdsToRemove = Array.isArray(images_to_delete) ? images_to_delete : [images_to_delete];
-            productToUpdate.images = productToUpdate.images.filter(imgSet => { return true; });
         }
+        
+        let finalImagesArray = [];
+        if (productToUpdate.images && Array.isArray(productToUpdate.images)) {
+            finalImagesArray = productToUpdate.images.filter(imgSet => {
+                if (!imgSet || typeof imgSet !== 'object' || 
+                    !imgSet.large || !imgSet.medium || !imgSet.thumb ||
+                    !imgSet.large.public_id || !imgSet.medium.public_id || !imgSet.thumb.public_id) {
+                    console.warn('[Admin Routes] PUT: Пропускаємо невалідний imageSet в існуючих зображеннях:', imgSet);
+                    return false; 
+                }
+
+                const currentSetIds = [
+                    imgSet.large.public_id, 
+                    imgSet.medium.public_id, 
+                    imgSet.thumb.public_id
+                ];
+
+                if (images_to_delete && images_to_delete.length > 0) {
+                     const publicIdsToRemove = Array.isArray(images_to_delete) ? images_to_delete : [images_to_delete];
+                     const shouldDeleteThisSet = publicIdsToRemove.some(idTriple => {
+                        const idsInTriple = idTriple.split(',');
+                        return idsInTriple.some(idToDel => currentSetIds.includes(idToDel.trim()));
+                     });
+                     if (shouldDeleteThisSet) {
+                         currentSetIds.forEach(async (id) => {
+                             try { 
+                                 console.log(`[Admin Routes] PUT: Спроба видалення старого зображення ${id} з Cloudinary.`);
+                                 await cloudinary.uploader.destroy(id); 
+                                 console.log(`[Admin Routes] PUT: Зображення ${id} видалено з Cloudinary.`);
+                             } catch (e) { console.error(`[Admin Routes] PUT: Помилка видалення зображення ${id} з Cloudinary:`, e.message);}
+                         });
+                         return false; 
+                     }
+                }
+                return true; 
+            });
+        }
+
+        finalImagesArray.push(...newCloudinaryImagesData);
+        
+        if (finalImagesArray.length === 0) {
+            if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
+            if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
+
+            const productDataForForm = await Product.findById(productId).lean() || req.body; 
+            return res.render('admin/edit-product', {
+                pageTitle: `Помилка - Редагувати: ${productDataForForm.name || 'Товар'}`,
+                productData: productDataForForm,
+                categories: categories,
+                errorMessage: 'Має бути хоча б одне основне зображення товару. Якщо ви видалили всі старі, завантажте нові.'
+            });
+        }
+        productToUpdate.images = finalImagesArray;
+
+
         if (livePhotoReceived) {
             if (productToUpdate.livePhotoPublicId) {
                 try { await cloudinary.uploader.destroy(productToUpdate.livePhotoPublicId, { resource_type: productToUpdate.livePhotoUrl && productToUpdate.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' }); } 
@@ -588,25 +646,21 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
                 productToUpdate.livePhotoUrl = liveUploadResult.secure_url;
                 productToUpdate.livePhotoPublicId = liveUploadResult.public_id;
                 successfullyProcessedNewLivePath = livePhotoReceived.path;
-                console.log(`[Admin Routes] PUT: Нове live photo завантажено: ${liveUploadResult.secure_url}`);
             } catch (livePhotoError) {
                 console.error(`[Admin Routes] PUT: Помилка завантаження нового live photo:`, livePhotoError.message);
-                try { await fs.unlink(livePhotoReceived.path); } catch (e) { }
-                throw livePhotoError;
+                if (livePhotoReceived.path) try { await fs.unlink(livePhotoReceived.path); } catch (e) { /* ігнор */ }
             }
         } else if (delete_live_photo === 'true') {
             if (productToUpdate.livePhotoPublicId) {
-                try { await cloudinary.uploader.destroy(productToUpdate.livePhotoPublicId, { resource_type: productToUpdate.livePhotoUrl && productToUpdate.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' }); 
-                    productToUpdate.livePhotoUrl = null; productToUpdate.livePhotoPublicId = null;
+                try { 
+                    await cloudinary.uploader.destroy(productToUpdate.livePhotoPublicId, { resource_type: productToUpdate.livePhotoUrl && productToUpdate.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' }); 
+                    productToUpdate.livePhotoUrl = null; 
+                    productToUpdate.livePhotoPublicId = null;
                 } 
                 catch (e) { console.error(`[Admin Routes] PUT: Помилка видалення live photo за запитом:`, e.message); }
             }
         }
         
-        console.log(`[Admin Routes] PUT: Фінальний стан productToUpdate.images перед save:`, JSON.stringify(productToUpdate.images, null, 2));
-        console.log(`[Admin Routes] PUT: Фінальний стан livePhotoUrl перед save: ${productToUpdate.livePhotoUrl}`);
-
-
         productToUpdate.markModified('images');
         if (livePhotoReceived || delete_live_photo === 'true') {
             productToUpdate.markModified('livePhotoUrl');
@@ -614,9 +668,7 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
         }
 
         const savedProduct = await productToUpdate.save(); 
-        console.log(`[Admin Routes] PUT: Товар ${productId} успішно оновлено. Збережені зображення:`, JSON.stringify(savedProduct.images, null, 2));
-        console.log(`[Admin Routes] PUT: Збережене livePhotoUrl: ${savedProduct.livePhotoUrl}`);
-
+        console.log(`[Admin Routes] PUT: Товар ${productId} успішно оновлено.`);
 
         if (successfullyProcessedNewMainPaths.length > 0) {
             await Promise.all(successfullyProcessedNewMainPaths.map(p => fs.unlink(p).catch(e => {})));
@@ -624,33 +676,46 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
         if (successfullyProcessedNewLivePath) {
              await fs.unlink(successfullyProcessedNewLivePath).catch(e => {});
         }
-        const remainingTempFiles = tempUploadedFilePaths.filter(p => !successfullyProcessedNewMainPaths.includes(p) && p !== successfullyProcessedNewLivePath);
-        if(remainingTempFiles.length > 0) {
-            await Promise.all(remainingTempFiles.map(p => fs.unlink(p).catch(e => {})));
+        const remainingTempFilesAfterProcessing = tempUploadedFilePaths.filter(p => 
+            !successfullyProcessedNewMainPaths.includes(p) && 
+            p !== successfullyProcessedNewLivePath
+        );
+        if(remainingTempFilesAfterProcessing.length > 0) {
+            await Promise.all(remainingTempFilesAfterProcessing.map(p => fs.unlink(p).catch(e => {})));
         }
         
         res.redirect('/admin/products');
 
     } catch (error) { 
         console.error(`[Admin Routes] Загальна помилка в PUT /products/${productId}:`, error.message, error.stack);
-        const allTempPathsForCleanup = [...newMainImageTempPaths];
-        if (newLivePhotoTempPath && !allTempPathsForCleanup.includes(newLivePhotoTempPath)) { 
-            allTempPathsForCleanup.push(newLivePhotoTempPath);
+        const allTempPathsForCleanupOnError = [...newMainImageTempPaths];
+        if (newLivePhotoTempPath && !allTempPathsForCleanupOnError.includes(newLivePhotoTempPath)) {
+            allTempPathsForCleanupOnError.push(newLivePhotoTempPath);
         }
         
-        if (allTempPathsForCleanup.length > 0) {
-            const pathsToAttemptDelete = allTempPathsForCleanup.filter(p => 
-                !successfullyProcessedNewMainPaths.includes(p) && 
-                p !== successfullyProcessedNewLivePath
-            );
-            if(pathsToAttemptDelete.length > 0) {
-                console.log('[Admin Routes] PUT: Спроба очищення залишених тимчасових файлів через загальну помилку...');
-                await Promise.all(pathsToAttemptDelete.map(p => fs.unlink(p).catch(e => {})));
-            }
+        if (allTempPathsForCleanupOnError.length > 0) {
+            await Promise.all(allTempPathsForCleanupOnError.map(p => fs.unlink(p).catch(e => {})));
         }
-        const errorRenderData = {  };
-        if (error.name === 'ValidationError') {}
-        return res.render('admin/edit-product', errorRenderData);
+        
+        let errorMsgForRender = 'Сталася невідома помилка при оновленні товару.';
+        if (error.name === 'ValidationError') {
+            if (error.errors && error.errors.images) {
+                 errorMsgForRender = error.errors.images.message;
+            } else {
+                 errorMsgForRender = 'Помилка валідації: ' + Object.values(error.errors).map(el => el.message).join(' ');
+            }
+        } else if (error.message) {
+            errorMsgForRender = error.message;
+        }
+
+        const productDataForForm = await Product.findById(productId).lean() || req.body;
+        
+        return res.render('admin/edit-product', {
+            pageTitle: `Помилка - Редагувати: ${productDataForForm.name || 'Товар'}`,
+            productData: productDataForForm,
+            categories: categories,
+            errorMessage: errorMsgForRender
+        });
     }
 });
 
@@ -684,6 +749,14 @@ router.post('/products/:id/delete', checkAdminAuth, async (req, res, next) => {
                 }
             }
         }
+        if (productToDelete.livePhotoPublicId) {
+            try {
+                await cloudinary.uploader.destroy(productToDelete.livePhotoPublicId, { resource_type: productToDelete.livePhotoUrl && productToDelete.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' });
+                console.log(`[Admin Routes] "Живе" фото ${productToDelete.livePhotoPublicId} видалено з Cloudinary.`);
+            } catch (e) {
+                console.error(`[Admin Routes] Помилка видалення "живого" фото ${productToDelete.livePhotoPublicId} з Cloudinary:`, e.message);
+            }
+        }
 
         await Product.findByIdAndDelete(productId);
         console.log(`[Admin Routes] Товар ${productId} успішно видалено з БД.`);
@@ -693,6 +766,7 @@ router.post('/products/:id/delete', checkAdminAuth, async (req, res, next) => {
         next(error);
     }
 });
+
 router.post('/generate-meta-description', checkAdminAuth, async (req, res) => {
     const { productName, productDescription } = req.body;
 
@@ -771,5 +845,6 @@ router.post('/generate-meta-description', checkAdminAuth, async (req, res) => {
         res.status(500).json({ message: userMessage });
     }
 });
+
 
 module.exports = router;

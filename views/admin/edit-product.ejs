@@ -27,9 +27,20 @@
             <h1><%= pageTitle %></h1>
             <hr style="margin-bottom: 25px;">
 
-            <% if (typeof errorMessage !== 'undefined' && errorMessage && errorMessage.length > 0) { %>
-                <div class="error-message" style="margin-bottom: 20px; text-align: center;">
-                    <%= errorMessage %>
+            <%
+            let errorMessage = null;
+            if (locals.errorMessage) { // Перевіряємо errorMessage, який передається з маршруту
+                errorMessage = locals.errorMessage;
+            } else if (locals.error) { // Стара логіка для сумісності, якщо ще десь використовується
+                if (locals.error === 'validation') errorMessage = 'Будь ласка, заповніть усі обов\'язкові поля.';
+                else if (locals.error === 'price_validation') errorMessage = 'Максимальна ціна не може бути меншою за мінімальну.';
+                // Додайте інші специфічні перевірки помилок тут, якщо потрібно
+                else errorMessage = locals.error; // Якщо це вже готове повідомлення
+            }
+            %>
+            <% if (errorMessage) { %>
+                <div class="alert alert-danger admin-alert" style="margin-bottom: 20px; text-align: left;">
+                    <strong>Помилка!</strong> <%= errorMessage %>
                 </div>
             <% } %>
 
@@ -64,6 +75,46 @@
                             <small>Цей текст буде показано в результатах пошуку. Має бути коротким і привабливим.</small>
                             <div id="metaDescCounterEdit" style="font-size: 0.8em; text-align: right; color: #6c757d; margin-top: 3px;">0 / 170</div>
                         </div>
+                        
+                        <%# Інші поля форми: ціна, категорія, статус, термін виготовлення і т.д. %>
+                        <%# ... (пропущено для стислості, вони мають бути тут) ... %>
+                         <div class="form-row">
+                            <div class="admin-form-group">
+                                <label for="price">Мін. ціна (грн) <span style="color:red;">*</span></label>
+                                <input type="number" id="price" name="price" required min="0" step="0.01" value="<%= productData.price %>">
+                            </div>
+                            <div class="admin-form-group">
+                                <label for="maxPrice">Макс. ціна (грн) <small>(необов'язково)</small></label>
+                                <input type="number" id="maxPrice" name="maxPrice" min="0" step="0.01" value="<%= productData.maxPrice || '' %>">
+                                <small>Якщо пусто або 0, ціна буде фіксована.</small>
+                            </div>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="category">Категорія <span style="color:red;">*</span></label>
+                            <select id="category" name="category" required>
+                                <option value="">-- Виберіть категорію --</option>
+                                <% if (typeof categories !== 'undefined' && Array.isArray(categories)) { %>
+                                    <% categories.forEach(cat => { %>
+                                        <option value="<%= cat %>" <%= (productData.category === cat) ? 'selected' : '' %>><%= cat %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        </div>
+                        
+                        <div class="admin-form-group">
+                            <label for="status">Статус товару <span style="color:red;">*</span></label>
+                            <select id="status" name="status" required>
+                               <option value="Під замовлення" <%= (productData.status === 'Під замовлення') ? 'selected' : '' %>>Під замовлення</option>
+                               <option value="В наявності" <%= (productData.status === 'В наявності') ? 'selected' : '' %>>В наявності</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label for="creation_time_info">Термін виготовлення <small>(напр., 'до 10 роб. днів')</small> <span style="color:red;">*</span></label>
+                            <input type="text" id="creation_time_info" name="creation_time_info" required placeholder="Наприклад: 5-7 робочих днів" value="<%= productData.creation_time_info || '' %>">
+                        </div>
+
+
                         <div class="admin-form-group">
                             <label>Поточні основні зображення</label>
                             <% if(productData.images && productData.images.length > 0) { %>
@@ -71,10 +122,10 @@
                                     <% productData.images.forEach((imgSet, index) => { %>
                                         <% if (imgSet && typeof imgSet === 'object' && imgSet.thumb && imgSet.thumb.url && imgSet.thumb.public_id) { %>
                                             <div class="current-image-item">
-                                                <img src="<%= imgSet.thumb.url %>" alt="Мініатюра <%= index + 1 %>">
-                                                <label for="delete_image_<%= index %>">
-                                                    <input type="checkbox" name="images_to_delete[]" id="delete_image_<%= index %>" value="<%= imgSet.thumb.public_id %>">
-                                                    Видалити цей набір
+                                                <img src="<%= imgSet.thumb.url %>?v=<%= new Date().getTime() %>" alt="Мініатюра <%= index + 1 %>">
+                                                <label for="delete_image_<%= productData._id %>_<%= index %>">
+                                                    <input type="checkbox" name="images_to_delete" id="delete_image_<%= productData._id %>_<%= index %>" value="<%= imgSet.large.public_id %>,<%= imgSet.medium.public_id %>,<%= imgSet.thumb.public_id %>">
+                                                    Видалити
                                                 </label>
                                             </div>
                                         <% } %>
@@ -86,8 +137,8 @@
                         </div>
 
                         <div class="admin-form-group">
-                            <label for="newImageFiles">Завантажити нові основні зображення <small>(Якщо вибрано, ЗАМІНЯТЬ усі поточні)</small></label>
-                            <input type="file" id="newImageFiles" name="newImageFiles" multiple class="form-control">
+                            <label for="imageFiles">Завантажити нові основні зображення <small>(Якщо вибрано, додадуться до існуючих або замінять їх, якщо старі видалені)</small></label>
+                            <input type="file" id="imageFiles" name="imageFiles" multiple class="form-control" accept="image/png, image/jpeg, image/jpg, image/gif, image/webp">
                             <small>Можна вибрати декілька файлів (до 10). Дозволені формати: jpg, png, gif, webp.</small>
                             <div class="image-preview-container" id="newImagePreviewContainerEdit">
                                 <%# Сюди JavaScript буде додавати мініатюри нових основних зображень %>
@@ -98,13 +149,13 @@
 
                         <div class="admin-form-group">
                             <label>Поточне "живе" фото (GIF/відео)</label>
-                            <div class="current-images-list"> <%# Використовуємо схожий контейнер для консистентності %>
+                            <div class="current-images-list">
                                 <% if (productData.livePhotoUrl) { %>
                                     <div class="current-image-item">
                                         <% if (productData.livePhotoUrl.endsWith('.gif')) { %>
-                                            <img src="<%= productData.livePhotoUrl %>" alt="Поточне живе фото (GIF)" style="border: 2px dashed var(--color-accent);">
+                                            <img src="<%= productData.livePhotoUrl %>?v=<%= new Date().getTime() %>" alt="Поточне живе фото (GIF)" style="border: 2px dashed var(--color-accent);">
                                         <% } else if (productData.livePhotoUrl.endsWith('.mp4') || productData.livePhotoUrl.endsWith('.webm')) { %>
-                                            <video src="<%= productData.livePhotoUrl %>" autoplay loop muted playsinline style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 2px dashed var(--color-accent);"></video>
+                                            <video src="<%= productData.livePhotoUrl %>?v=<%= new Date().getTime() %>" style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 2px dashed var(--color-accent);" controls></video>
                                         <% } else { %>
                                             <a href="<%= productData.livePhotoUrl %>" target="_blank">Переглянути файл</a>
                                         <% } %>
@@ -155,7 +206,6 @@
                             </label>
                         </div>
 
-
                         <hr>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Оновити товар</button>
@@ -177,22 +227,15 @@
     </main>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Лічильник для Meta Description
             const metaDescTextarea = document.getElementById('metaDescription');
-            const metaDescCounter = document.getElementById('metaDescCounterEdit'); // Унікальний ID для сторінки редагування
+            const metaDescCounter = document.getElementById('metaDescCounterEdit');
             const metaDescMaxLength = 170; 
         
             function updateMetaCounter() {
                 if (!metaDescTextarea || !metaDescCounter) return;
                 const currentLength = metaDescTextarea.value.length;
                 metaDescCounter.textContent = `${currentLength} / ${metaDescMaxLength}`;
-                if (currentLength > metaDescMaxLength) {
-                    metaDescCounter.style.color = 'red';
-                } else if (currentLength > metaDescMaxLength - 20) {
-                    metaDescCounter.style.color = 'orange';
-                } else {
-                    metaDescCounter.style.color = '#6c757d';
-                }
+                metaDescCounter.style.color = currentLength > metaDescMaxLength ? 'red' : (currentLength > metaDescMaxLength - 20 ? 'orange' : '#6c757d');
             }
         
             if (metaDescTextarea && metaDescCounter) {
@@ -200,15 +243,23 @@
                 updateMetaCounter();
             }
 
-            // Передпросмотр для НОВИХ ОСНОВНИХ зображень (newImageFiles)
-            const newMainImageInput = document.getElementById('newImageFiles');
+            const newMainImageInput = document.getElementById('imageFiles'); // Змінено ID для відповідності name
             const newMainImagePreviewContainer = document.getElementById('newImagePreviewContainerEdit');
-            let newMainSelectedFilesStore = [];
-            const MAX_MAIN_FILES = 10;
+            // JavaScript для передпросмотру нових основних зображень (newImageFiles)
+            // Важливо: цей скрипт має враховувати, що файли відправляються через стандартну форму,
+            // тому selectedFilesStore тут більше для візуалізації та обмеження кількості.
+            // Реальна відправка буде залежати від вмісту newMainImageInput.files
+            let newMainSelectedFilesStore = []; // Для відстеження файлів у прев'ю
+            const MAX_MAIN_FILES_EDIT = 10;
 
-            function updateNewMainImagePreview() {
+            function updateNewMainImagePreviewEdit() {
                 if (!newMainImagePreviewContainer) return;
                 newMainImagePreviewContainer.innerHTML = '';
+                
+                // Оновлюємо FileList для інпута, щоб він відповідав newMainSelectedFilesStore
+                // Це складно зробити напряму, тому краще покладатися на те, що користувач вибере файли заново, якщо видалить з прев'ю
+                // Або, якщо відправка йде через AJAX, то можна формувати FormData з newMainSelectedFilesStore
+
                 newMainSelectedFilesStore.forEach((file, index) => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
@@ -219,43 +270,46 @@
                         const name = document.createElement('span');
                         name.classList.add('file-name-preview');
                         name.textContent = file.name.length > 15 ? file.name.substring(0,12) + '...' : file.name;
+                        
+                        // Кнопка видалення з прев'ю (не видаляє з FileList інпута напряму)
                         const btn = document.createElement('button');
                         btn.type = 'button'; btn.textContent = '×'; btn.dataset.index = index;
                         btn.classList.add('btn-remove-preview');
                         btn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.7);color:white;border:1px solid rgba(0,0,0,0.2);border-radius:50%;width:20px;height:20px;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0;';
-                        btn.onclick = handleRemoveNewMainImageFile;
+                        btn.onclick = function() {
+                            newMainSelectedFilesStore.splice(index, 1);
+                            // Очистити FileList інпута - це складно і не завжди надійно
+                            // Краще оновити newMainImageInput.files, якщо це можливо, або просто оновити прев'ю
+                            // Для стандартної відправки форми, це видалення з прев'ю не вплине на те, що буде відправлено,
+                            // якщо користувач не вибере файли заново.
+                            // Для надійності, можна очистити newMainImageInput.value = null; і попросити вибрати файли знову.
+                            newMainImageInput.value = null; // Це очистить вибір файлів в інпуті
+                            updateNewMainImagePreviewEdit(); // Оновити прев'ю (буде порожнім)
+                            alert("Вибір файлів для нових зображень скинуто. Будь ласка, виберіть файли знову, якщо потрібно.");
+                        };
                         item.append(img, name, btn);
                         newMainImagePreviewContainer.append(item);
                     }
                     reader.readAsDataURL(file);
                 });
             }
-
+            
             if (newMainImageInput) {
                 newMainImageInput.addEventListener('change', function(event) {
                     if (event.target.files) {
-                        const filesToAdd = Array.from(event.target.files);
-                        if (newMainSelectedFilesStore.length + filesToAdd.length > MAX_MAIN_FILES) {
-                            alert(`Можна завантажити максимум ${MAX_MAIN_FILES} основних зображень.`);
-                            return;
+                        const filesFromInput = Array.from(event.target.files);
+                        if (filesFromInput.length > MAX_MAIN_FILES_EDIT) {
+                            alert(`Можна завантажити максимум ${MAX_MAIN_FILES_EDIT} нових основних зображень.`);
+                            this.value = null; // Скидаємо вибір
+                            newMainSelectedFilesStore = [];
+                        } else {
+                            newMainSelectedFilesStore = filesFromInput; // Оновлюємо наш стор файлами з інпута
                         }
-                        newMainSelectedFilesStore.push(...filesToAdd);
-                        updateNewMainImagePreview();
-                        // НЕ очищуємо event.target.value для стандартної відправки
+                        updateNewMainImagePreviewEdit();
                     }
                 });
             }
-            function handleRemoveNewMainImageFile(event) {
-                const index = parseInt(event.target.dataset.index);
-                newMainSelectedFilesStore.splice(index, 1);
-                updateNewMainImagePreview();
-                // Потрібно оновити FileList в newMainImageInput, що складно.
-                // Простіше сказати користувачу, що для відправки будуть використані файли з інпуту.
-                alert("Файл видалено з предпросмотру. Для відправки будуть використані файли, що залишились у полі вибору.");
-            }
 
-
-            // Передпросмотр для НОВОГО "ЖИВОГО" ФОТО (livePhotoFileEdit)
             const livePhotoInputEdit = document.getElementById('livePhotoFileEdit');
             const livePhotoPreviewContainerEdit = document.getElementById('livePhotoPreviewContainerEdit');
 
@@ -268,7 +322,7 @@
                         reader.onload = function(e) {
                             const previewItem = document.createElement('div');
                             previewItem.classList.add('image-preview-item');
-                            previewItem.style.width = 'auto'; // Дозволити більшу ширину для відео
+                            previewItem.style.width = 'auto';
 
                             let mediaElement;
                             if (file.type.startsWith('image/gif')) {
@@ -292,14 +346,13 @@
                             fileNameSpan.classList.add('file-name-preview');
                             fileNameSpan.textContent = file.name.length > 20 ? file.name.substring(0,17) + '...' : file.name;
                             
-                            // Кнопка видалення для live photo (якщо потрібно, щоб користувач міг скасувати вибір)
                             const removeLiveBtn = document.createElement('button');
                             removeLiveBtn.type = 'button'; removeLiveBtn.textContent = '×';
                             removeLiveBtn.classList.add('btn-remove-preview');
                             removeLiveBtn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.7);color:white;border:1px solid rgba(0,0,0,0.2);border-radius:50%;width:20px;height:20px;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0;';
                             removeLiveBtn.onclick = () => {
-                                livePhotoInputEdit.value = null; // Очищуємо інпут
-                                livePhotoPreviewContainerEdit.innerHTML = ''; // Очищуємо предпросмотр
+                                livePhotoInputEdit.value = null; 
+                                livePhotoPreviewContainerEdit.innerHTML = ''; 
                             };
 
                             previewItem.appendChild(mediaElement);
@@ -312,11 +365,10 @@
                 });
             }
             
-            // Код для генерації Meta Description для сторінки редагування
             const generateMetaBtnEdit = document.getElementById('generateMetaDescBtnEdit');
-            const productNameInputEdit = document.getElementById('name'); // Вже є на сторінці
-            const productDescriptionTextareaEdit = document.getElementById('description'); // Вже є
-            const metaDescTextareaEdit = document.getElementById('metaDescription'); // Вже є
+            const productNameInputEdit = document.getElementById('name'); 
+            const productDescriptionTextareaEdit = document.getElementById('description'); 
+            const metaDescTextareaEdit = document.getElementById('metaDescription'); 
 
             if (generateMetaBtnEdit && productNameInputEdit && productDescriptionTextareaEdit && metaDescTextareaEdit) {
                 generateMetaBtnEdit.addEventListener('click', async function() {
@@ -345,7 +397,7 @@
                         const data = await response.json();
                         if (data.metaDescription) {
                             metaDescTextareaEdit.value = data.metaDescription;
-                            updateMetaCounter(); // Оновлюємо лічильник для поля metaDescription
+                            updateMetaCounter(); 
                         } else {
                             alert('Не вдалося згенерувати мета-опис.');
                         }
@@ -358,7 +410,6 @@
                     }
                 });
             }
-
         });
     </script>
 </body>
