@@ -12,11 +12,13 @@
     <header class="admin-header">
         <div class="container">
             <h1>Панель Адміністратора</h1>
-            <nav>
-                <a href="/admin/orders">Замовлення</a>
-                <a href="/admin/products" class="active">Товари</a>
-                <a href="/admin/logout">Вийти</a>
-            </nav>
+<nav>
+    <a href="/admin/orders" class="<%= typeof pageName !== 'undefined' && pageName === 'orders' ? 'active' : '' %>">Замовлення</a>
+    <a href="/admin/products" class="<%= typeof pageName !== 'undefined' && pageName === 'products' ? 'active' : '' %>">Товари</a>
+    <a href="/admin/blog" class="<%= typeof pageName !== 'undefined' && pageName === 'blog' ? 'active' : '' %>">Блог</a>
+    <a href="/admin/blog/html-guide" class="<%= typeof pageName !== 'undefined' && pageName === 'html-guide' ? 'active' : '' %>">HTML Інструкція</a> 
+    <a href="/admin/logout">Вийти</a>
+</nav>
         </div>
     </header>
 
@@ -25,16 +27,15 @@
             <h1><%= pageTitle %></h1>
             <hr style="margin-bottom: 25px;">
 
-            <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+            <% if (typeof errorMessage !== 'undefined' && errorMessage && errorMessage.length > 0) { %>
                 <div class="error-message" style="margin-bottom: 20px; text-align: center;">
                     <%= errorMessage %>
                 </div>
             <% } %>
 
-
-            <% if (typeof productData !== 'undefined') { %>
+            <% if (typeof productData !== 'undefined' && productData) { %>
                 <div class="admin-form-container">
-                     <form method="POST" action="/admin/products/<%= productData._id %>?_method=PUT">
+                    <form method="POST" action="/admin/products/<%= productData._id %>?_method=PUT" enctype="multipart/form-data" id="editProductForm">
 
                         <div class="admin-form-group">
                             <label for="name">Назва товару <span style="color:red;">*</span></label>
@@ -48,122 +49,124 @@
 
                         <div class="admin-form-group">
                             <label for="metaDescription">Meta Опис (для SEO)</label>
-                            <textarea id="metaDescription" name="metaDescription" rows="3" maxlength="170" placeholder="Короткий опис для пошуку Google (до 170 симв.)"><%= productData.metaDescription || '' %></textarea>
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                <textarea id="metaDescription" name="metaDescription" rows="3" maxlength="170" placeholder="Короткий опис для пошуку Google (до 170 симв.)" style="flex-grow: 1;"><%= productData.metaDescription || '' %></textarea>
+                                <button type="button" id="generateMetaDescBtnEdit" class="btn btn-secondary btn-sm" style="flex-shrink: 0; padding: 0.5rem 0.8rem; line-height: 1.5;">
+                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-magic" viewBox="0 0 16 16" style="margin-right: 5px; vertical-align: text-bottom;">
+                                        <path d="M9.5 2.672a.5.5 0 1 0 1 0V.843a.5.5 0 0 0-1 0v1.829Zm4.5.035A.5.5 0 0 0 13.293 2L12 3.293a.5.5 0 1 0 .707.707L14 2.707ZM7.293 4A.5.5 0 1 0 8 3.293L6.707 2A.5.5 0 0 0 6 2.707L7.293 4Zm-.646 2.472A.5.5 0 1 0 6 5.843V4.013a.5.5 0 1 0-1 0v1.829h-1.02a.5.5 0 1 0 0 1H5v1.829a.5.5 0 1 0 1 0V6.843h1.02a.5.5 0 0 0 .646-.371Z"/>
+                                        <path d="M.5 12.04A.5.5 0 0 0 0 12.5v1.167l1.829 1.828a.5.5 0 0 0 .707-.707L1.207 13.5h1.166a.5.5 0 0 0 .5-.5V12a.5.5 0 0 0-.5-.5H1.207l1.328-1.329a.5.5 0 0 0-.707-.707L.5 11.293V12.04Zm15 0a.5.5 0 0 0-.5-.5h-1.166l-1.329-1.329a.5.5 0 0 0-.707.707L13.5 12h-1.167a.5.5 0 0 0-.5.5v.5a.5.5 0 0 0 .5.5h1.166l1.329 1.329a.5.5 0 0 0 .707-.707L14.5 13.5v-.793a.5.5 0 0 0-.5-.5Z"/>
+                                        <path d="M11.469 8.242c.063.577.346 1.383.997 2.294.634.921 1.373 1.853 1.996 2.62.313.384.415.962.23 1.373-.186.412-.646.656-1.125.568-.479-.088-.894-.422-1.114-.833-.21-.396-.203-1.02.048-1.562.252-.541.65-1.334 1.043-2.062-.631-.842-1.374-1.747-2.012-2.538-.317-.395-.423-.965-.234-1.379.188-.413.648-.66-1.128-.571-.48.088-.892.423-1.11.836-.211.396-.206 1.022-.044 1.564Zm-6.938 0c-.063.577-.346 1.383-.997 2.294-.634.921-1.373 1.853-1.996 2.62-.313.384-.415.962-.23 1.373.186.412.646.656 1.125.568-.479-.088-.894-.422-1.114-.833-.21-.396-.203-1.02-.048-1.562-.252-.541-.65-1.334-1.043-2.062.631-.842 1.374-1.747 2.012-2.538-.317-.395-.423-.965-.234-1.379-.188-.413-.648-.66-1.128-.571-.48.088-.892.423-1.11.836-.211.396-.206 1.022.044 1.564Z"/>
+                                        <path d="M4.973 8.242a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm6.054 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
+                                      </svg>
+                                    Згенерувати
+                                </button>
+                            </div>
                             <small>Цей текст буде показано в результатах пошуку. Має бути коротким і привабливим.</small>
-                            <div id="metaDescCounter" style="font-size: 0.8em; text-align: right; color: #6c757d; margin-top: 3px;">0 / 170</div>
+                            <div id="metaDescCounterEdit" style="font-size: 0.8em; text-align: right; color: #6c757d; margin-top: 3px;">0 / 170</div>
                         </div>
-
-                        <div class="form-row">
-                            <div class="admin-form-group">
-                                <label for="price">Мін. ціна (грн) <span style="color:red;">*</span></label>
-                                <input type="number" id="price" name="price" required min="0" step="0.01" value="<%= productData.price %>">
-                            </div>
-                            <div class="admin-form-group">
-                                <label for="maxPrice">Макс. ціна (грн) <small>(необов'язково)</small></label>
-                                <input type="number" id="maxPrice" name="maxPrice" min="0" step="0.01" value="<%= productData.maxPrice || '' %>">
-                                <small>Якщо пусто або 0, ціна буде фіксована.</small>
-                            </div>
-                        </div>
-
                         <div class="admin-form-group">
-                            <label for="category">Категорія <span style="color:red;">*</span></label>
-                            <select id="category" name="category" required>
-                                <option value="">-- Виберіть категорію --</option>
-                                <% if (typeof categories !== 'undefined' && Array.isArray(categories)) { %>
-                                    <% categories.forEach(cat => { %>
-                                        <option value="<%= cat %>" <%= (productData.category === cat) ? 'selected' : '' %> ><%= cat %></option>
+                            <label>Поточні основні зображення</label>
+                            <% if(productData.images && productData.images.length > 0) { %>
+                                <div class="current-images-list">
+                                    <% productData.images.forEach((imgSet, index) => { %>
+                                        <% if (imgSet && typeof imgSet === 'object' && imgSet.thumb && imgSet.thumb.url && imgSet.thumb.public_id) { %>
+                                            <div class="current-image-item">
+                                                <img src="<%= imgSet.thumb.url %>" alt="Мініатюра <%= index + 1 %>">
+                                                <label for="delete_image_<%= index %>">
+                                                    <input type="checkbox" name="images_to_delete[]" id="delete_image_<%= index %>" value="<%= imgSet.thumb.public_id %>">
+                                                    Видалити цей набір
+                                                </label>
+                                            </div>
+                                        <% } %>
                                     <% }); %>
+                                </div>
+                            <% } else { %>
+                                <p><small>Основних зображень немає.</small></p>
+                            <% } %>
+                        </div>
+
+                        <div class="admin-form-group">
+                            <label for="newImageFiles">Завантажити нові основні зображення <small>(Якщо вибрано, ЗАМІНЯТЬ усі поточні)</small></label>
+                            <input type="file" id="newImageFiles" name="newImageFiles" multiple class="form-control">
+                            <small>Можна вибрати декілька файлів (до 10). Дозволені формати: jpg, png, gif, webp.</small>
+                            <div class="image-preview-container" id="newImagePreviewContainerEdit">
+                                <%# Сюди JavaScript буде додавати мініатюри нових основних зображень %>
+                            </div>
+                        </div>
+                        
+                        <hr style="margin: 20px 0;">
+
+                        <div class="admin-form-group">
+                            <label>Поточне "живе" фото (GIF/відео)</label>
+                            <div class="current-images-list"> <%# Використовуємо схожий контейнер для консистентності %>
+                                <% if (productData.livePhotoUrl) { %>
+                                    <div class="current-image-item">
+                                        <% if (productData.livePhotoUrl.endsWith('.gif')) { %>
+                                            <img src="<%= productData.livePhotoUrl %>" alt="Поточне живе фото (GIF)" style="border: 2px dashed var(--color-accent);">
+                                        <% } else if (productData.livePhotoUrl.endsWith('.mp4') || productData.livePhotoUrl.endsWith('.webm')) { %>
+                                            <video src="<%= productData.livePhotoUrl %>" autoplay loop muted playsinline style="width: 100px; height: 100px; object-fit: cover; border-radius: 4px; border: 2px dashed var(--color-accent);"></video>
+                                        <% } else { %>
+                                            <a href="<%= productData.livePhotoUrl %>" target="_blank">Переглянути файл</a>
+                                        <% } %>
+                                        <label for="delete_live_photo" style="color: var(--color-danger);">
+                                            <input type="checkbox" name="delete_live_photo" id="delete_live_photo" value="true">
+                                            Видалити "живе" фото
+                                        </label>
+                                    </div>
                                 <% } else { %>
-                                    <option value="" disabled>Помилка: список категорій не завантажено.</option>
+                                    <p><small>"Живого" фото ще немає.</small></p>
                                 <% } %>
-                            </select>
+                            </div>
                         </div>
 
                         <div class="admin-form-group">
-                            <label for="status">Статус товару <span style="color:red;">*</span></label>
-                            <select id="status" name="status" required>
-                                <%# Для форми редагування (edit-product.ejs) використовуємо productData %>
-                                <% if (typeof productData !== 'undefined') { %>
-                                    <option value="Під замовлення" <%= (productData.status === 'Під замовлення') ? 'selected' : '' %>>Під замовлення</option>
-                                    <option value="В наявності" <%= (productData.status === 'В наявності') ? 'selected' : '' %>>В наявності</option>
-                                <%# Для форми створення (new-product.ejs) можна встановити значення за замовчуванням %>
-                                <% } else { %>
-                                     <option value="Під замовлення" selected>Під замовлення</option> <%# За замовчуванням %>
-                                     <option value="В наявності">В наявності</option>
-                                <% } %>
-                            </select>
+                            <label for="livePhotoFile">Завантажити нове "живе" фото <small>(GIF/MP4/WebM, ЗАМІНИТЬ поточне, якщо є)</small></label>
+                            <input type="file" id="livePhotoFileEdit" name="livePhotoFile" accept="image/gif,video/mp4,video/webm" class="form-control">
+                             <small>Макс. розмір: 5MB.</small>
+                            <div class="image-preview-container" id="livePhotoPreviewContainerEdit" style="margin-top: 10px; min-height: 50px;">
+                                <%# Сюди JavaScript буде додавати мініатюру для нового livePhotoFile %>
+                            </div>
                         </div>
-                        <div class="admin-form-group">
-                            <label for="creation_time_info">Термін виготовлення <small>(напр., 'до 10 роб. днів')</small> <span style="color:red;">*</span></label>
-                            <input type="text" id="creation_time_info" name="creation_time_info" required placeholder="Наприклад: 5-7 робочих днів" value="<%= productData.creation_time_info || '' %>">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Поточні зображення товару <small>(Редагування/видалення окремих фото поки не реалізовано)</small></label>
-                             <div class="current-images-preview" style="margin-bottom: 10px; display:flex; flex-wrap:wrap; gap:8px;">
-                                  <%# Проверяем наличие массива images и его длину %>
-                                  <% if(typeof productData !== 'undefined' && productData.images && productData.images.length > 0) { %>
-                                      <%# Перебираем массив объектов с изображениями %>
-                                      <% productData.images.forEach((imgObj, index) => { %>
-                                          <%# Проверяем, что imgObj это объект и у него есть свойство thumb %>
-                                          <% if (imgObj && typeof imgObj === 'object' && imgObj.thumb) { %>
-                                              <img src="<%= imgObj.thumb %>"
-                                                   alt="Зображення <%= index + 1 %> для <%= productData.name %>"
-                                                   title="Мініатюра <%= index + 1 %>"
-                                                   style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">
-                                          <% } else { %>
-                                               <%# Если структура неожиданная, можно вывести заглушку или сообщение %>
-                                               <div style="width:60px; height:60px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:10px; color:#999; border-radius:4px;">?</div>
-                                          <% } %>
-                                      <% }); %>
-                                  <% } else { %>
-                                      <p><small>Зображень немає.</small></p>
-                                  <% } %>
-                              </div>
-                             <small>Щоб змінити набір зображень, видаліть товар і створіть новий з потрібними файлами.</small>
-                        </div>
-
-
+                        
                         <div class="admin-form-group">
                             <label for="tags">Теги <small>(через кому)</small></label>
-                             <input type="text" id="tags" name="tags" placeholder="квіти, традиційний, подарунок" value="<%= productData.tags ? productData.tags.join(', ') : '' %>">
+                            <input type="text" id="tags" name="tags" placeholder="квіти, традиційний, подарунок" value="<%= productData.tags ? productData.tags.join(', ') : '' %>">
                         </div>
 
-                         <div class="admin-form-group">
+                        <div class="admin-form-group">
                             <label for="materials">Матеріали <small>(через кому)</small></label>
-                             <input type="text" id="materials" name="materials" placeholder="Льон 100%, Бавовна" value="<%= productData.materials ? productData.materials.join(', ') : '' %>">
+                            <input type="text" id="materials" name="materials" placeholder="Льон 100%, Бавовна" value="<%= productData.materials ? productData.materials.join(', ') : '' %>">
                         </div>
 
-                         <div class="admin-form-group">
+                        <div class="admin-form-group">
                             <label for="colors">Кольори <small>(через кому)</small></label>
-                             <input type="text" id="colors" name="colors" placeholder="Білий, Червоний, Чорний" value="<%= productData.colors ? productData.colors.join(', ') : '' %>">
+                            <input type="text" id="colors" name="colors" placeholder="Білий, Червоний, Чорний" value="<%= productData.colors ? productData.colors.join(', ') : '' %>">
                         </div>
 
-                         <div class="admin-form-group">
+                        <div class="admin-form-group">
                             <label for="care_instructions">Інструкції по догляду</label>
                             <textarea id="care_instructions" name="care_instructions" rows="3"><%= productData.care_instructions || '' %></textarea>
                         </div>
 
-                         <div class="admin-form-group checkbox-group">
-                             <label>
-                                 <input type="checkbox" name="isFeatured" <%= productData.isFeatured ? 'checked' : '' %>>
-                                 <span>Показати в "Наші Хіти" на головній?</span>
-                             </label>
-                         </div>
+                        <div class="admin-form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" name="isFeatured" <%= productData.isFeatured ? 'checked' : '' %>>
+                                <span>Показати в "Наші Хіти" на головній?</span>
+                            </label>
+                        </div>
+
 
                         <hr>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Оновити товар</button>
                             <a href="/admin/products" class="btn btn-secondary">До списку товарів</a>
                         </div>
-
                     </form>
 
                     <form method="POST" action="/admin/products/<%= productData._id %>/delete" style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed #ccc;" onsubmit="return confirm('Ви впевнені, що хочете видалити цей товар? Цю дію не можна скасувати.');">
-                         <button type="submit" class="btn btn-danger btn-sm">Видалити товар</button>
-                     </form>
-
+                        <button type="submit" class="btn btn-danger btn-sm">Видалити товар</button>
+                    </form>
                 </div>
-
             <% } else { %>
                 <div class="admin-form-container">
                     <p>Помилка: Дані про товар не знайдено.</p>
@@ -173,27 +176,190 @@
         </div>
     </main>
     <script>
-        const metaDescTextarea = document.getElementById('metaDescription');
-        const metaDescCounter = document.getElementById('metaDescCounter');
-        const maxLength = 170;
-    
-        function updateCounter() {
-            const currentLength = metaDescTextarea.value.length;
-            metaDescCounter.textContent = `${currentLength} / ${maxLength}`;
-            if (currentLength > maxLength) {
-                metaDescCounter.style.color = 'red';
-            } else if (currentLength > 150) {
-                 metaDescCounter.style.color = 'orange';
+        document.addEventListener('DOMContentLoaded', function() {
+            // Лічильник для Meta Description
+            const metaDescTextarea = document.getElementById('metaDescription');
+            const metaDescCounter = document.getElementById('metaDescCounterEdit'); // Унікальний ID для сторінки редагування
+            const metaDescMaxLength = 170; 
+        
+            function updateMetaCounter() {
+                if (!metaDescTextarea || !metaDescCounter) return;
+                const currentLength = metaDescTextarea.value.length;
+                metaDescCounter.textContent = `${currentLength} / ${metaDescMaxLength}`;
+                if (currentLength > metaDescMaxLength) {
+                    metaDescCounter.style.color = 'red';
+                } else if (currentLength > metaDescMaxLength - 20) {
+                    metaDescCounter.style.color = 'orange';
+                } else {
+                    metaDescCounter.style.color = '#6c757d';
+                }
             }
-             else {
-                metaDescCounter.style.color = '#6c757d';
+        
+            if (metaDescTextarea && metaDescCounter) {
+                metaDescTextarea.addEventListener('input', updateMetaCounter);
+                updateMetaCounter();
             }
-        }
-    
-        if (metaDescTextarea && metaDescCounter) {
-            metaDescTextarea.addEventListener('input', updateCounter);
-            updateCounter();
-        }
+
+            // Передпросмотр для НОВИХ ОСНОВНИХ зображень (newImageFiles)
+            const newMainImageInput = document.getElementById('newImageFiles');
+            const newMainImagePreviewContainer = document.getElementById('newImagePreviewContainerEdit');
+            let newMainSelectedFilesStore = [];
+            const MAX_MAIN_FILES = 10;
+
+            function updateNewMainImagePreview() {
+                if (!newMainImagePreviewContainer) return;
+                newMainImagePreviewContainer.innerHTML = '';
+                newMainSelectedFilesStore.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const item = document.createElement('div');
+                        item.classList.add('image-preview-item');
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        const name = document.createElement('span');
+                        name.classList.add('file-name-preview');
+                        name.textContent = file.name.length > 15 ? file.name.substring(0,12) + '...' : file.name;
+                        const btn = document.createElement('button');
+                        btn.type = 'button'; btn.textContent = '×'; btn.dataset.index = index;
+                        btn.classList.add('btn-remove-preview');
+                        btn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.7);color:white;border:1px solid rgba(0,0,0,0.2);border-radius:50%;width:20px;height:20px;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0;';
+                        btn.onclick = handleRemoveNewMainImageFile;
+                        item.append(img, name, btn);
+                        newMainImagePreviewContainer.append(item);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (newMainImageInput) {
+                newMainImageInput.addEventListener('change', function(event) {
+                    if (event.target.files) {
+                        const filesToAdd = Array.from(event.target.files);
+                        if (newMainSelectedFilesStore.length + filesToAdd.length > MAX_MAIN_FILES) {
+                            alert(`Можна завантажити максимум ${MAX_MAIN_FILES} основних зображень.`);
+                            return;
+                        }
+                        newMainSelectedFilesStore.push(...filesToAdd);
+                        updateNewMainImagePreview();
+                        // НЕ очищуємо event.target.value для стандартної відправки
+                    }
+                });
+            }
+            function handleRemoveNewMainImageFile(event) {
+                const index = parseInt(event.target.dataset.index);
+                newMainSelectedFilesStore.splice(index, 1);
+                updateNewMainImagePreview();
+                // Потрібно оновити FileList в newMainImageInput, що складно.
+                // Простіше сказати користувачу, що для відправки будуть використані файли з інпуту.
+                alert("Файл видалено з предпросмотру. Для відправки будуть використані файли, що залишились у полі вибору.");
+            }
+
+
+            // Передпросмотр для НОВОГО "ЖИВОГО" ФОТО (livePhotoFileEdit)
+            const livePhotoInputEdit = document.getElementById('livePhotoFileEdit');
+            const livePhotoPreviewContainerEdit = document.getElementById('livePhotoPreviewContainerEdit');
+
+            if (livePhotoInputEdit && livePhotoPreviewContainerEdit) {
+                livePhotoInputEdit.addEventListener('change', function(event) {
+                    livePhotoPreviewContainerEdit.innerHTML = ''; 
+                    if (this.files && this.files[0]) {
+                        const file = this.files[0];
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewItem = document.createElement('div');
+                            previewItem.classList.add('image-preview-item');
+                            previewItem.style.width = 'auto'; // Дозволити більшу ширину для відео
+
+                            let mediaElement;
+                            if (file.type.startsWith('image/gif')) {
+                                mediaElement = document.createElement('img');
+                                mediaElement.alt = "Предпросмотр GIF";
+                            } else if (file.type.startsWith('video/')) {
+                                mediaElement = document.createElement('video');
+                                mediaElement.autoplay = true; mediaElement.loop = true; mediaElement.muted = true;
+                                mediaElement.alt = "Предпросмотр відео";
+                                mediaElement.setAttribute('playsinline', '');
+                            } else {
+                                livePhotoPreviewContainerEdit.textContent = 'Непідтримуваний тип файлу.';
+                                return;
+                            }
+                            mediaElement.src = e.target.result;
+                            mediaElement.style.maxWidth = '150px'; 
+                            mediaElement.style.maxHeight = '150px';
+                            mediaElement.style.objectFit = 'contain';
+
+                            const fileNameSpan = document.createElement('span');
+                            fileNameSpan.classList.add('file-name-preview');
+                            fileNameSpan.textContent = file.name.length > 20 ? file.name.substring(0,17) + '...' : file.name;
+                            
+                            // Кнопка видалення для live photo (якщо потрібно, щоб користувач міг скасувати вибір)
+                            const removeLiveBtn = document.createElement('button');
+                            removeLiveBtn.type = 'button'; removeLiveBtn.textContent = '×';
+                            removeLiveBtn.classList.add('btn-remove-preview');
+                            removeLiveBtn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.7);color:white;border:1px solid rgba(0,0,0,0.2);border-radius:50%;width:20px;height:20px;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0;';
+                            removeLiveBtn.onclick = () => {
+                                livePhotoInputEdit.value = null; // Очищуємо інпут
+                                livePhotoPreviewContainerEdit.innerHTML = ''; // Очищуємо предпросмотр
+                            };
+
+                            previewItem.appendChild(mediaElement);
+                            previewItem.appendChild(fileNameSpan);
+                            previewItem.appendChild(removeLiveBtn);
+                            livePhotoPreviewContainerEdit.appendChild(previewItem);
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Код для генерації Meta Description для сторінки редагування
+            const generateMetaBtnEdit = document.getElementById('generateMetaDescBtnEdit');
+            const productNameInputEdit = document.getElementById('name'); // Вже є на сторінці
+            const productDescriptionTextareaEdit = document.getElementById('description'); // Вже є
+            const metaDescTextareaEdit = document.getElementById('metaDescription'); // Вже є
+
+            if (generateMetaBtnEdit && productNameInputEdit && productDescriptionTextareaEdit && metaDescTextareaEdit) {
+                generateMetaBtnEdit.addEventListener('click', async function() {
+                    const productName = productNameInputEdit.value.trim();
+                    const productDescription = productDescriptionTextareaEdit.value.trim();
+
+                    if (!productName && !productDescription) {
+                        alert('Будь ласка, введіть назву та опис товару для генерації мета-опису.'); return;
+                    }
+                    if (!productName) { alert('Будь ласка, введіть назву товару.'); return; }
+                    if (!productDescription) { alert('Будь ласка, введіть опис товару.'); return; }
+
+                    this.disabled = true;
+                    this.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Генеруємо...`;
+
+                    try {
+                        const response = await fetch('/admin/generate-meta-description', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ productName: productName, productDescription: productDescription })
+                        });
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.message || `Помилка сервера: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        if (data.metaDescription) {
+                            metaDescTextareaEdit.value = data.metaDescription;
+                            updateMetaCounter(); // Оновлюємо лічильник для поля metaDescription
+                        } else {
+                            alert('Не вдалося згенерувати мета-опис.');
+                        }
+                    } catch (error) {
+                        console.error('Помилка генерації мета-опису (edit):', error);
+                        alert(`Помилка: ${error.message}`);
+                    } finally {
+                        this.disabled = false;
+                        this.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-magic" viewBox="0 0 16 16" style="margin-right: 5px; vertical-align: text-bottom;"><path d="M9.5 2.672a.5.5 0 1 0 1 0V.843a.5.5 0 0 0-1 0v1.829Zm4.5.035A.5.5 0 0 0 13.293 2L12 3.293a.5.5 0 1 0 .707.707L14 2.707ZM7.293 4A.5.5 0 1 0 8 3.293L6.707 2A.5.5 0 0 0 6 2.707L7.293 4Zm-.646 2.472A.5.5 0 1 0 6 5.843V4.013a.5.5 0 1 0-1 0v1.829h-1.02a.5.5 0 1 0 0 1H5v1.829a.5.5 0 1 0 1 0V6.843h1.02a.5.5 0 0 0 .646-.371Z"/><path d="M.5 12.04A.5.5 0 0 0 0 12.5v1.167l1.829 1.828a.5.5 0 0 0 .707-.707L1.207 13.5h1.166a.5.5 0 0 0 .5-.5V12a.5.5 0 0 0-.5-.5H1.207l1.328-1.329a.5.5 0 0 0-.707-.707L.5 11.293V12.04Zm15 0a.5.5 0 0 0-.5-.5h-1.166l-1.329-1.329a.5.5 0 0 0-.707.707L13.5 12h-1.167a.5.5 0 0 0-.5.5v.5a.5.5 0 0 0 .5.5h1.166l1.329 1.329a.5.5 0 0 0 .707-.707L14.5 13.5v-.793a.5.5 0 0 0-.5-.5Z"/><path d="M11.469 8.242c.063.577.346 1.383.997 2.294.634.921 1.373 1.853 1.996 2.62.313.384.415.962.23 1.373-.186.412-.646.656-1.125.568-.479-.088-.894-.422-1.114-.833-.21-.396-.203-1.02.048-1.562.252-.541.65-1.334 1.043-2.062-.631-.842-1.374-1.747-2.012-2.538-.317-.395-.423-.965-.234-1.379.188-.413.648-.66-1.128-.571-.48.088-.892.423-1.11.836-.211.396-.206 1.022-.044 1.564Zm-6.938 0c-.063.577-.346 1.383-.997 2.294-.634.921-1.373 1.853-1.996 2.62-.313.384-.415.962-.23 1.373.186.412.646.656 1.125.568-.479-.088-.894-.422-1.114-.833-.21-.396-.203-1.02-.048-1.562-.252-.541-.65-1.334-1.043-2.062.631-.842 1.374-1.747 2.012-2.538-.317-.395-.423-.965-.234-1.379-.188-.413-.648-.66-1.128-.571-.48.088-.892.423-1.11.836-.211.396-.206 1.022.044 1.564Z"/><path d="M4.973 8.242a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm6.054 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/></svg> Згенерувати`;
+                    }
+                });
+            }
+
+        });
     </script>
-    </body>
+</body>
 </html>

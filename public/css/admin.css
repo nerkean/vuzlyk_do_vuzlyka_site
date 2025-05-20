@@ -1,177 +1,54 @@
 :root {
     --color-white: #ffffff;
-    --color-light-bg: #f8f9fa;
+    --color-light-bg: #f8f9fa; /* Світлий фон для сторінки */
+    --color-form-bg: #ffffff; /* Фон для самої форми */
     --color-dark-bg: #343a40;
-    --color-border: #dee2e6;
-    --color-text: #212529;
-    --color-text-light: #6c757d;
-    --color-accent: #b9936c;
-    --color-footer-text: #adb5bd;
+    --color-border: #dee2e6; /* Основний колір рамки */
+    --color-border-light: #e9ecef; /* Світліший колір рамки */
+    --color-text: #212529; /* Основний колір тексту */
+    --color-text-light: #6c757d; /* Світлий колір тексту (для підписів, small) */
+    --color-accent: #b9936c; /* Акцентний колір */
+    --color-accent-dark: #a07e5a; /* Темніший акцент */
+    --color-primary: #007bff; /* Основний колір для кнопок (можна замінити на акцентний) */
+    --color-primary-dark: #0056b3;
     --color-danger: #dc3545;
     --color-danger-dark: #a71d2a;
     --color-success: #28a745;
-    --color-secondary: #6c757d;
-    --color-warning: #ffc107;
-    --color-warning-dark: #d39e00;
-    --color-primary: #007bff;
-    --color-primary-dark: #0056b3;
-    --box-shadow-light: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --box-shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --border-radius-main: 6px;
+    --color-secondary: #6c757d; /* Для другорядних кнопок */
+    --color-secondary-dark: #5a6268;
+
+    --font-main: 'Roboto', Arial, sans-serif; /* Пропоную Roboto, якщо він є в common.css, або залиште Arial */
+    --font-heading: 'Montserrat', Arial, sans-serif; /* Для заголовків, якщо є */
+
+    --box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --box-shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.1);
+    --border-radius-main: 8px; /* Збільшений радіус для м'якшого вигляду */
+    --input-padding-y: 0.65rem; /* Вертикальний падінг для інпутів */
+    --input-padding-x: 1rem;   /* Горизонтальний падінг для інпутів */
 }
 
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background-color: var(--color-light-bg);
-    padding: 20px;
-}
-
-.login-box {
-    background-color: var(--color-white);
-    padding: 30px 25px;
-    border-radius: var(--border-radius-main);
-    box-shadow: var(--box-shadow-medium);
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.login-box h1 {
-    font-size: 1.6em;
-    margin-bottom: 25px;
-    color: var(--color-text);
-}
-
-.login-box .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.login-box label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    font-size: 0.95em;
-}
-
-.login-box input[type="text"],
-.login-box input[type="password"] {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 4px;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-
-
-.login-box .login-button {
-    width: 100%;
-    padding: 12px;
-    font-size: 1.1em;
-    background-color: var(--color-accent);
-    color: var(--color-white);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.login-box .login-button:hover {
-    background-color: #a07e5a;
-}
-
-.login-box .error-message,
-.admin-main .error-message {
-    color: #721c24;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-    padding: 10px 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    font-size: 0.9em;
-    text-align: center;
-}
-
+/* Загальні стилі для адмін-частини */
 body.admin-body {
     background-color: var(--color-light-bg);
-    font-family: 'Arial', sans-serif;
+    font-family: var(--font-main);
     color: var(--color-text);
     margin: 0;
     font-size: 16px;
-}
-
-.current-images-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-.current-image-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-    border: 1px solid #eee;
-    padding: 5px;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    position: relative; /* Для позиціонування кнопки видалення */
-}
-.current-image-item img {
-    width: 80px; /* Збільшено для кращого перегляду */
-    height: 80px;
-    object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-}
- .current-image-item label {
-    font-size: 0.8em;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 3px;
- }
- .current-image-item input[type="checkbox"] {
-     margin: 0;
- }
-.file-input-label {
-     display: block;
-     padding: 10px 15px;
-     background-color: #f0f0f0;
-     border: 1px dashed #ccc;
-     border-radius: 4px;
-     cursor: pointer;
-     text-align: center;
-     margin-top: 5px;
-     transition: background-color 0.3s ease;
-}
-.file-input-label:hover {
-    background-color: #e9e9e9;
-}
-#newImages {
-    display: none; /* Ховаємо стандартний інпут */
-}
-#file-chosen {
-    margin-top: 8px;
-    font-style: italic;
-    font-size: 0.9em;
-    color: #555;
+    line-height: 1.6;
 }
 
 .container {
     width: 90%;
-    max-width: 1200px;
+    max-width: 1200px; /* Можна трохи збільшити для комфорту на великих екранах */
     margin: 0 auto;
     padding: 0 15px;
     box-sizing: border-box;
 }
 
+/* Хедер адмінки */
 .admin-header {
     background-color: var(--color-dark-bg);
-    padding: 10px 0;
+    padding: 15px 0; /* Трохи більше падінгу */
     color: var(--color-white);
     box-shadow: var(--box-shadow-light);
 }
@@ -184,27 +61,25 @@ body.admin-body {
 }
 
 .admin-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 1.3em;
+    margin: 0; /* Забрати зайві відступи, якщо вони є від браузера */
+    font-size: 1.5em; /* Трохи більший шрифт для заголовка */
+    font-family: var(--font-heading);
     color: var(--color-white);
-    width: 100%;
-    text-align: center;
 }
 
 .admin-header nav {
-    width: 100%;
     display: flex;
-    justify-content: center;
-    gap: 15px;
+    gap: 20px; /* Збільшити відстань між посиланнями */
 }
 
 .admin-header nav a {
-    color: var(--color-footer-text);
+    color: #e0e0e0; /* Трохи світліший текст для кращого контрасту */
     text-decoration: none;
-    padding: 5px 0;
+    padding: 8px 0; /* Збільшити падінг для кращого кліку */
     border-bottom: 2px solid transparent;
     transition: color 0.2s ease, border-color 0.2s ease;
-    font-size: 0.95em;
+    font-size: 1em;
+    font-weight: 500; /* Трохи жирніший шрифт */
 }
 .admin-header nav a:hover,
 .admin-header nav a.active {
@@ -212,323 +87,459 @@ body.admin-body {
     border-bottom-color: var(--color-accent);
 }
 
+/* Основний контент адмінки */
 .admin-main {
-    padding: 20px 0;
+    padding: 30px 0; /* Більше відступу зверху та знизу */
 }
 
-.admin-main h1 {
+.admin-main > .container > h1 { /* Стилізація головного H1 сторінки (напр. "Редагувати товар") */
     margin-top: 0;
-    margin-bottom: 25px;
-    font-size: 1.8em;
+    margin-bottom: 30px;
+    font-size: 2em; /* Більший розмір */
     text-align: center;
-}
-
-.admin-main h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-size: 1.6em;
-    text-align: center;
-}
-
-.btn {
-    display: inline-block;
-    padding: 10px 18px;
-    font-size: 1em;
-    font-weight: 600;
-    text-align: center;
-    text-decoration: none;
-    border: 1px solid transparent;
-    border-radius: var(--border-radius-main);
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-    margin-bottom: 15px;
-    vertical-align: middle;
-}
-.btn:hover {
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-}
-
-.btn-sm {
-    padding: 5px 10px;
-    font-size: 0.85em;
-}
-
-.btn-primary {
-    background-color: var(--color-primary);
-    color: var(--color-white);
-    border-color: var(--color-primary);
-}
-.btn-primary:hover {
-    background-color: var(--color-primary-dark);
-    border-color: var(--color-primary-dark);
-}
-
-.btn-success {
-    background-color: var(--color-success);
-    color: var(--color-white);
-    border-color: var(--color-success);
-}
-.btn-success:hover {
-    background-color: #218838;
-    border-color: #1e7e34;
-}
-.btn-danger {
-    background-color: var(--color-danger);
-    color: var(--color-white);
-    border-color: var(--color-danger);
-}
-.btn-danger:hover {
-    background-color: #c82333;
-    border-color: #bd2130;
-}
-.btn-secondary {
-    background-color: var(--color-secondary);
-    color: var(--color-white);
-    border-color: var(--color-secondary);
-}
-.btn-secondary:hover {
-    background-color: #5a6268;
-    border-color: #545b62;
-}
-.btn-warning {
-    background-color: var(--color-warning);
+    font-family: var(--font-heading);
     color: var(--color-text);
-    border-color: var(--color-warning);
-}
-.btn-warning:hover {
-    background-color: var(--color-warning-dark);
-    border-color: #cca000;
-}
-
-.table-responsive-wrapper {
-    overflow-x: auto;
-    margin-bottom: 20px;
-    border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-main);
-    background-color: var(--color-white);
-    box-shadow: var(--box-shadow-light);
-}
-
-.orders-table,
-.product-list-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 1em;
-    border: none;
-}
-
-.orders-table th, .orders-table td,
-.product-list-table th, .product-list-table td {
-    border: none;
-    border-bottom: 1px solid var(--color-border);
-    padding: 12px 10px;
-    text-align: left;
-    vertical-align: middle;
-}
-.orders-table tbody tr:last-child td,
-.product-list-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.orders-table thead,
-.product-list-table thead {
-    background-color: var(--color-light-bg);
-    border-bottom: 2px solid var(--color-border);
-}
-
-.orders-table th,
-.product-list-table th {
     font-weight: 600;
-    color: var(--color-text);
-    font-size: 0.9em;
-    white-space: nowrap;
-    border-bottom-width: 2px;
 }
 
-.orders-table tbody tr:nth-child(even),
-.product-list-table tbody tr:nth-child(even) {
-    background-color: #fdfdfd;
-}
-.orders-table tbody tr:hover,
-.product-list-table tbody tr:hover {
-    background-color: #f1f1f1;
-}
-
-.orders-table td ul { list-style: none; padding: 0; margin: 0; font-size: 0.9em; }
-.orders-table td ul li { margin-bottom: 4px; }
-.orders-table td ul li a { color: var(--color-accent); text-decoration: none; }
-.orders-table td ul li a:hover { text-decoration: underline; }
-.orders-table td .custom-description em { font-size: 0.85em; color: var(--color-text-light); display: block; margin-top: 5px; font-style: italic; line-height: 1.3; }
-.order-status-select { padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 4px; background-color: var(--color-white); cursor: pointer; font-size: 0.95em; width: 100%; max-width: 150px; box-sizing: border-box; }
-.btn-delete-order { background: none; border: none; color: var(--color-danger); cursor: pointer; font-size: 1.3em; padding: 5px; line-height: 1; transition: color 0.2s ease; vertical-align: middle; }
-.btn-delete-order:hover { color: var(--color-danger-dark); }
-
-.product-list-table img { max-width: 50px; max-height: 50px; height: auto; object-fit: contain; display: block; margin: auto; border-radius: 4px; }
-.product-actions { white-space: nowrap; }
-.product-actions .btn { margin-right: 5px; margin-bottom: 0; }
-.product-actions form { display: inline-block; margin: 0; }
-.product-actions form .btn { margin-right: 0; }
-
+/* Стилі для контейнера форми */
 .admin-form-container {
-    max-width: 800px;
-    margin: 1.5rem auto;
-    padding: 2rem;
-    background: var(--color-white);
+    max-width: 850px; /* Трохи ширше для комфорту */
+    margin: 2rem auto;
+    padding: 2.5rem; /* Більше внутрішніх відступів */
+    background: var(--color-form-bg);
     border-radius: var(--border-radius-main);
     box-shadow: var(--box-shadow-medium);
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border-light);
 }
 
+/* Групи полів форми */
 .admin-form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.75rem; /* Більший відступ між групами */
 }
 
 .admin-form-group label {
     display: block;
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.75rem; /* Більший відступ від інпута */
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 1em; /* Трохи більший шрифт */
     color: var(--color-text);
 }
 
 .admin-form-group label small {
     font-weight: normal;
-    font-size: 0.9em;
+    font-size: 0.85em; /* Зробити меншим */
     color: var(--color-text-light);
+    margin-left: 5px;
+    display: inline; /* Щоб було в одному рядку з текстом label */
+}
+.admin-form-group label .required { /* Стиль для зірочки */
+    color: var(--color-danger);
+    font-weight: bold;
+    margin-left: 3px;
 }
 
+
+/* Стилі для полів вводу, textarea, select */
 .admin-form-group input[type="text"],
 .admin-form-group input[type="number"],
+.admin-form-group input[type="file"], /* Стилізуємо input type file */
 .admin-form-group textarea,
 .admin-form-group select {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: var(--input-padding-y) var(--input-padding-x);
     border: 1px solid var(--color-border);
-    border-radius: 4px;
+    border-radius: var(--border-radius-main); /* Однаковий радіус */
     font-size: 1em;
+    font-family: var(--font-main);
     box-sizing: border-box;
-    background-color: #fff;
+    background-color: var(--color-white);
     color: var(--color-text);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.admin-form-group input[type="file"] {
+    padding: 0.5rem 0.75rem; 
+    line-height: 1.5; 
+    background-color: var(--color-white); /* Додано фон для консистентності */
+}
+
+
 .admin-form-group input:focus,
 .admin-form-group textarea:focus,
 .admin-form-group select:focus {
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    border-color: var(--color-accent); 
+    box-shadow: 0 0 0 0.2rem rgba(185, 147, 108, 0.25); 
     outline: none;
 }
 
 .admin-form-group textarea {
-    min-height: 100px;
+    min-height: 120px; 
     resize: vertical;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
+/* Стилі для чекбоксів */
 .admin-form-group.checkbox-group label {
     display: flex;
     align-items: center;
     font-weight: normal;
     cursor: pointer;
+    font-size: 0.95em; 
+    color: var(--color-text);
 }
 
 .admin-form-group input[type="checkbox"] {
-    width: auto;
-    margin-right: 8px;
-    vertical-align: middle;
-    height: 1.1em;
-    width: 1.1em;
+    width: auto; 
+    height: 1.1em; 
+    margin-right: 10px; 
     flex-shrink: 0;
+    accent-color: var(--color-accent); 
 }
 .admin-form-group input[type="checkbox"] + span {
      flex: 1;
      line-height: 1.4;
 }
 
-.admin-form-group small {
+/* Маленький текст під полями */
+.admin-form-group small, 
+#metaDescCounter,
+#file-chosen, 
+#file-chosen-edit { 
     color: var(--color-text-light);
-    font-size: 0.85em;
+    font-size: 0.875em; 
     display: block;
-    margin-top: 5px;
+    margin-top: 8px; 
+}
+#metaDescCounter {
+    text-align: right;
 }
 
+/* Рядок з кількома полями */
 .form-row {
     display: flex;
-    gap: 1.5rem;
+    gap: 1.75rem; 
     align-items: flex-start;
 }
 .form-row .admin-form-group {
     flex: 1;
 }
 
+/* Блок з кнопками */
 .form-actions {
     display: flex;
-    gap: 10px;
+    gap: 15px; 
     flex-wrap: wrap;
-    margin-top: 1.5rem;
-    border-top: 1px solid var(--color-border);
-    padding-top: 1.5rem;
-    justify-content: flex-start;
+    margin-top: 2rem; 
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 2rem; 
+    justify-content: flex-start; 
 }
 .form-actions .btn {
-    margin-bottom: 0;
-}
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    margin-bottom: 0; 
 }
 
-.modal-content {
-    background-color: #fefefe;
-    padding: 25px 30px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 450px;
+/* Стилізація блоку поточних зображень (для сторінки редагування) */
+.current-images-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px; 
+    padding: 15px; 
+    background-color: var(--color-light-bg); 
+    border: 1px solid var(--color-border-light);
     border-radius: var(--border-radius-main);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+.current-image-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px; 
+    border: 1px solid var(--color-border); 
+    padding: 10px; 
+    border-radius: var(--border-radius-main);
+    background-color: var(--color-white);
     position: relative;
+    transition: box-shadow 0.2s ease;
+    width: 120px; /* Фіксована ширина для кращого вигляду */
+}
+.current-image-item:hover {
+    box-shadow: var(--box-shadow-light);
+}
+
+.current-image-item img {
+    width: 100px; 
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px; 
+    border: 1px solid var(--color-border-light);
+}
+.current-image-item label { 
+    font-size: 0.9em;
+    cursor: pointer;
+    display: flex; 
+    align-items: center;
+    gap: 5px;
+    color: var(--color-danger); 
+    padding: 5px; 
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    text-align: center; /* Центрування тексту */
+    width: 100%; /* Щоб label займав всю ширину */
+    justify-content: center; /* Центрування вмісту label */
+}
+.current-image-item label:hover {
+    background-color: rgba(220, 53, 69, 0.05); /* Світліший фон при наведенні */
+}
+.current-image-item input[type="checkbox"] {
+    margin: 0; 
+    accent-color: var(--color-danger);
+}
+
+/* Стилізація блоку для ПЕРЕДПРОСМОТРУ нових зображень */
+.image-preview-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px; /* Відступ від інпуту файлів */
+    padding: 15px;
+    background-color: var(--color-light-bg);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-main);
+    min-height: 100px; /* Мінімальна висота, щоб було видно, навіть якщо порожньо */
+    align-items: flex-start; /* Вирівнювання елементів по верху */
+}
+
+.image-preview-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--color-border);
+    padding: 10px;
+    border-radius: var(--border-radius-main);
+    background-color: var(--color-white);
+    width: 120px; /* Фіксована ширина для мініатюр */
+    box-shadow: var(--box-shadow-light);
+}
+
+.image-preview-item img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.image-preview-item .file-name-preview {
+    font-size: 0.8em;
+    color: var(--color-text-light);
+    text-align: center;
+    word-break: break-all; /* Перенос довгих імен файлів */
+    max-width: 100px; /* Обмеження ширини тексту */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap; /* Запобігання переносу на новий рядок, якщо не влазить */
+}
+
+
+/* Стилізація кастомного інпуту для файлів (якщо використовується) */
+.file-input-label { 
+    display: inline-block; 
+    padding: var(--input-padding-y) var(--input-padding-x);
+    background-color: var(--color-light-bg);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--border-radius-main);
+    cursor: pointer;
+    text-align: center;
+    margin-top: 5px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    color: var(--color-text-light);
+}
+.file-input-label:hover {
+    background-color: var(--color-border-light);
+    border-color: var(--color-accent);
+    color: var(--color-accent-dark);
+}
+
+/* Стилі для кнопок */
+.btn-primary {
+    background-color: var(--color-accent); 
+    color: var(--color-white);
+    border-color: var(--color-accent);
+}
+.btn-primary:hover {
+    background-color: var(--color-accent-dark);
+    border-color: var(--color-accent-dark);
+}
+
+.btn-secondary {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+    border-color: var(--color-secondary);
+}
+.btn-secondary:hover {
+    background-color: var(--color-secondary-dark);
+    border-color: var(--color-secondary-dark);
+}
+
+
+/* Адаптивність для форм */
+@media (max-width: 768px) {
+    .admin-form-container {
+        padding: 1.5rem;
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 0; 
+    }
+    .form-row .admin-form-group {
+        margin-bottom: 1.75rem; 
+    }
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch; 
+    }
+    .form-actions .btn {
+        width: 100%;
+    }
+    .current-images-list, .image-preview-container { /* Центрувати зображення на мобільних */
+        justify-content: center; 
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-form-container {
+        padding: 1rem;
+    }
+    .admin-form-group input[type="text"],
+    .admin-form-group input[type="number"],
+    .admin-form-group input[type="file"],
+    .admin-form-group textarea,
+    .admin-form-group select {
+        padding: 0.6rem 0.8rem; 
+    }
+    .admin-form-group label {
+        font-size: 0.9em;
+    }
+    .current-image-item img, .image-preview-item img { /* Однаковий розмір для всіх мініатюр */
+        width: 80px;
+        height: 80px;
+    }
+    .current-image-item, .image-preview-item {
+        width: 100px; /* Зменшити ширину контейнера мініатюри */
+    }
+}
+
+/* Логін сторінка */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--color-light-bg);
+    padding: 20px;
+}
+.login-box {
+    background-color: var(--color-white);
+    padding: 40px 30px; 
+    border-radius: var(--border-radius-main);
+    box-shadow: var(--box-shadow-medium);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+.login-box h1 {
+    font-size: 1.8em; 
+    margin-bottom: 30px;
+    color: var(--color-text);
+    font-family: var(--font-heading);
+}
+.login-box .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+.login-box label {
+    display: block;
+    margin-bottom: 8px; 
+    font-weight: 600;
+    font-size: 0.95em;
+}
+.login-box input[type="text"],
+.login-box input[type="password"] {
+    width: 100%;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-main);
+    font-size: 1em;
+    box-sizing: border-box;
+}
+.login-box input[type="text"]:focus,
+.login-box input[type="password"]:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 0.2rem rgba(185, 147, 108, 0.25);
+    outline: none;
+}
+.login-box .login-button {
+    width: 100%;
+    padding: 0.8rem var(--input-padding-x); 
+    font-size: 1.1em;
+    background-color: var(--color-accent);
+    color: var(--color-white);
+    border: none;
+    border-radius: var(--border-radius-main);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-weight: 600;
+}
+.login-box .login-button:hover {
+    background-color: var(--color-accent-dark);
+}
+.login-box .login-button:active {
+    transform: translateY(1px);
+}
+.login-box .error-message { 
+    color: var(--color-danger-dark);
+    background-color: #fddede;
+    border: 1px solid var(--color-danger);
+    padding: 12px 15px;
+    border-radius: var(--border-radius-main);
+    margin-top: -10px; 
+    margin-bottom: 20px;
+    font-size: 0.9em;
     text-align: center;
 }
 
+/* Загальні стилі для таблиць */
+.table-responsive-wrapper {
+    overflow-x: auto;
+    margin-bottom: 25px; 
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-main);
+    background-color: var(--color-white);
+    box-shadow: var(--box-shadow-light);
+}
+
+.orders-table th, .orders-table td,
+.product-list-table th, .product-list-table td {
+    padding: 14px 12px; 
+}
+
+.orders-table th,
+.product-list-table th {
+    font-size: 0.95em; 
+    font-family: var(--font-heading);
+}
+
+/* Стилі для модального вікна */
+.modal-content {
+    padding: 30px 35px; 
+}
 .modal-content p {
-    margin-bottom: 20px;
-    font-size: 1.1em;
+    font-size: 1.15em; 
+    margin-bottom: 25px;
 }
 
-.close-button {
-    color: #aaa;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 28px;
-    font-weight: bold;
-    line-height: 1;
-}
-
-.close-button:hover,
-.close-button:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-#confirmActionBtn,
-#cancelActionBtn {
-    margin: 5px;
-    min-width: 100px;
-}
-
-
+/* Адаптивність для таблиць (залишено з вашого коду, можна переглянути за потреби) */
 @media (max-width: 992px) {
     .orders-table th, .orders-table td,
     .product-list-table th, .product-list-table td {
@@ -547,27 +558,37 @@ body.admin-body {
     .admin-header .container { flex-direction: column; }
     .admin-header h1 { margin-bottom: 15px; text-align: center; }
     .admin-header nav { justify-content: center; gap: 10px; }
-    .admin-header nav a { font-size: 0.9em; margin-left: 0; }
+    .admin-header nav a { font-size: 0.9em; /*margin-left: 0; Зайве, бо є gap */ }
 
-    .orders-table thead { display: none; }
-    .orders-table, .orders-table tbody, .orders-table tr, .orders-table td { display: block; width: 100%; box-sizing: border-box; }
-    .orders-table tr { margin-bottom: 15px; border: 1px solid var(--color-border); border-radius: var(--border-radius-main); overflow: hidden; box-shadow: var(--box-shadow-light); background-color: var(--color-white) !important; }
-    .orders-table td { border: none; border-bottom: 1px solid #eee; padding-left: 45%; position: relative; min-height: 30px; display: flex; align-items: center; text-align: right; }
-    .orders-table td:last-child { border-bottom: none; }
-    .orders-table td::before { content: attr(data-label); position: absolute; left: 10px; width: 40%; padding-right: 10px; font-weight: 600; white-space: nowrap; text-align: left; color: var(--color-text-light); font-size: 0.9em; }
+    .orders-table thead, .product-list-table thead { display: none; }
+    .orders-table, .orders-table tbody, .orders-table tr, .orders-table td,
+    .product-list-table, .product-list-table tbody, .product-list-table tr, .product-list-table td { 
+        display: block; width: 100%; box-sizing: border-box; 
+    }
+    .orders-table tr, .product-list-table tr { 
+        margin-bottom: 15px; border: 1px solid var(--color-border); 
+        border-radius: var(--border-radius-main); overflow: hidden; 
+        box-shadow: var(--box-shadow-light); background-color: var(--color-white) !important; 
+    }
+    .orders-table td, .product-list-table td { 
+        border: none; border-bottom: 1px solid #eee; padding-left: 45%; 
+        position: relative; min-height: 30px; display: flex; 
+        align-items: center; text-align: right; 
+    }
+    .orders-table td:last-child, .product-list-table td:last-child { border-bottom: none; }
+    .orders-table td::before, .product-list-table td::before { 
+        content: attr(data-label); position: absolute; left: 10px; 
+        width: 40%; padding-right: 10px; font-weight: 600; 
+        white-space: nowrap; text-align: left; color: var(--color-text-light); 
+        font-size: 0.9em; 
+    }
     .orders-table td[data-label="Товари"] ul { text-align: right; width: 100%; padding-left: 0; }
     .orders-table td[data-label="Товари"] .custom-description { text-align: right; width: 100%; margin-top: 8px; }
     .orders-table td[data-label="Статус"] select { max-width: none; margin-left: auto; }
     .orders-table td[data-label="Дії"] { padding-left: 10px; justify-content: flex-end; }
     .orders-table td[data-label="Дії"]::before { width: auto; }
     .orders-table td[data-label="Телефон"] a, .orders-table td[data-label="Email"] a { word-break: break-all; }
-
-    .product-list-table thead { display: none; }
-    .product-list-table, .product-list-table tbody, .product-list-table tr, .product-list-table td { display: block; width: 100%; box-sizing: border-box; }
-    .product-list-table tr { margin-bottom: 15px; border: 1px solid var(--color-border); border-radius: var(--border-radius-main); overflow: hidden; box-shadow: var(--box-shadow-light); background-color: var(--color-white) !important; }
-    .product-list-table td { border: none; border-bottom: 1px solid #eee; padding-left: 45%; position: relative; min-height: 40px; display: flex; align-items: center; text-align: right; }
-    .product-list-table td:last-child { border-bottom: none; }
-    .product-list-table td::before { content: attr(data-label); position: absolute; left: 10px; width: 40%; padding-right: 10px; font-weight: 600; white-space: nowrap; text-align: left; color: var(--color-text-light); font-size: 0.9em; }
+    
     .product-list-table td[data-label="Фото"] { padding-left: 10px; justify-content: flex-end; }
     .product-list-table td[data-label="Фото"]::before { width: auto; }
     .product-list-table td[data-label="Фото"] img { max-width: 40px; max-height: 40px; margin: 0; }
@@ -575,47 +596,25 @@ body.admin-body {
     .product-list-table td[data-label="Дії"]::before { width: auto; }
     .product-list-table td[data-label="Дії"] .btn, .product-list-table td[data-label="Дії"] form { margin: 0; }
     .product-list-table td[data-label="Дії"] form { display: inline-block; }
-
-    .admin-form-container {
-        padding: 1.5rem;
-        margin: 1rem auto;
-    }
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
-    .form-row .admin-form-group {
-        margin-bottom: 1.25rem;
-    }
-    .form-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 15px;
-    }
-    .form-actions .btn {
-        width: 100%;
-        margin: 0;
-        box-sizing: border-box;
-    }
 }
 
 @media (max-width: 480px) {
     body.admin-body { font-size: 15px; } 
-    .login-box { padding: 20px 15px; }
-    .admin-main h1 { font-size: 1.5em; }
-    .admin-main h2 { font-size: 1.4em; }
+    .login-box { padding: 25px 20px; } /* Зменшити падінги для дуже малих екранів */
+    .admin-main > .container > h1 { font-size: 1.6em; } /* Зменшити заголовок */
 
      .orders-table td,
      .product-list-table td {
          padding-left: 10px; padding-right: 10px; text-align: left;
-         min-height: 0; padding-top: 30px; align-items: flex-start;
+         min-height: 0; padding-top: 35px; /* Збільшити верхній падінг для data-label */
+         align-items: flex-start;
          flex-wrap: wrap;
      }
       .orders-table td::before,
       .product-list-table td::before {
-         position: absolute; top: 8px; left: 10px; width: calc(100% - 20px);
+         position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); /* Збільшити відступ для data-label */
          font-weight: bold; margin-bottom: 0; padding-right: 0;
-         white-space: normal; font-size: 0.8em; color: var(--color-text-light);
+         white-space: normal; font-size: 0.85em; color: var(--color-text-light);
      }
 
       .orders-table td[data-label="Товари"] ul,
@@ -626,40 +625,69 @@ body.admin-body {
      }
       .orders-table td[data-label="Дії"],
       .product-list-table td[data-label="Дії"] {
-         justify-content: flex-start; padding-top: 10px;
+         justify-content: flex-start; padding-top: 10px; /* Зменшити верхній падінг для дій */
      }
       .product-list-table td[data-label="Фото"] { padding-top: 10px; }
       .product-list-table td[data-label="Дії"] .btn,
       .product-list-table td[data-label="Дії"] form { margin: 0 5px 5px 0; }
 
-     .admin-form-container {
-         padding: 1rem; 
-         margin: 0.5rem auto;
-     }
-     .admin-form-group input[type="text"],
-     .admin-form-group input[type="number"],
-     .admin-form-group textarea,
-     .admin-form-group select {
-         padding: 0.6rem 0.8rem; 
-         font-size: 1em;
-     }
-     .admin-form-group label {
-         font-size: 0.9em;
-     }
      .admin-form-group {
-         margin-bottom: 1rem; 
+         margin-bottom: 1.25rem; /* Трохи збільшити відступ для кращої читабельності на малих екранах */
      }
-     .form-row .admin-form-group {
-         margin-bottom: 1rem;
+     .form-row .admin-form-group { /* Якщо form-row все ще використовується на малих екранах */
+         margin-bottom: 1.25rem;
      }
-
 
      .modal-content {
-        width: 90%; padding: 20px 15px;
+        width: 95%; padding: 20px 15px; /* Зробити модалку ширшою і зменшити падінги */
     }
-     .modal-content p { font-size: 1em; }
      #confirmActionBtn, #cancelActionBtn {
-        width: calc(50% - 10px); min-width: 0;
+        width: 100%; margin: 8px 0; /* Кнопки на всю ширину з відступом */
+        box-sizing: border-box;
     }
 }
 
+#generateMetaDescBtn {
+    background-color: var(--color-secondary); /* Або інший колір, наприклад, світло-синій */
+    border-color: var(--color-secondary);
+    color: var(--color-white);
+    padding: 0.5rem 0.8rem; /* Менші падінги для маленької кнопки */
+    font-size: 0.85em; /* Менший шрифт */
+    line-height: 1.5;
+    margin-left: 10px; /* Відступ від textarea */
+    white-space: nowrap; /* Щоб текст не переносився */
+}
+
+#generateMetaDescBtn:hover {
+    background-color: var(--color-secondary-dark);
+    border-color: var(--color-secondary-dark);
+}
+
+#generateMetaDescBtn:disabled {
+    background-color: var(--color-text-light);
+    border-color: var(--color-text-light);
+    cursor: not-allowed;
+}
+
+/* Стилі для спіннера (якщо ви його додасте) */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: .2em;
+    vertical-align: -0.125em; /* Вирівнювання зі текстом */
+    margin-right: 0.3em;
+}
+/* Bootstrap spinner animation (якщо не використовуєте Bootstrap CSS) */
+@keyframes spinner-border {
+  to { transform: rotate(360deg); }
+}
+.spinner-border {
+  display: inline-block;
+  width: 1em; /* Розмір спіннера */
+  height: 1em; /* Розмір спіннера */
+  vertical-align: text-bottom;
+  border: .15em solid currentColor; /* Товщина лінії */
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: .75s linear infinite spinner-border;
+}

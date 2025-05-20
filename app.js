@@ -13,6 +13,7 @@ const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const methodOverride = require('method-override');
 const helmet = require('helmet');
 const axios = require('axios');
+const cloudinary = require('cloudinary').v2;
 const { SitemapStream, streamToPromise } = require('sitemap');
 const { Readable } = require('stream');
 
@@ -34,6 +35,13 @@ mongoose.connection.on('error', err => {
     console.error('Помилка з\'єднання MongoDB:', err);
 });
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true
+});
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -41,75 +49,77 @@ app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
-          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(), // Залишає дефолтні значення, такі як default-src 'self'
           "script-src": [
             "'self'",
             "https://cdn.jsdelivr.net",
             "https://cdnjs.cloudflare.com",
             "https://www.googletagmanager.com",
             "https://www.google-analytics.com",
-            "https://unpkg.com",
+            "https://unpkg.com", // Для AOS та інших бібліотек з unpkg
             "https://*.googleadservices.com",
-            // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
-            "https://*.doubleclick.net", // Включает googleads.g.doubleclick.net, static.doubleclick.net и т.д.
+            "https://*.doubleclick.net",
             "https://tpc.googlesyndication.com",
-            // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
-            "'unsafe-inline'"
+             "https://cdn.tailwindcss.com", // ДОЗВІЛ для Tailwind CSS
+            "'unsafe-inline'" // Потрібно для деяких вбудованих скриптів або обробників подій
           ],
           "script-src-attr": [
-            "'unsafe-inline'"
+            "'unsafe-inline'" // Дозволяє inline обробники типу onclick, якщо вони є
           ],
           "style-src": [
             "'self'",
             "https://fonts.googleapis.com",
             "https://cdn.jsdelivr.net",
-            "https://cdnjs.cloudflare.com",
-            "https://unpkg.com",
-            "https://fonts.gstatic.com", // Оставим на всякий случай
-            "'unsafe-inline'"
+            "https://cdnjs.cloudflare.com", // Для Font Awesome та AOS
+            "https://unpkg.com", // Для AOS
+            "https://fonts.gstatic.com", 
+            "'unsafe-inline'" // Для вбудованих стилів
           ],
           "font-src": [
             "'self'",
-            "https://fonts.gstatic.com",
-            "https://cdnjs.cloudflare.com",
-            "data:"
+            "https://fonts.gstatic.com", // Для Google Fonts
+            "https://cdnjs.cloudflare.com", // Для Font Awesome
+            "data:" // Дозволяє data: URI для шрифтів (іноді використовується)
           ],
           "img-src": [
             "'self'",
-            "data:",
-            "https://www.google-analytics.com",
+            "data:", // Для вбудованих зображень (наприклад, base64)
+            "https://res.cloudinary.com", // Для зображень з Cloudinary
+            "https://www.google-analytics.com", // Для пікселів відстеження Google
             "https://www.googletagmanager.com",
             "https://*.google.com",
             "https://*.googleadservices.com",
-             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
-             "https://*.doubleclick.net", // Включает googleads.g.doubleclick.net и т.д.
-             "https://*.googlesyndication.com"
-             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
+            "https://*.doubleclick.net", 
+            "https://*.googlesyndication.com"
+          ],
+          // НОВА ДИРЕКТИВА або оновлення існуючої default-src
+          "media-src": [
+            "'self'", // Дозволяє медіа з вашого домену
+            "https://res.cloudinary.com" // ДОДАНО: Дозволяє відео/аудіо з Cloudinary
           ],
           "connect-src": [
             "'self'",
+            "https://res.cloudinary.com", // Для можливих API запитів до Cloudinary
             "https://www.google-analytics.com",
-            "https://region1.google-analytics.com",
+            "https://region1.google-analytics.com", // Для Google Analytics
             "https://www.googletagmanager.com",
             "https://*.google.com",
             "https://*.googleadservices.com",
-             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
-             "https://*.doubleclick.net" // Включает googleads.g.doubleclick.net и т.д.
-             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
+            "https://*.doubleclick.net" 
           ],
-          "frame-src": [
-             "'self'",
-             "https://*.google.com",
-             // --- >>> ИЗМЕНЕНО/ДОБАВЛЕНО (используем wildcard) <<< ---
-             "https://*.doubleclick.net" // Включает googleads.g.doubleclick.net, bid.g.doubleclick.net и т.д.
-             // --- >>> КОНЕЦ ИЗМЕНЕНИЯ <<< ---
-             ],
-          "object-src": ["'none'"]
+          "frame-src": [ // Для вбудованих фреймів (наприклад, Google reCAPTCHA, якщо використовуєте)
+            "'self'",
+            "https://*.google.com", // Для reCAPTCHA
+            "https://*.doubleclick.net" 
+          ],
+          "object-src": ["'none'"], // Забороняє <object>, <embed>, <applet>
+          "worker-src": ["'self'"], // Якщо використовуєте Web Workers
+          "form-action": ["'self'"], // Дозволяє формам відправлятися тільки на ваш домен
+          // "upgrade-insecure-requests": [], // Якщо сайт повністю на HTTPS, це корисно
         }
       },
-      // Остальные настройки helmet остаются без изменений
       crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-      crossOriginEmbedderPolicy: false,
+      crossOriginEmbedderPolicy: false, // Встановіть true, якщо всі ресурси це дозволяють
       referrerPolicy: { policy: "strict-origin-when-cross-origin" }
     })
   );
@@ -507,7 +517,7 @@ app.post('/cart/add', async (req, res) => {
           return res.status(404).json({ success: false, message: 'Товар не знайдено' });
       }
 
-      let imageForCart = '/images/placeholder.png'; 
+      let imageForCart = '/images/placeholder.svg'; 
       if (product.images && product.images.length > 0 && product.images[0].thumb) {
            imageForCart = product.images[0].thumb;
       } else if (product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
@@ -855,12 +865,19 @@ app.post('/order/place', async (req, res) => {
             throw new Error('Email configuration missing.');
         } else {
             const transporter = nodemailer.createTransport({
-                service: 'gmail',
+                host: process.env.SMTP_HOST,
+                port: parseInt(process.env.SMTP_PORT, 10),
+                secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
                 auth: {
-                    user: process.env.EMAIL_USER,
-                    pass: process.env.EMAIL_PASS
-                }
+                    user: process.env.EMAIL_USER, // info@vuzlyk.com
+                    pass: process.env.EMAIL_PASS, // пароль від info@vuzlyk.com
+                },
+                // tls: {
+                // ciphers:'SSLv3' // Може знадобитися для деяких хостингів
+                // rejectUnauthorized: false // УВАГА: Не рекомендується для продакшена
+                // }
             });
+
             const accentColor = '#b9936c';
             const accentDarkColor = '#a07e5a';
             const textColor = '#333333';
@@ -927,13 +944,19 @@ app.post('/order/place', async (req, res) => {
                 </body>
                 </html>
             `;
-            const mailOptionsAdmin = {
-                from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`,
+ const mailOptionsAdmin = {
+                from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`, // Відправник info@vuzlyk.com
                 to: process.env.ADMIN_EMAIL,
-                subject: `Новий запит на замовлення з сайту Vuzlyk (${orderData.contactInfo.name})`,
+                subject: `Новий запит на замовлення з сайту Vuzlyk (#${newOrder._id} - ${orderData.contactInfo.name})`,
                 html: emailHtmlAdmin
             };
-            await transporter.sendMail(mailOptionsAdmin);
+            
+            transporter.sendMail(mailOptionsAdmin, (error, info) => {
+                if (error) {
+                    return console.error('[Order Email Admin] Помилка відправки листа адміністратору:', error);
+                }
+                console.log('[Order Email Admin] Лист адміністратору успішно відправлено: ' + info.response);
+            });
 
             const customerSubject = `Ваш запит на замовлення #${newOrder._id} на Vuzlyk отримано!`;
             const customerEmailHtml = `
@@ -982,16 +1005,19 @@ app.post('/order/place', async (req, res) => {
                 </html>
             `;
 
-            const mailOptionsCustomer = {
-                from: `"Сайт Vuzlyk" <${process.env.EMAIL_USER}>`,
+  const mailOptionsCustomer = {
+                from: `"Вузлик до вузлика" <${process.env.EMAIL_USER}>`, // Відправник info@vuzlyk.com
                 to: orderData.contactInfo.email,
                 subject: customerSubject,
                 html: customerEmailHtml
             };
 
-            try {
-                await transporter.sendMail(mailOptionsCustomer);
-            } catch (customerMailError) {}
+            transporter.sendMail(mailOptionsCustomer, (error, info) => {
+                if (error) {
+                    return console.error('[Order Email Customer] Помилка відправки листа клієнту:', error);
+                }
+                console.log('[Order Email Customer] Лист клієнту успішно відправлено: ' + info.response);
+            });
         }
         req.session.cart = [];
         res.redirect('/order/request-sent');
@@ -1007,6 +1033,10 @@ app.get('/order/request-sent', (req, res) => {
 app.get('/privacy-policy', (req, res) => { res.render('privacy-policy'); });
 app.get('/terms', (req, res) => { res.render('terms-of-service'); });
 app.get('/faq', (req, res) => { res.render('faq'); });
+const blogAdminRoutes = require('./routes/blogAdminRoutes');
+app.use('/admin/blog', blogAdminRoutes); 
+const blogRoutes = require('./routes/blogRoutes');
+app.use('/blog', blogRoutes);
 app.get('/about', (req, res) => {
   try {
       res.render('about');

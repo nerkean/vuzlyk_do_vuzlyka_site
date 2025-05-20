@@ -382,7 +382,7 @@ strong {
 }
 .logo-img {
     height: 50px;
-    width: 50px;
+    width: 80px;
     margin-right: 12px;
 }
 .main-nav ul {
@@ -829,6 +829,9 @@ strong {
     
     .logo {
        flex-shrink: 1; 
+    }
+        .logo-img {
+       margin-right: 0px;
     }
 }
 

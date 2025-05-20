@@ -55,7 +55,7 @@
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "Customer Service",
-            "email": "vuzlykinfo@gmail.com"
+            "email": "info@vuzlyk.com"
           },
           "address": {
             "@type": "PostalAddress",
@@ -183,7 +183,7 @@
                                 <div class="product-image-wrapper">
                                     <a href="/product/<%= product._id %>">
                                         <%
-                                        let featuredImgSrc = '/images/placeholder.png';
+                                        let featuredImgSrc = '/images/placeholder.svg';
                                         let imgWidth = 300;
                                         let imgHeight = 400;
                                         if (product.images && product.images.length > 0) {
@@ -193,7 +193,7 @@
                                         <img src="<%= featuredImgSrc %>"
                                              alt="Вишивка ручної роботи <%= product.name %>"
                                              width="<%= imgWidth %>" height="<%= imgHeight %>" loading="lazy"
-                                             onerror="this.onerror=null; this.src='/images/placeholder.png';">
+                                             onerror="this.onerror=null; this.src='/images/placeholder.svg';">
                                         <div class="product-overlay">
                                             <span class="view-details-btn">Детальніше</span>
                                         </div>

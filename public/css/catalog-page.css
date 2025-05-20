@@ -277,6 +277,14 @@
     border: 1px solid var(--color-border);
     text-align: center;
 }
+.product-card-image { 
+    display: block;
+    width: 100%;
+    height: auto; 
+    object-fit: cover; 
+    transition: opacity 0.3s ease-in-out;
+}
+
 .product-card:hover { 
     box-shadow: var(--box-shadow-medium);
     transform: translateY(-5px);

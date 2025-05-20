@@ -73,13 +73,15 @@ const passwordChangeLimiter = rateLimit({
 });
 
 async function sendVerificationEmail(email, code) {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-        console.error('ПОМИЛКА: Email credentials не встановлені в .env');
+    if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+        console.error('ПОМИЛКА: Email credentials або SMTP налаштування не встановлені в .env');
         throw new Error('Налаштування для відправки email відсутні.');
     }
 
     const transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT, 10),
+        secure: process.env.SMTP_SECURE === 'true', 
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS,
@@ -87,7 +89,7 @@ async function sendVerificationEmail(email, code) {
     });
 
     const mailOptions = {
-        from: `"Вузлик" <${process.env.EMAIL_USER}>`,
+        from: `"Вузлик до вузлика" <${process.env.EMAIL_USER}>`, 
         to: email,
         subject: 'Код підтвердження реєстрації на сайті Вузлик',
         html: `
@@ -99,17 +101,17 @@ async function sendVerificationEmail(email, code) {
                 <p>Якщо ви не намагалися зареєструватися, просто проігноруйте цей лист.</p>
                 <hr>
                 <p style="font-size: 0.9em; color: #777;">З повагою,<br>Майстерня Вузлик до вузлика</p>
+                <p style="font-size:0.8em; color:#aaa;">Це повідомлення надіслано з адреси ${process.env.EMAIL_USER}</p>
             </div>
         `,
-        text: `Вітаємо у Вузлик! Ваш код підтвердження: ${code}. Цей код дійсний протягом 15 хвилин. Якщо ви не реєструвалися, проігноруйте цей лист.`
+        text: `Вітаємо у Вузлик! Ваш код підтвердження: ${code}. Цей код дійсний протягом 15 хвилин. Якщо ви не реєструвалися, проігноруйте цей лист. Надіслано з ${process.env.EMAIL_USER}`
     };
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`Код підтвердження відправлено на ${email}`);
+        console.log(`[Email Service] Код підтвердження відправлено на ${email} з адреси ${process.env.EMAIL_USER}`);
     } catch (error) {
-        console.error(`Помилка відправки коду на ${email}:`, error);
-        throw new Error('Не вдалося відправити email з кодом підтвердження.');
+        console.error(`[Email Service] Помилка відправки коду на ${email} з ${process.env.EMAIL_USER}:`, error);
     }
 }
 

@@ -9,11 +9,13 @@
 <body class="admin-body"> <header class="admin-header">
         <div class="container">
             <h1>Панель Адміністратора</h1>
-            <nav>
-                <a href="/admin/orders" class="active">Замовлення</a>
-                <a href="/admin/products">Товари</a>
-                <a href="/admin/logout">Вийти</a>
-            </nav>
+<nav>
+    <a href="/admin/orders" class="<%= typeof pageName !== 'undefined' && pageName === 'orders' ? 'active' : '' %>">Замовлення</a>
+    <a href="/admin/products" class="<%= typeof pageName !== 'undefined' && pageName === 'products' ? 'active' : '' %>">Товари</a>
+    <a href="/admin/blog" class="<%= typeof pageName !== 'undefined' && pageName === 'blog' ? 'active' : '' %>">Блог</a>
+    <a href="/admin/blog/html-guide" class="<%= typeof pageName !== 'undefined' && pageName === 'html-guide' ? 'active' : '' %>">HTML Інструкція</a> 
+    <a href="/admin/logout">Вийти</a>
+</nav>
         </div>
     </header>
 

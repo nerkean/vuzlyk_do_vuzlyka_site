@@ -3,15 +3,18 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Post = require('../models/Post');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
 const sharp = require('sharp');
+const cloudinary = require('cloudinary').v2;
+const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require("@google/generative-ai");
 
 const uploadDir = path.join(__dirname, '..', 'public', 'images', 'uploads');
 fs.mkdir(uploadDir, { recursive: true })
-    .then(() => console.log(`Папка для завантажень існує або створена: ${uploadDir}`))
-    .catch(err => console.error(`Помилка створення папки ${uploadDir}:`, err));
+    .then(() => console.log(`[Admin Routes] Папка для завантажень існує або створена: ${uploadDir}`))
+    .catch(err => console.error(`[Admin Routes] Помилка створення папки ${uploadDir}:`, err));
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -24,21 +27,41 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-
-    if (mimetype && extname) {
-        return cb(null, true);
+    if (file.fieldname === "imageFiles") {
+        const imageMime = /image\/(jpeg|jpg|png|gif|webp)/.test(file.mimetype);
+        const imageExt = /jpeg|jpg|png|gif|webp/.test(path.extname(file.originalname).toLowerCase());
+        if (imageMime && imageExt) {
+            return cb(null, true);
+        }
+        req.fileValidationError = req.fileValidationError || {};
+        req.fileValidationError[file.fieldname] = 'Для основних зображень дозволено: jpg, png, gif, webp.';
+        return cb(null, false);
+    } else if (file.fieldname === "livePhotoFile") {
+        const liveMime = /image\/gif|video\/mp4|video\/webm/.test(file.mimetype);
+        const liveExt = /gif|mp4|webm/.test(path.extname(file.originalname).toLowerCase());
+        if (liveMime && liveExt) {
+            return cb(null, true);
+        }
+        req.fileValidationError = req.fileValidationError || {};
+        req.fileValidationError[file.fieldname] = 'Для "живого" фото дозволено: GIF, MP4, WebM.';
+        return cb(null, false);
+    } else {
+        console.warn(`[Multer File Filter] Отримано файл з невідомим ім'ям поля: ${file.fieldname}`);
+        cb(new Error(`Неочікуване поле файлу: ${file.fieldname}`), false);
     }
-    cb(new Error('Дозволено завантажувати лише файли зображень (jpg, jpeg, png, gif, webp)!'), false);
 };
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 },
+    limits: { fileSize: 10 * 1024 * 1024 }, 
     fileFilter: fileFilter
 });
+
+const cpUpload = upload.fields([
+    { name: 'imageFiles', maxCount: 10 },
+    { name: 'livePhotoFile', maxCount: 1 }
+]);
+
 
 function checkAdminAuth(req, res, next) {
     if (req.session && req.session.isAdmin) {
@@ -143,7 +166,7 @@ router.get('/products', checkAdminAuth, async (req, res, next) => {
             products: products
         });
     } catch (error) {
-        console.error("Помилка завантаження товарів для адмін-панелі:", error);
+        console.error("[Admin Routes] Помилка завантаження товарів для адмін-панелі:", error);
         next(error);
     }
 });
@@ -159,109 +182,161 @@ router.get('/products/new', checkAdminAuth, (req, res) => {
     });
 });
 
-router.post('/products', checkAdminAuth, upload.array('imageFiles', 10), async (req, res, next) => {
+router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
     const categories = ['Вишивка'];
     const formData = req.body;
 
+    const mainImageFiles = req.files && req.files.imageFiles ? req.files.imageFiles : [];
+    const livePhotoFile = req.files && req.files.livePhotoFile ? req.files.livePhotoFile[0] : null;
+
+    let fileValidationErrorMessage = '';
     if (req.fileValidationError) {
-        if (req.files) {
-            await Promise.all(req.files.map(file => fs.unlink(file.path).catch(e => console.error("Failed to delete invalid file:", e))));
+        if(req.fileValidationError.imageFiles) fileValidationErrorMessage += req.fileValidationError.imageFiles + " ";
+        if(req.fileValidationError.livePhotoFile) fileValidationErrorMessage += req.fileValidationError.livePhotoFile;
+    }
+
+    if (fileValidationErrorMessage.trim() !== '') {
+        if (mainImageFiles.length > 0) {
+            await Promise.all(mainImageFiles.map(file => fs.unlink(file.path).catch(e => console.error("[Admin Routes] Failed to delete invalid main image file:", e.message, file.path))));
+        }
+        if (livePhotoFile) {
+            await fs.unlink(livePhotoFile.path).catch(e => console.error("[Admin Routes] Failed to delete invalid live photo file:", e.message, livePhotoFile.path));
         }
         return res.status(400).render('admin/new-product', {
             pageTitle: 'Помилка - Додати Товар', categories, formData,
-            error: req.fileValidationError
+            error: fileValidationErrorMessage.trim()
         });
     }
 
-    if (!req.files || req.files.length === 0) {
+    if (mainImageFiles.length === 0) { 
+        if (livePhotoFile) {
+             await fs.unlink(livePhotoFile.path).catch(e => console.error("[Admin Routes] Failed to delete live photo due to no main images:", e.message, livePhotoFile.path));
+        }
         return res.status(400).render('admin/new-product', {
             pageTitle: 'Помилка - Додати Товар', categories, formData,
-            error: 'Необхідно завантажити хоча б одне зображення.'
+            error: 'Необхідно завантажити хоча б одне основне зображення товару.'
         });
     }
+    
+    const successfullyProcessedOriginalPaths = [];
+    let livePhotoTempPath = null; 
 
     try {
+        let numPrice = 0;
+        let numMaxPrice = null;
+
         const {
             name, description, price, maxPrice, category,
             tags, materials, colors, care_instructions, isFeatured,
-            creation_time_info,
-            status, metaDescription 
+            creation_time_info, status, metaDescription
         } = req.body;
 
-        if (!name || !description || !price || !category || !creation_time_info) {
-            await Promise.all(req.files.map(file => fs.unlink(file.path).catch(e => console.error("Cleanup failed:", e))));
+        if (price !== undefined && price !== null && price !== '') {
+            numPrice = parseFloat(price);
+            if (isNaN(numPrice)) { numPrice = 0; console.warn("[Admin Routes] POST: Некоректний формат ціни, встановлено 0. Отримано:", price); }
+        }
+        numPrice = numPrice || 0;
+
+        if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+            numMaxPrice = parseFloat(maxPrice);
+            if (isNaN(numMaxPrice)) { numMaxPrice = null; }
+        }
+        numMaxPrice = numMaxPrice || null;
+
+        if (!name || !description || (price === undefined || price === null || price === '') || !category || !creation_time_info) {
+            const allTempFiles = mainImageFiles.map(f => f.path);
+            if (livePhotoFile) allTempFiles.push(livePhotoFile.path);
+            await Promise.all(allTempFiles.map(p => fs.unlink(p).catch(e => console.error("[Admin Routes] Cleanup failed for validation error (missing fields):", e.message, p))));
             return res.status(400).render('admin/new-product', {
-                pageTitle: 'Помилка - Додати Товар', categories, formData,
-                error: 'validation'
+                pageTitle: 'Помилка - Додати Товар', categories, formData, error: 'validation'
             });
         }
-        const numPrice = parseFloat(price) || 0;
-        const numMaxPrice = maxPrice ? (parseFloat(maxPrice) || null) : null;
-
+        
         if (numMaxPrice !== null && numMaxPrice < numPrice) {
-            if (req.files) { req.files.forEach(file => { try { fs.unlinkSync(file.path); } catch(e){} }); }
+            const allTempFiles = mainImageFiles.map(f => f.path);
+            if (livePhotoFile) allTempFiles.push(livePhotoFile.path);
+            await Promise.all(allTempFiles.map(p => fs.unlink(p).catch(e => console.error("[Admin Routes] Cleanup failed for price validation error:", e.message, p))));
             return res.status(400).render('admin/new-product', {
-                pageTitle: 'Помилка - Додати Товар', categories, formData,
-                error: 'price_validation'
+                pageTitle: 'Помилка - Додати Товар', categories, formData, error: 'price_validation'
             });
         }
 
         const processedImagesData = [];
-        const filesToDeleteOnError = [];
-
-        for (const file of req.files) {
+        for (const file of mainImageFiles) {
             const originalPath = file.path;
             const baseFilename = path.parse(file.filename).name;
-            const imagePaths = {};
-            const generatedFiles = [];
-
-            let imageBuffer;
-            try {
-                imageBuffer = await fs.readFile(originalPath);
-                await fs.unlink(originalPath);
-            } catch (readOrDeleteError) {
-                filesToDeleteOnError.push(originalPath);
-                continue;
-            }
+            const imageSetUrlsAndIds = { large: null, medium: null, thumb: null }; 
 
             try {
+                const imageBuffer = await fs.readFile(originalPath);
                 const sizes = {
                     large: { width: 1000, quality: 80 },
                     medium: { width: 600, quality: 75 },
                     thumb: { width: 300, quality: 70 }
                 };
-
                 const imageProcessor = sharp(imageBuffer);
 
                 for (const [sizeName, options] of Object.entries(sizes)) {
-                    const newFilename = `${baseFilename}-${sizeName}.webp`;
-                    const outputPath = path.join(uploadDir, newFilename);
+                    const processedBuffer = await imageProcessor.clone().resize({ width: options.width, withoutEnlargement: true }).webp({ quality: options.quality }).toBuffer();
+                    const publicIdForUpload = `${baseFilename}-${sizeName}-${Date.now()}`;
+                    const uploadResult = await new Promise((resolve, reject) => {
+                        const uploadStream = cloudinary.uploader.upload_stream(
+                            { folder: "products", public_id: publicIdForUpload, resource_type: "image", format: "webp" },
+                            (error, result) => error ? reject(error) : resolve(result)
+                        );
+                        uploadStream.end(processedBuffer);
+                    });
 
-                    await imageProcessor
-                        .clone()
-                        .resize({ width: options.width, withoutEnlargement: true })
-                        .webp({ quality: options.quality })
-                        .toFile(outputPath);
-
-                    const relativePath = `/images/uploads/${newFilename}`;
-                    imagePaths[sizeName] = relativePath;
-                    generatedFiles.push(outputPath);
+                    if (!uploadResult || !uploadResult.secure_url || !uploadResult.public_id) {
+                        throw new Error(`Помилка завантаження версії ${sizeName} в Cloudinary для ${file.originalname}`);
+                    }
+                    imageSetUrlsAndIds[sizeName] = { url: uploadResult.secure_url, public_id: uploadResult.public_id };
                 }
-
-                processedImagesData.push(imagePaths);
-
-            } catch (sharpError) {
-                await Promise.all(generatedFiles.map(p => fs.unlink(p).catch(e => console.warn(`Не вдалося видалити ${p}:`, e))));
-                throw new Error(`Помилка обробки зображення: ${file.originalname}`);
+                
+                if (imageSetUrlsAndIds.large && imageSetUrlsAndIds.large.url && imageSetUrlsAndIds.large.public_id &&
+                    imageSetUrlsAndIds.medium && imageSetUrlsAndIds.medium.url && imageSetUrlsAndIds.medium.public_id &&
+                    imageSetUrlsAndIds.thumb && imageSetUrlsAndIds.thumb.url && imageSetUrlsAndIds.thumb.public_id) {
+                    processedImagesData.push(imageSetUrlsAndIds);
+                    successfullyProcessedOriginalPaths.push(originalPath);
+                } else {
+                    throw new Error(`Не вдалося сформувати повний набір зображень (L,M,S) для файлу ${file.originalname}`);
+                }
+            } catch (fileProcessingError) {
+                console.error(`[Admin Routes] Помилка обробки основного файлу ${file.originalname}:`, fileProcessingError.message);
+                try { await fs.unlink(originalPath); } catch (e) { }
+                throw fileProcessingError; 
             }
         }
 
-        if (processedImagesData.length === 0) {
-            await Promise.all(filesToDeleteOnError.map(filePath => fs.unlink(filePath).catch(e => console.error("Cleanup failed for unprocessed file:", e))));
-            return res.status(400).render('admin/new-product', {
+        if (processedImagesData.length === 0 && mainImageFiles.length > 0) {
+            if (livePhotoFile) await fs.unlink(livePhotoFile.path).catch(e => {});
+            return res.status(400).render('admin/new-product', { 
                 pageTitle: 'Помилка - Додати Товар', categories, formData,
-                error: 'Не вдалося обробити завантажені зображення.'
+                error: 'Не вдалося обробити жодного основного зображення.'
             });
+        }
+
+        let livePhotoUrlDb = null;
+        let livePhotoPublicIdDb = null;
+        if (livePhotoFile) {
+            livePhotoTempPath = livePhotoFile.path;
+            console.log(`[Admin Routes] POST: Обробка livePhotoFile: ${livePhotoFile.originalname}`);
+            try {
+                const uploadResult = await cloudinary.uploader.upload(livePhotoTempPath, {
+                    folder: "products/live_photos",
+                    resource_type: livePhotoFile.mimetype.startsWith('image/gif') ? "image" : "video",
+                });
+                if (uploadResult && uploadResult.secure_url) {
+                    livePhotoUrlDb = uploadResult.secure_url;
+                    livePhotoPublicIdDb = uploadResult.public_id;
+                    successfullyProcessedOriginalPaths.push(livePhotoTempPath); 
+                } else {
+                    throw new Error('Не вдалося завантажити "живе" фото в Cloudinary.');
+                }
+            } catch (livePhotoError) {
+                console.error(`[Admin Routes] POST: Помилка завантаження "живого" фото ${livePhotoFile.originalname}:`, livePhotoError.message);
+                try { await fs.unlink(livePhotoTempPath); } catch(e) { }
+            }
         }
 
         const processedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
@@ -269,37 +344,53 @@ router.post('/products', checkAdminAuth, upload.array('imageFiles', 10), async (
         const processedColors = colors ? colors.split(',').map(c => c.trim()).filter(c => c) : [];
 
         const newProduct = new Product({
-            name,
-            description,
-            metaDescription: metaDescription ? metaDescription.trim() : null,
-            price: numPrice,
+            name, description, metaDescription: metaDescription ? metaDescription.trim() : null,
+            price: numPrice, 
             maxPrice: (numMaxPrice !== null && numMaxPrice >= numPrice) ? numMaxPrice : undefined,
-            category,
-            status: status || 'Під замовлення',
-            images: processedImagesData,
-            tags: processedTags,
-            materials: processedMaterials,
-            colors: processedColors,
-            care_instructions,
-            creation_time_info,
-            isFeatured: isFeatured === 'on'
+            category, status: status || 'Під замовлення', images: processedImagesData,
+            livePhotoUrl: livePhotoUrlDb,
+            livePhotoPublicId: livePhotoPublicIdDb,
+            tags: processedTags, materials: processedMaterials, colors: processedColors,
+            care_instructions, creation_time_info, isFeatured: isFeatured === 'on'
         });
-
         await newProduct.save();
+
+        for (const pathToDelete of successfullyProcessedOriginalPaths) {
+            try {
+                await fs.unlink(pathToDelete);
+            } catch (unlinkError) {
+                console.warn(`[Admin Routes] Не вдалося видалити тимчасовий файл ${pathToDelete}:`, unlinkError.message);
+            }
+        }
         res.redirect('/admin/products');
-    } catch (error) {
-        if (req.files && error.name !== 'Error') {
-            await Promise.all(req.files.map(file => fs.unlink(file.path).catch(e => console.error("Cleanup failed:", e))));
+    } catch (error) { 
+        console.error('[Admin Routes] Загальна помилка в POST /admin/products (зовнішній catch):', error.message, error.stack);
+        
+        const allTempFilesPaths = mainImageFiles.map(f => f.path);
+        if (livePhotoFile && livePhotoFile.path) { 
+            allTempFilesPaths.push(livePhotoFile.path);
+        }
+        const pathsToAttemptDelete = allTempFilesPaths.filter(p => !successfullyProcessedOriginalPaths.includes(p));
+
+        if (pathsToAttemptDelete.length > 0) {
+            console.log('[Admin Routes] Спроба очищення залишених тимчасових файлів через загальну помилку...');
+            await Promise.all(pathsToAttemptDelete.map(filePath => {
+                return fs.unlink(filePath)
+                    .then(() => console.log(`[Admin Routes] Тимчасовий файл ${filePath} видалено (загальна помилка).`))
+                    .catch(e => console.warn(`[Admin Routes] Не вдалося видалити ${filePath} (загальна помилка):`, e.message));
+            }));
         }
         if (error.name === 'ValidationError') {
             let errorMsg = 'Помилка валідації: ';
             for (let field in error.errors) { errorMsg += `${error.errors[field].message} `; }
             return res.status(400).render('admin/new-product', {
-                pageTitle: 'Помилка - Додати Товар', categories, formData,
-                error: errorMsg
+                pageTitle: 'Помилка - Додати Товар', categories, formData, error: errorMsg.trim()
             });
         }
-        next(error);
+        return res.status(500).render('admin/new-product', {
+            pageTitle: 'Помилка - Додати Товар', categories, formData,
+            error: error.message || 'Сталася невідома помилка при обробці зображень.'
+        });
     }
 });
 
@@ -307,18 +398,17 @@ router.get('/products/:id/edit', checkAdminAuth, async (req, res, next) => {
     try {
         const productId = req.params.id;
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return res.redirect('/admin/products');
+            return res.redirect('/admin/products?error=invalid_id');
         }
         const product = await Product.findById(productId).lean();
         if (!product) {
-            return res.redirect('/admin/products');
+            return res.redirect('/admin/products?error=notfound');
         }
         const categories = ['Вишивка'];
-
         let errorMessage = null;
-        if (req.query.error === 'validation') errorMessage = 'Будь ласка, заповніть усі обов\'язкові поля (включаючи термін виготовлення).';
+        if (req.query.error === 'validation') errorMessage = 'Будь ласка, заповніть усі обов\'язкові поля.';
         else if (req.query.error === 'price_validation') errorMessage = 'Максимальна ціна не може бути меншою за мінімальну.';
-        else if (req.query.error) errorMessage = 'Сталася помилка: ' + req.query.error;
+        else if (req.query.error) errorMessage = decodeURIComponent(req.query.error);
 
         res.render('admin/edit-product', {
             pageTitle: `Редагувати: ${product.name}`,
@@ -327,93 +417,249 @@ router.get('/products/:id/edit', checkAdminAuth, async (req, res, next) => {
             errorMessage: errorMessage
         });
     } catch (error) {
-        console.error('Помилка отримання товару для редагування:', error);
+        console.error('[Admin Routes] Помилка отримання товару для редагування:', error);
         next(error);
     }
 });
 
-router.put('/products/:id', checkAdminAuth, async (req, res, next) => {
+router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => {
     const productId = req.params.id;
+    const categories = ['Вишивка']; 
+    let productToUpdate; 
+    
+    const newMainImageTempPaths = req.files && req.files.imageFiles ? req.files.imageFiles.map(f => f.path) : [];
+    const newLivePhotoTempPath = req.files && req.files.livePhotoFile && req.files.livePhotoFile[0] ? req.files.livePhotoFile[0].path : null;
+    
+    let successfullyProcessedNewMainPaths = [];
+    let successfullyProcessedNewLivePath = null;
+
+    console.log(`[Admin Routes] PUT /products/${productId} - Початок обробки.`);
+    const mainImagesReceived = req.files && req.files.imageFiles ? req.files.imageFiles : [];
+    const livePhotoReceived = req.files && req.files.livePhotoFile ? req.files.livePhotoFile[0] : null;
+
+    if (mainImagesReceived.length > 0) {
+        console.log(`[Admin Routes] PUT: Отримано ${mainImagesReceived.length} нових ОСНОВНИХ файлів:`, mainImagesReceived.map(f=>f.originalname).join(', '));
+    } else {
+        console.log(`[Admin Routes] PUT: Нові ОСНОВНІ файли для завантаження відсутні.`);
+    }
+    if (livePhotoReceived) {
+        console.log(`[Admin Routes] PUT: Отримано новий LIVE PHOTO файл:`, livePhotoReceived.originalname);
+    } else {
+        console.log(`[Admin Routes] PUT: Новий LIVE PHOTO файл для завантаження відсутній.`);
+    }
+
+    if (req.body.images_to_delete && req.body.images_to_delete.length > 0) {
+        console.log(`[Admin Routes] PUT: Запит на видалення ОСНОВНИХ зображень (public_ids):`, req.body.images_to_delete);
+    } else {
+        console.log(`[Admin Routes] PUT: Запит на видалення старих ОСНОВНИХ зображень відсутній або порожній.`);
+    }
+     if (req.body.delete_live_photo) {
+        console.log(`[Admin Routes] PUT: Отримано запит на видалення LIVE PHOTO.`);
+    }
+
+
     try {
-         if (!mongoose.Types.ObjectId.isValid(productId)) {
-             return res.redirect('/admin/products?error=invalid_id');
-         }
-
-         const {
-            name, description, price, maxPrice, category,
-            tags, materials, colors, care_instructions, isFeatured,
-            creation_time_info, status, isPriceNegotiable,
-            metaDescription
-        } = req.body;
-        if (!name || !description || !price || !category || !creation_time_info || !status) {
-            return res.redirect(`/admin/products/${productId}/edit?error=validation`);
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
+             if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
+            return res.redirect('/admin/products?error=invalid_id_update');
         }
 
-        const numPrice = (isPriceNegotiable === 'on') ? 0 : (parseFloat(price) || 0);
-         let parsedMaxPrice = parseFloat(maxPrice);
-         const numMaxPrice = (isPriceNegotiable === 'on' || !maxPrice || maxPrice.trim() === '' || isNaN(parsedMaxPrice))
-                             ? null
-                             : parsedMaxPrice;
-
-        if (numMaxPrice !== null && numPrice > numMaxPrice) {
-            return res.redirect(`/admin/products/${productId}/edit?error=price_validation`);
-        }
-
-         const processedTags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : undefined;
-         const processedMaterials = materials ? materials.split(',').map(m => m.trim()).filter(m => m) : undefined;
-         const processedColors = colors ? colors.split(',').map(c => c.trim()).filter(c => c) : undefined;
-
-        const updatedData = {
-            name,
-            description,
-            metaDescription: metaDescription ? metaDescription.trim() : null,
-            price: numPrice,
-            maxPrice: numMaxPrice,
-            category,
-            status: status,
-            isPriceNegotiable: isPriceNegotiable === 'on',
-            tags: processedTags,
-            materials: processedMaterials,
-            colors: processedColors,
-            care_instructions,
-            creation_time_info,
-            isFeatured: isFeatured === 'on'
-        };
-
-         const dataToSet = {};
-         for (const key in updatedData) {
-             if (updatedData[key] !== undefined) {
-                 dataToSet[key] = updatedData[key];
-             }
-         }
-
-        const updatedProduct = await Product.findByIdAndUpdate(
-            productId,
-            { $set: dataToSet },
-            { new: true, runValidators: true, context: 'query' }
-        );
-
-        if (!updatedProduct) {
+        productToUpdate = await Product.findById(productId);
+        if (!productToUpdate) {
+             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
+             if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
             return res.redirect('/admin/products?error=notfound_update');
         }
+        
+        const {
+            name, description, price, maxPrice, category,
+            tags, materials, colors, care_instructions, isFeatured,
+            creation_time_info, status, metaDescription,
+            images_to_delete, delete_live_photo 
+        } = req.body;
 
+        if (!name || !description || !price || !category || !creation_time_info || !status) {
+            if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
+            if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
+            return res.redirect(`/admin/products/${productId}/edit?error=${encodeURIComponent('Будь ласка, заповніть усі обов\'язкові поля.')}`);
+        }
+
+        productToUpdate.name = name;
+        productToUpdate.description = description;
+        productToUpdate.metaDescription = metaDescription ? metaDescription.trim() : null;
+        
+        let currentNumPrice = parseFloat(price) || 0;
+        let currentNumMaxPrice = maxPrice ? (parseFloat(maxPrice) || null) : null;
+
+        productToUpdate.price = currentNumPrice;
+        productToUpdate.maxPrice = (currentNumMaxPrice !== null && currentNumMaxPrice >= currentNumPrice) ? currentNumMaxPrice : undefined;
+       
+        if (currentNumMaxPrice !== null && currentNumPrice > currentNumMaxPrice) {
+             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
+             if (newLivePhotoTempPath) await fs.unlink(newLivePhotoTempPath).catch(e=>{});
+            return res.redirect(`/admin/products/${productId}/edit?error=price_validation`);
+        }
+        productToUpdate.category = category;
+        productToUpdate.status = status;
+        productToUpdate.tags = tags ? tags.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+        productToUpdate.materials = materials ? materials.split(',').map(m => m.trim()).filter(m => m) : [];
+        productToUpdate.colors = colors ? colors.split(',').map(c => c.trim()).filter(c => c) : [];
+        productToUpdate.care_instructions = care_instructions;
+        productToUpdate.creation_time_info = creation_time_info;
+        productToUpdate.isFeatured = isFeatured === 'on';
+
+        let newMainImagesDataArray = []; 
+        let allNewMainFilesProcessedSuccessfully = true; 
+
+        if (mainImagesReceived.length > 0) {
+            console.log(`[Admin Routes] PUT: Обробка ${mainImagesReceived.length} нових ОСНОВНИХ файлів для ЗАМІНИ.`);
+            
+            for (const file of mainImagesReceived) {
+                const originalPath = file.path; 
+                const baseFilename = path.parse(file.filename).name;
+                const imageSetUrlsAndIds = { large: null, medium: null, thumb: null };
+                console.log(`[Admin Routes] PUT: Обробка нового основного файлу: ${file.originalname}`);
+                try {
+                    const imageBuffer = await fs.readFile(originalPath);
+                    const sizes = { large: { width: 1000, quality: 80 }, medium: { width: 600, quality: 75 }, thumb: { width: 300, quality: 70 } };
+                    const imageProcessor = sharp(imageBuffer);
+                    for (const [sizeName, options] of Object.entries(sizes)) {
+                        const processedBuffer = await imageProcessor.clone().resize({ width: options.width, withoutEnlargement: true }).webp({ quality: options.quality }).toBuffer();
+                        const publicIdForUpload = `${baseFilename}-${sizeName}-${Date.now()}`;
+                        const uploadResult = await new Promise((resolve, reject) => {
+                            cloudinary.uploader.upload_stream(
+                                { folder: "products", public_id: publicIdForUpload, resource_type: "image", format: "webp" },
+                                (error, result) => error ? reject(error) : resolve(result)
+                            ).end(processedBuffer);
+                        });
+                        if (!uploadResult || !uploadResult.secure_url || !uploadResult.public_id) {
+                            throw new Error(`Помилка завантаження ${sizeName} для ${file.originalname} (немає URL або public_id)`);
+                        }
+                        imageSetUrlsAndIds[sizeName] = { url: uploadResult.secure_url, public_id: uploadResult.public_id };
+                    }
+                    
+                    if (imageSetUrlsAndIds.large && imageSetUrlsAndIds.large.url && imageSetUrlsAndIds.large.public_id &&
+                        imageSetUrlsAndIds.medium && imageSetUrlsAndIds.medium.url && imageSetUrlsAndIds.medium.public_id &&
+                        imageSetUrlsAndIds.thumb && imageSetUrlsAndIds.thumb.url && imageSetUrlsAndIds.thumb.public_id) {
+                        newMainImagesDataArray.push(imageSetUrlsAndIds);
+                        successfullyProcessedNewMainPaths.push(originalPath); 
+                    } else {
+                        allNewMainFilesProcessedSuccessfully = false;
+                        console.error(`[Admin Routes] PUT: Неповний набір для нового основного файлу ${file.originalname}. Пропускаємо.`);
+                        try { await fs.unlink(originalPath); } catch (e) { }
+                    }
+                } catch (fileProcessingError) {
+                    allNewMainFilesProcessedSuccessfully = false;
+                    console.error(`[Admin Routes] PUT: Помилка обробки нового основного файлу ${file.originalname}:`, fileProcessingError.message);
+                    try { await fs.unlink(originalPath); } catch (e) {  }
+                }
+            }
+
+            if (!allNewMainFilesProcessedSuccessfully && newMainImagesDataArray.length === 0 && mainImagesReceived.length > 0) {
+                throw new Error('Жоден з нових основних файлів не вдалося обробити. Зміни зображень не застосовано.');
+            }
+            
+            if (newMainImagesDataArray.length > 0) {
+                 if (productToUpdate.images && productToUpdate.images.length > 0) {
+                    console.log(`[Admin Routes] PUT: Видалення ${productToUpdate.images.length} старих наборів ОСНОВНИХ зображень.`);
+                    for (const imgSet of productToUpdate.images) { }
+                }
+                productToUpdate.images = newMainImagesDataArray; 
+                console.log(`[Admin Routes] PUT: productToUpdate.images оновлено ${newMainImagesDataArray.length} новими наборами.`);
+            } else if (mainImagesReceived.length > 0 && newMainImagesDataArray.length === 0) {
+                console.warn("[Admin Routes] PUT: Нові основні файли були, але жоден не оброблено. Масив images не змінено.");
+            }
+        } 
+        else if (images_to_delete && images_to_delete.length > 0) {
+            const publicIdsToRemove = Array.isArray(images_to_delete) ? images_to_delete : [images_to_delete];
+            productToUpdate.images = productToUpdate.images.filter(imgSet => { return true; });
+        }
+        if (livePhotoReceived) {
+            if (productToUpdate.livePhotoPublicId) {
+                try { await cloudinary.uploader.destroy(productToUpdate.livePhotoPublicId, { resource_type: productToUpdate.livePhotoUrl && productToUpdate.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' }); } 
+                catch (e) { console.error(`[Admin Routes] PUT: Помилка видалення старого live photo:`, e.message); }
+            }
+            try {
+                const liveUploadResult = await cloudinary.uploader.upload(livePhotoReceived.path, {
+                    folder: "products/live_photos",
+                    resource_type: livePhotoReceived.mimetype.startsWith('image/gif') ? "image" : "video",
+                });
+                productToUpdate.livePhotoUrl = liveUploadResult.secure_url;
+                productToUpdate.livePhotoPublicId = liveUploadResult.public_id;
+                successfullyProcessedNewLivePath = livePhotoReceived.path;
+                console.log(`[Admin Routes] PUT: Нове live photo завантажено: ${liveUploadResult.secure_url}`);
+            } catch (livePhotoError) {
+                console.error(`[Admin Routes] PUT: Помилка завантаження нового live photo:`, livePhotoError.message);
+                try { await fs.unlink(livePhotoReceived.path); } catch (e) { }
+                throw livePhotoError;
+            }
+        } else if (delete_live_photo === 'true') {
+            if (productToUpdate.livePhotoPublicId) {
+                try { await cloudinary.uploader.destroy(productToUpdate.livePhotoPublicId, { resource_type: productToUpdate.livePhotoUrl && productToUpdate.livePhotoUrl.endsWith('.gif') ? 'image' : 'video' }); 
+                    productToUpdate.livePhotoUrl = null; productToUpdate.livePhotoPublicId = null;
+                } 
+                catch (e) { console.error(`[Admin Routes] PUT: Помилка видалення live photo за запитом:`, e.message); }
+            }
+        }
+        
+        console.log(`[Admin Routes] PUT: Фінальний стан productToUpdate.images перед save:`, JSON.stringify(productToUpdate.images, null, 2));
+        console.log(`[Admin Routes] PUT: Фінальний стан livePhotoUrl перед save: ${productToUpdate.livePhotoUrl}`);
+
+
+        productToUpdate.markModified('images');
+        if (livePhotoReceived || delete_live_photo === 'true') {
+            productToUpdate.markModified('livePhotoUrl');
+            productToUpdate.markModified('livePhotoPublicId');
+        }
+
+        const savedProduct = await productToUpdate.save(); 
+        console.log(`[Admin Routes] PUT: Товар ${productId} успішно оновлено. Збережені зображення:`, JSON.stringify(savedProduct.images, null, 2));
+        console.log(`[Admin Routes] PUT: Збережене livePhotoUrl: ${savedProduct.livePhotoUrl}`);
+
+
+        if (successfullyProcessedNewMainPaths.length > 0) {
+            await Promise.all(successfullyProcessedNewMainPaths.map(p => fs.unlink(p).catch(e => {})));
+        }
+        if (successfullyProcessedNewLivePath) {
+             await fs.unlink(successfullyProcessedNewLivePath).catch(e => {});
+        }
+        const remainingTempFiles = tempUploadedFilePaths.filter(p => !successfullyProcessedNewMainPaths.includes(p) && p !== successfullyProcessedNewLivePath);
+        if(remainingTempFiles.length > 0) {
+            await Promise.all(remainingTempFiles.map(p => fs.unlink(p).catch(e => {})));
+        }
+        
         res.redirect('/admin/products');
 
-    } catch (error) {
-        const productId = req.params.id;
-        if (error.name === 'ValidationError') {
-            let errorMsg = Object.values(error.errors).map(el => el.message).join(' ');
-            return res.redirect(`/admin/products/${productId}/edit?error=${encodeURIComponent(errorMsg.trim())}`);
+    } catch (error) { 
+        console.error(`[Admin Routes] Загальна помилка в PUT /products/${productId}:`, error.message, error.stack);
+        const allTempPathsForCleanup = [...newMainImageTempPaths];
+        if (newLivePhotoTempPath && !allTempPathsForCleanup.includes(newLivePhotoTempPath)) { 
+            allTempPathsForCleanup.push(newLivePhotoTempPath);
         }
-        next(error);
+        
+        if (allTempPathsForCleanup.length > 0) {
+            const pathsToAttemptDelete = allTempPathsForCleanup.filter(p => 
+                !successfullyProcessedNewMainPaths.includes(p) && 
+                p !== successfullyProcessedNewLivePath
+            );
+            if(pathsToAttemptDelete.length > 0) {
+                console.log('[Admin Routes] PUT: Спроба очищення залишених тимчасових файлів через загальну помилку...');
+                await Promise.all(pathsToAttemptDelete.map(p => fs.unlink(p).catch(e => {})));
+            }
+        }
+        const errorRenderData = {  };
+        if (error.name === 'ValidationError') {}
+        return res.render('admin/edit-product', errorRenderData);
     }
 });
+
 
 router.post('/products/:id/delete', checkAdminAuth, async (req, res, next) => {
     const productId = req.params.id;
     try {
         if (!mongoose.Types.ObjectId.isValid(productId)) {
-            return res.redirect('/admin/products');
+            return res.redirect('/admin/products?error=invalid_id_delete');
         }
         const productToDelete = await Product.findById(productId);
         if (!productToDelete) {
@@ -421,23 +667,108 @@ router.post('/products/:id/delete', checkAdminAuth, async (req, res, next) => {
         }
 
         if (productToDelete.images && productToDelete.images.length > 0) {
-            productToDelete.images.forEach(imageUrl => {
-                try {
-                    const filename = path.basename(imageUrl);
-                    const filePath = path.join(uploadDir, filename);
-                    if (fs.existsSync(filePath)) {
-                        fs.unlinkSync(filePath);
+            for (const imgSet of productToDelete.images) {
+                const publicIdsToDelete = [];
+                if (imgSet.large && imgSet.large.public_id) publicIdsToDelete.push(imgSet.large.public_id);
+                if (imgSet.medium && imgSet.medium.public_id) publicIdsToDelete.push(imgSet.medium.public_id);
+                if (imgSet.thumb && imgSet.thumb.public_id) publicIdsToDelete.push(imgSet.thumb.public_id);
+                
+                for (const publicId of publicIdsToDelete) {
+                    try {
+                        console.log(`[Admin Routes] Спроба видалення з Cloudinary: ${publicId}`);
+                        const result = await cloudinary.uploader.destroy(publicId);
+                        console.log(`[Admin Routes] Зображення ${publicId} видалено з Cloudinary:`, result);
+                    } catch (cloudinaryError) {
+                        console.error(`[Admin Routes] Помилка видалення зображення ${publicId} з Cloudinary:`, cloudinaryError.message);
                     }
-                } catch (err) {
-                    console.error(`Помилка видалення файлу зображення ${imageUrl}:`, err);
                 }
-            });
+            }
         }
 
-        const deletedProduct = await Product.findByIdAndDelete(productId);
+        await Product.findByIdAndDelete(productId);
+        console.log(`[Admin Routes] Товар ${productId} успішно видалено з БД.`);
         res.redirect('/admin/products');
     } catch (error) {
+        console.error(`[Admin Routes] Помилка видалення товару ${productId}:`, error);
         next(error);
+    }
+});
+router.post('/generate-meta-description', checkAdminAuth, async (req, res) => {
+    const { productName, productDescription } = req.body;
+
+    if (!productName || !productDescription) {
+        return res.status(400).json({ message: 'Назва та опис товару необхідні для генерації.' });
+    }
+    if (!process.env.GEMINI_API_KEY) {
+        console.error('[AI Meta Gen] GEMINI_API_KEY не знайдено в .env');
+        return res.status(500).json({ message: 'Сервіс генерації тимчасово недоступний (відсутній API ключ).' });
+    }
+
+    try {
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash-latest", 
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+            ]
+        });
+
+        const prompt = `Згенеруй SEO-оптимізований мета-опис українською мовою (максимум 160 символів) для товару ручної роботи.
+Товар: "${productName}"
+Опис товару: "${productDescription}"
+Мета-опис має бути унікальним, привабливим для користувача, містити ключові слова з назви та опису (особливо "ручна робота", "вишивка", якщо доречно), та спонукати до кліку. Уникай повторень назви, якщо вона вже інформативна. Відповідь надай тільки текстом мета-опису, без додаткових пояснень, заголовків чи фраз типу "Ось мета-опис:".`;
+
+        const result = await model.generateContent(prompt);
+        const response = result.response;
+        let aiResponseText = response.text(); 
+
+        console.log(`[AI Meta Gen - Product] Raw AI response: ${aiResponseText}`);
+        
+        let generatedMetaDescription = '';
+
+        if (aiResponseText.startsWith("```json")) { 
+            aiResponseText = aiResponseText.substring(7);
+        } else if (aiResponseText.startsWith("```")) { 
+             aiResponseText = aiResponseText.substring(3);
+        }
+        if (aiResponseText.endsWith("```")) {
+            aiResponseText = aiResponseText.substring(0, aiResponseText.length - 3);
+        }
+        generatedMetaDescription = aiResponseText.trim();
+
+
+        if (!generatedMetaDescription || generatedMetaDescription.trim() === '') {
+            generatedMetaDescription = `Купуйте ексклюзивну вишивку "${productName}" ручної роботи. ${productDescription.substring(0, 60)}... Детальніше на сайті!`;
+            console.warn('[AI Meta Gen - Product] AI returned empty or invalid text, using fallback.');
+        }
+        
+        if (generatedMetaDescription.length > 160) {
+            generatedMetaDescription = generatedMetaDescription.substring(0, 160).trim();
+            const lastSpace = generatedMetaDescription.lastIndexOf(' ', 157); 
+            if (lastSpace > 0) {
+                generatedMetaDescription = generatedMetaDescription.substring(0, lastSpace) + "...";
+            } else { 
+                 generatedMetaDescription = generatedMetaDescription.substring(0, 157) + "...";
+            }
+        }
+
+        console.log(`[AI Meta Gen - Product] productName: ${productName}`);
+        console.log(`[AI Meta Gen - Product] Generated: ${generatedMetaDescription}`);
+
+        res.json({ metaDescription: generatedMetaDescription.trim() });
+
+    } catch (error) {
+        console.error('[Admin Routes] Помилка генерації мета-опису для товару:', error);
+        let userMessage = 'Не вдалося згенерувати мета-опис.';
+        if (error.message.includes('SAFETY')) {
+            userMessage = 'Генерація була заблокована через налаштування безпеки. Спробуйте змінити текст.';
+        } else if (error.message.includes('API key not valid')) {
+             userMessage = 'Помилка конфігурації AI: недійсний API ключ.';
+        }
+        res.status(500).json({ message: userMessage });
     }
 });
 
