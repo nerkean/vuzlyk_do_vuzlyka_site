@@ -326,26 +326,31 @@ const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes); 
 app.use('/', authRoutes);
 
-app.get('/', async (req, res) => {
+app.get('/', async (req, res, next) => { // Додайте next для обробки помилок
     try {
-        // Определяем базовый URL (лучше брать из настроек или определить автоматически)
-        // Используем process.env.BASE_URL если он задан, иначе используем стандартный
         const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com';
-        const canonicalUrlForHomepage = baseUrl + '/'; // Canonical для главной - это базовый URL со слешем
-  
-        const featuredProducts = await Product.find({ isFeatured: true }).limit(4);
-  
-        // Передаем canonicalUrl и baseUrl в объект данных для шаблона
+        const canonicalUrlForHomepage = baseUrl + '/';
+
+        const featuredProducts = await Product.find({ isFeatured: true })
+            .select('name price maxPrice images slug') // Вибираємо потрібні поля, включаючи images
+            .limit(4)
+            .lean(); // Додаємо .lean()
+
         res.render('index', {
            featuredProducts: featuredProducts,
            canonicalUrl: canonicalUrlForHomepage,
-           baseUrl: baseUrl                
+           baseUrl: baseUrl,
+           // Передаємо змінні для форматування ціни, якщо вони ще не глобальні
+           selectedCurrency: res.locals.selectedCurrency,
+           exchangeRates: res.locals.exchangeRates,
+           currencySymbols: res.locals.currencySymbols,
+           pageName: 'home' // Для активного меню
         });
     } catch (error) {
         console.error("Помилка отримання товарів для головної:", error);
-        res.status(500).render('500');
+        next(error); // Передаємо помилку в обробник помилок
     }
-  });
+});
 
 app.get('/product/:id', async (req, res, next) => {
   console.log(`[LOG] Обробка маршруту /product/${req.params.id}`);
