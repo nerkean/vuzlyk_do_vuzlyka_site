@@ -98,110 +98,125 @@
     <%- include('partials/header') %>
 
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
+<%
+  const currentCanonicalUrl = typeof locals.canonicalUrl === 'string' ? locals.canonicalUrl : ((typeof locals.baseUrl === 'string' ? locals.baseUrl : 'https://vuzlyk.com') + '/catalog');
+  const currentPageTitle = typeof locals.pageTitle === 'string' ? locals.pageTitle : 'Каталог товарів - Вузлик до вузлика';
+  const currentMetaDescription = typeof locals.metaDescription === 'string' ? locals.metaDescription : 'Перегляньте наш каталог вишивки ручної роботи.';
+  const currentBaseUrl = typeof locals.baseUrl === 'string' ? locals.baseUrl : 'https://vuzlyk.com';
+  const currentPageHeading = typeof locals.pageHeading === 'string' ? locals.pageHeading : 'Каталог товарів';
+  
+  const currentProducts = Array.isArray(locals.products) ? locals.products : [];
+  const currentCurrentPage = typeof locals.currentPage === 'number' ? locals.currentPage : 1;
+  const currentLimit = typeof locals.limit === 'number' ? locals.limit : 12;
+  const currentProductCount = typeof locals.count === 'number' ? locals.count : currentProducts.length;
+  const currentExchangeRates = typeof locals.exchangeRates === 'object' && locals.exchangeRates !== null ? locals.exchangeRates : { "UAH": 1 };
+  const currentSelectedCurrency = typeof locals.selectedCurrency === 'string' ? locals.selectedCurrency : 'UAH';
+
+  const graph = [
     {
-      "@type": "WebPage",
-      "@id": "<%= canonicalUrl %>",
-      "url": "<%= canonicalUrl %>",
-      "name": "<%- pageTitle %>",
-      "description": "<%- metaDescription %>",
+      "@type": "CollectionPage",
+      "@id": currentCanonicalUrl,
+      "url": currentCanonicalUrl,
+      "name": currentPageTitle,
+      "description": currentMetaDescription,
+      "inLanguage": "uk",
       "isPartOf": {
         "@type": "WebSite",
-        "url": "<%= baseUrl %>/",
+        "@id": currentBaseUrl + "/#website",
+        "url": currentBaseUrl + "/",
         "name": "Вузлик до вузлика"
       },
       "breadcrumb": {
-        "@id": "<%= canonicalUrl %>#breadcrumb"
+        "@id": currentCanonicalUrl + "#breadcrumb"
       },
-      "mainEntity": { "@id": "<%= canonicalUrl %>#itemlist" }
+      "mainEntity": { "@id": currentCanonicalUrl + "#itemlist" }
     },
     {
       "@type": "BreadcrumbList",
-      "@id": "<%= canonicalUrl %>#breadcrumb",
+      "@id": currentCanonicalUrl + "#breadcrumb",
       "itemListElement": [
         {
           "@type": "ListItem",
           "position": 1,
           "name": "Головна",
-          "item": "<%= baseUrl %>/"
+          "item": currentBaseUrl + "/"
         },
         {
           "@type": "ListItem",
           "position": 2,
-          "name": "<%= pageHeading %>",
-          "item": "<%= canonicalUrl %>"
+          "name": currentPageHeading, // Используем currentPageHeading, а не pageTitle для хлебных крошек, если они отличаются
+          "item": currentCanonicalUrl
         }
       ]
     }
-    <%# Умова для додавання блоку ItemList %>
-    <% if (typeof locals.products !== 'undefined' && locals.products.length > 0 && typeof locals.currentPage !== 'undefined' && typeof locals.limit !== 'undefined') { %>
-    , <%# Запятая, отделяющая ItemList от предыдущего элемента в @graph %>
-    {
+  ];
+
+  if (currentProducts.length > 0) {
+    const itemList = {
       "@type": "ItemList",
-      "@id": "<%= canonicalUrl %>#itemlist",
-      "name": "Список товарів каталогу",
-      "numberOfItems": <%= typeof locals.count !== 'undefined' ? locals.count : locals.products.length %>,
-      "itemListElement": [
-        <%# Цикл по продуктам для генерации ListItem %>
-        <% locals.products.forEach((product, index) => { %>
-          {
-            "@type": "ListItem",
-            "position": <%= (currentPage - 1) * limit + index + 1 %>,
-            "item": {
-                "@type": "Product",
-                "@id": "<%= baseUrl %>/product/<%= product._id %>",
-                "url": "<%= baseUrl %>/product/<%= product._id %>",
-                "name": "<%- product.name %>" <%# Конец ключа name. Запятая после него ставится УСЛОВНО %>
-                <%# Ставим запятую после name, ТОЛЬКО ЕСЛИ дальше будет image ИЛИ offers %>
-                <% 
-                  let hasImageForJsonLd = false;
-                  if (product.images && product.images.length > 0) {
-                      const imgSet = product.images[0];
-                      if ((imgSet.thumb && imgSet.thumb.url) || (imgSet.medium && imgSet.medium.url)) {
-                          hasImageForJsonLd = true;
-                      }
-                  }
-                  const hasPriceForJsonLd = product.price !== undefined && product.price !== null;
-                %>
-                <% if (hasImageForJsonLd || hasPriceForJsonLd) { %>,<% } %>
+      "@id": currentCanonicalUrl + "#itemlist",
+      "name": "Список товарів: " + currentPageHeading,
+      "numberOfItems": currentProductCount,
+      "itemListElement": currentProducts.map((product, index) => {
+        const productUrl = `${currentBaseUrl}/product/${product.slug || product._id}`;
+        const itemProduct = {
+          "@type": "Product",
+          "@id": productUrl,
+          "url": productUrl,
+          "name": product.name || "Назва товару", // Добавлена заглушка
+          "sku": product.sku || `VUZLYK-${product._id}`,
+          "brand": {
+            "@type": "Organization",
+            "name": "Вузлик до вузлика",
+            "url": currentBaseUrl
+          },
+          "offers": {
+            "@type": "Offer",
+            "url": productUrl,
+            "price": (parseFloat(product.price || 0) * (currentExchangeRates[currentSelectedCurrency] || 1)).toFixed(2),
+            "priceCurrency": currentSelectedCurrency,
+            "availability": (product.status === 'В наявності' ? "https://schema.org/InStock" : "https://schema.org/PreOrder"),
+            "itemCondition": "https://schema.org/NewCondition"
+          }
+        };
 
-                <%# Добавляем image, если он есть (БЕЗ запятой ПЕРЕД ним) %>
-                <% if (hasImageForJsonLd) { %>
-                  <% 
-                    let imageUrlForJsonLd = '';
-                    const imgSet = product.images[0];
-                    if (imgSet.medium && imgSet.medium.url) {
-                        imageUrlForJsonLd = imgSet.medium.url;
-                    } else if (imgSet.thumb && imgSet.thumb.url) {
-                        imageUrlForJsonLd = imgSet.thumb.url;
-                    }
-                  %>
-                  "image": "<%= new URL(imageUrlForJsonLd, baseUrl).href %>" <%# Конец ключа image. Запятая после него ставится УСЛОВНО %>
-                  <%# Ставим запятую после image, ТОЛЬКО ЕСЛИ дальше будет offers %>
-                  <% if (hasPriceForJsonLd) { %>,<% } %>
-                <% } %>
+        if (product.images && product.images.length > 0 && product.images[0]) {
+          const img = product.images[0];
+          let imageUrlPath = img.medium?.url || img.thumb?.url;
+          if (imageUrlPath && typeof imageUrlPath === 'string') {
+            try { itemProduct.image = new URL(imageUrlPath, currentBaseUrl).href; } catch (e) { /* Ошибка создания URL, image останется неопределенным */ }
+          }
+        }
 
-                <%# Добавляем offers, если цена есть (БЕЗ запятой ПЕРЕД ним) %>
-                <% if (hasPriceForJsonLd) { %>
-                  "offers": {
-                      "@type": "Offer",
-                      "price": "<%= (product.price * (locals.exchangeRates[locals.selectedCurrency] || 1)).toFixed(2) %>",
-                      "priceCurrency": "<%= locals.selectedCurrency || 'UAH' %>",
-                      "availability": "https://schema.org/PreOrder" <%# Или другая логика доступности, если нужно %>
-                  }
-                <% } %>
-            } <%# Конец объекта item %>
-          } <%# Конец объекта ListItem %>
-          <%# Запятая между элементами ListItem %>
-          <% if (index < locals.products.length - 1) { %>,<% } %>
-        <% }); %>
-      ] <%# Конец itemListElement %>
-    } <%# Конец объекта ItemList %>
-    <% } %> <%# Конец условия if для ItemList %>
-  ] <%# Конец @graph %>
-} <%# Конец всего JSON-LD %>
+        let cleanDescription = "";
+        const sourceDescription = product.summary || product.description || "";
+        if (typeof sourceDescription === 'string') {
+            cleanDescription = sourceDescription.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim().substring(0, 160);
+        }
+        if (cleanDescription) itemProduct.description = cleanDescription;
+        
+        if (product.category && typeof product.category === 'string') itemProduct.category = product.category;
+        if (product.materials && Array.isArray(product.materials) && product.materials.length > 0) itemProduct.material = product.materials.join(', ');
+        if (product.colors && Array.isArray(product.colors) && product.colors.length > 0) itemProduct.color = product.colors.join(', ');
+
+        if (product.ratingCount && product.ratingCount > 0 && product.ratingSum !== undefined) {
+          itemProduct.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": (product.ratingSum / product.ratingCount).toFixed(1),
+            "reviewCount": product.ratingCount
+          };
+        }
+        return {
+          "@type": "ListItem",
+          "position": (currentCurrentPage - 1) * currentLimit + index + 1,
+          "item": itemProduct
+        };
+      })
+    };
+    graph.push(itemList);
+  }
+%>
+<%- JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 0) %>
 </script>
 
 

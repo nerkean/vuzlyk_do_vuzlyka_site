@@ -44,42 +44,137 @@
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
     <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
     {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "Organization", 
-          "name": "Вузлик до вузлика",
-          "url": "https://vuzlyk.com/",
-          "logo": "https://vuzlyk.com/images/logo.webp",
-          "contactPoint": {
-            "@type": "ContactPoint",
-            "contactType": "Customer Service",
-            "email": "info@vuzlyk.com"
-          },
-          "address": {
-            "@type": "PostalAddress",
-            "addressLocality": "Бровари",
-            "addressRegion": "Київська область",
-            "addressCountry": "UA"
-          },
-           "sameAs": [ 
+      "@type": "Store", 
+      "@id": "https://vuzlyk.com/#organization", 
+      "name": "Вузлик до вузлика",
+      "url": "https://vuzlyk.com/",
+      "logo": "https://vuzlyk.com/images/logo.webp",
+      "image": "https://vuzlyk.com/images/og-image.jpg", 
+      "description": "Майстерня унікальної української вишивки ручної роботи. Ексклюзивні вишиванки, рушники та аксесуари, створені з любов'ю та увагою до деталей.",
+      "email": "info@vuzlyk.com", 
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Бровари",
+        "addressRegion": "Київська область",
+        "addressCountry": "UA"
+      },
+      "contactPoint": [
+  {
+    "@type": "ContactPoint",
+    "contactType": "Customer Service", 
+    "email": "info@vuzlyk.com",  
+    "areaServed": "UA",       
+    "availableLanguage": ["Ukrainian", "English"]
+  }
+      ],
+      "founder": { 
+        "@type": "Person",
+        "name": "Валентина Юрченко", 
+        "jobTitle": "Майстриня вишивки", 
+        "image": "https://vuzlyk.com/images/maystrynya.webp",
+        "sameAs": [ 
             "https://www.facebook.com/valentina.yurchenko",
-            "https://www.instagram.com/valentyna_embroidery"
-          ]
-        },
+            "https://www.instagram.com/valentyna_embroidery",
+            "https://www.pinterest.com/valentyna_embroidery/"
+        ]
+      },
+    "knowsAbout": [ 
+      "Українська вишивка",
+      "Вишивка ручної роботи",
+      "Вишиванки",
+      "Рушники",
+      "Аксесуари з вишивкою",
+      "Традиційне мистецтво",
+      "Handmade embroidery",
+      "Етнічний одяг",
+      "Авторські візерунки",
+      "Сучасна вишивка",
+      "Вишиті картини",
+      "Подарунки ручної роботи",
+      "Льон",
+      "Бавовна",
+      "Декор для дому",
+      "Українська культура",
+      "Сімейні традиції",
+      "Ексклюзивні вироби",
+      "Індивідуальне замовлення",
+      "Вишиті аксесуари",
+      "Вишиті серветки",
+      "Весільна вишивка",
+      "Патріотична вишивка",
+      "Символіка України",
+      "Національні орнаменти",
+      "Фольклор",
+      "Крафтові вироби",
+      "Мистецтво вишивки",
+      "Вишивка гладдю",
+      "Вишивка хрестиком"
+    ],
+    "makesOffer": [ // Открывающая скобка для массива makesOffer
+        { // Открывающая скобка для единственного Offer
+          "@type": "Offer",
+          "itemOffered": {
+            "@type": "Service",
+            "name": "Вишивка на замовлення"
+          },
+          "url": "https://vuzlyk.com/catalog" 
+        } // Закрывающая скобка для Offer. После нее НЕ ДОЛЖНО БЫТЬ ЗАПЯТОЙ, если это последний элемент
+      ],
+      "paymentAccepted": "Cash, Credit Card, Bank Transfer",
+      "priceRange": "$$ - $$$", 
+      "currenciesAccepted": "UAH, USD, EUR", 
+      "areaServed": { 
+        "@type": "Country",
+        "name": "Ukraine"
+      },
+      "openingHoursSpecification": [ 
         {
-          "@type": "WebSite",
-          "url": "https://vuzlyk.com/",
-          "name": "Вузлик до вузлика",
-          "potentialAction": { 
-            "@type": "SearchAction",
-            "target": "https://vuzlyk.com/catalog?search={search_term_string}",
-            "query-input": "required name=search_term_string"
-          }
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          ],
+          "opens": "09:00",
+          "closes": "20:00"
         }
+        // Можно добавить "Saturday", "Sunday" или "PublicHolidays" если часы отличаются
+      ],
+      "sameAs": [
+        "https://www.facebook.com/valentina.yurchenko", 
+        "https://www.instagram.com/valentyna_embroidery",
+         "https://www.pinterest.com/valentyna_embroidery/"
       ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://vuzlyk.com/#website",
+      "url": "https://vuzlyk.com/",
+      "name": "Вузлик до вузлика",
+      "description": "Вузлик до вузлика - майстерня унікальної української вишивки ручної роботи. Ексклюзивні вишиванки, рушники та аксесуари.", 
+      "publisher": { 
+        "@id": "https://vuzlyk.com/#organization"
+      },
+      "inLanguage": "uk", 
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://vuzlyk.com/catalog?search={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
     }
+  ]
+}
     </script>
     <meta property="og:title" content="Вузлик до вузлика - Вишивка Ручної Роботи | Головна">
     <meta property="og:description" content="Відкрийте для себе світ унікальної української вишивки ручної роботи. Ексклюзивні вишиванки, рушники та аксесуари.">

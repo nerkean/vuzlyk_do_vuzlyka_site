@@ -14,6 +14,7 @@ const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
 
+// Існуючі rate limiters
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, 
     max: 10, 
@@ -72,6 +73,21 @@ const passwordChangeLimiter = rateLimit({
     }
 });
 
+// Новий rate limiter для повторної відправки коду
+const resendVerificationLimiter = rateLimit({
+    windowMs: 30 * 60 * 1000, // 30 хвилин
+    max: 3, // 3 спроби
+    message: { message: 'Забагато спроб повторної відправки коду. Будь ласка, спробуйте пізніше.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => req.query.email ? req.query.email.toLowerCase() : req.ip, // Обмежуємо за email або IP
+    handler: (req, res, next, options) => {
+        console.warn(`Rate limit exceeded for RESEND VERIFICATION by email/IP ${req.query.email || req.ip} on ${req.originalUrl}`);
+        res.redirect(`/verify-email?error=${encodeURIComponent(options.message.message)}`);
+    }
+});
+
+
 async function sendVerificationEmail(email, code) {
     if (!process.env.SMTP_HOST || !process.env.SMTP_PORT || !process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
         console.error('ПОМИЛКА: Email credentials або SMTP налаштування не встановлені в .env');
@@ -112,6 +128,7 @@ async function sendVerificationEmail(email, code) {
         console.log(`[Email Service] Код підтвердження відправлено на ${email} з адреси ${process.env.EMAIL_USER}`);
     } catch (error) {
         console.error(`[Email Service] Помилка відправки коду на ${email} з ${process.env.EMAIL_USER}:`, error);
+        // Не кидаємо помилку тут, щоб обробити її вище, якщо потрібно
     }
 }
 
@@ -181,13 +198,13 @@ router.post('/register', registerLimiter,
               });
           }
   
-          await Verification.deleteMany({ email: lowerCaseEmail });
+          await Verification.deleteMany({ email: lowerCaseEmail }); //
   
           const salt = await bcrypt.genSalt(10);
-          const hashedPassword = await bcrypt.hash(password, salt); 
+          const hashedPassword = await bcrypt.hash(password, salt); //
   
-          const verificationCode = crypto.randomInt(100000, 999999).toString();
-          const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+          const verificationCode = crypto.randomInt(100000, 999999).toString(); //
+          const expiresAt = new Date(Date.now() + 15 * 60 * 1000); //
   
           const newVerification = new Verification({
               email: lowerCaseEmail,
@@ -196,13 +213,13 @@ router.post('/register', registerLimiter,
               verificationCode,
               expiresAt
           });
-          await newVerification.save();
+          await newVerification.save(); //
           console.log(`Створено запит на верифікацію для ${lowerCaseEmail}`);
   
-          await sendVerificationEmail(lowerCaseEmail, verificationCode);
+          await sendVerificationEmail(lowerCaseEmail, verificationCode); //
   
-          req.session.verificationEmail = lowerCaseEmail;
-          res.redirect('/verify-email');
+          req.session.verificationEmail = lowerCaseEmail; //
+          res.redirect('/verify-email'); //
   
       } catch (error) {
           console.error('Помилка під час реєстрації (крок 1):', error);
@@ -232,9 +249,62 @@ router.get('/verify-email', (req, res) => {
     res.render('verify-email', {
         pageTitle: 'Підтвердження Email',
         email: email,
-        error: req.query.error ? decodeURIComponent(req.query.error) : null
+        error: req.query.error ? decodeURIComponent(req.query.error) : null,
+        success: req.query.success ? decodeURIComponent(req.query.success) : null // Додано для повідомлень про успіх
     });
 });
+
+// Маршрут для повторної відправки коду верифікації
+router.get('/resend-verification', resendVerificationLimiter, async (req, res) => {
+    const email = req.query.email ? req.query.email.toLowerCase() : null;
+
+    if (!email) {
+        return res.redirect('/register?error=' + encodeURIComponent('Email не вказано для повторної відправки коду.'));
+    }
+
+    // Перевіряємо, чи цей email збігається з тим, що в сесії (якщо є)
+    // Це для безпеки, щоб користувач не міг спамити кодами на чужі пошти, якщо вгадав URL
+    if (req.session.verificationEmail && req.session.verificationEmail !== email) {
+        console.warn(`Attempt to resend code for ${email} but session has ${req.session.verificationEmail}`);
+        return res.redirect(`/verify-email?error=${encodeURIComponent('Помилка: email не співпадає з активною сесією верифікації.')}`);
+    }
+    
+    try {
+        const verificationData = await Verification.findOne({ email: email });
+
+        if (!verificationData) {
+            // Якщо запису немає, можливо, користувач ще не починав реєстрацію або запис видалено (напр. за TTL)
+            // У цьому випадку, краще перенаправити на реєстрацію
+            return res.redirect('/register?error=' + encodeURIComponent('Активний запит на верифікацію для цього email не знайдено. Будь ласка, зареєструйтеся знову.') + `&email=${encodeURIComponent(email)}`);
+        }
+        
+        // Генерація нового коду та оновлення часу дії
+        const newVerificationCode = crypto.randomInt(100000, 999999).toString();
+        const newExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // Новий термін дії - 15 хвилин
+
+        verificationData.verificationCode = newVerificationCode;
+        verificationData.expiresAt = newExpiresAt;
+        verificationData.createdAt = new Date(); // Оновлюємо час створення/оновлення запису
+        await verificationData.save();
+
+        await sendVerificationEmail(email, newVerificationCode);
+
+        // Оновлюємо email в сесії, якщо його там не було або для консистентності
+        req.session.verificationEmail = email; 
+        
+        console.log(`Новий код верифікації відправлено на ${email}`);
+        res.redirect('/verify-email?success=' + encodeURIComponent('Новий код підтвердження було відправлено на вашу пошту.'));
+
+    } catch (error) {
+        console.error(`Помилка повторної відправки коду для ${email}:`, error);
+        let userErrorMessage = 'Не вдалося повторно відправити код. Спробуйте пізніше.';
+        if (error.message.includes('Налаштування для відправки email відсутні')) {
+            userErrorMessage = 'Сервіс відправки email тимчасово недоступний.';
+        }
+        res.redirect(`/verify-email?error=${encodeURIComponent(userErrorMessage)}`);
+    }
+});
+
 
 router.post('/verify-code', verifyCodeLimiter, async (req, res, next) => {
     const { code } = req.body;
@@ -245,44 +315,44 @@ router.post('/verify-code', verifyCodeLimiter, async (req, res, next) => {
     }
 
     try {
-        const verificationData = await Verification.findOne({ email: email });
+        const verificationData = await Verification.findOne({ email: email }); //
 
         if (!verificationData) {
             return res.redirect('/verify-email?error=' + encodeURIComponent('Запис верифікації не знайдено. Спробуйте зареєструватися знову.'));
         }
 
-        if (verificationData.expiresAt < new Date()) {
-            await Verification.deleteOne({ email: email });
+        if (verificationData.expiresAt < new Date()) { //
+            await Verification.deleteOne({ email: email }); //
             return res.redirect('/verify-email?error=' + encodeURIComponent('Термін дії коду минув. Спробуйте зареєструватися знову.'));
         }
 
-        if (verificationData.verificationCode !== code) {
+        if (verificationData.verificationCode !== code) { //
             return res.redirect('/verify-email?error=' + encodeURIComponent('Неправильний код підтвердження.'));
         }
 
         console.log(`Верифікація для ${email} успішна.`);
 
         const newUser = new User({
-            name: verificationData.name,
-            email: verificationData.email,
-            password: verificationData.hashedPassword
+            name: verificationData.name, //
+            email: verificationData.email, //
+            password: verificationData.hashedPassword //
         });
-        await newUser.save();
+        await newUser.save(); //
         console.log(`Новий користувач ${newUser.email} створений.`);
 
-        await Verification.deleteOne({ email: email });
+        await Verification.deleteOne({ email: email }); //
 
-        delete req.session.verificationEmail;
+        delete req.session.verificationEmail; //
 
-        req.login(newUser, (err) => {
+        req.login(newUser, (err) => { //
             if (err) {
                 console.error('Помилка автоматичного входу після верифікації:', err);
                 return res.redirect('/login?message=' + encodeURIComponent('Акаунт створено! Будь ласка, увійдіть.'));
             }
             console.log(`Користувач ${newUser.email} автоматично залогінений після верифікації.`);
-            const redirectUrl = req.session.returnTo || '/profile';
-            delete req.session.returnTo;
-            res.redirect(redirectUrl);
+            const redirectUrl = req.session.returnTo || '/profile'; //
+            delete req.session.returnTo; //
+            res.redirect(redirectUrl); //
         });
 
     } catch (error) {
@@ -303,7 +373,8 @@ router.get('/login', (req, res) => {
     res.render('login', {
         pageTitle: 'Вхід',
         error: loginError,
-        query: req.query
+        query: req.query,
+        message: req.query.message ? decodeURIComponent(req.query.message) : null // Для повідомлення про успішну реєстрацію
     });
 });
 
@@ -331,7 +402,9 @@ router.get('/profile', isLoggedIn, async (req, res, next) => {
             user: req.user,
             orders: userOrders,
             reviewedProductIds: reviewedProductIds,
-            query: req.query
+            query: req.query,
+            success: req.query.success ? decodeURIComponent(req.query.success) : null, // Для повідомлень про успіх
+            error: req.query.error ? decodeURIComponent(req.query.error) : null, // Для повідомлень про помилки
         });
     } catch (error) {
         console.error("Помилка завантаження даних профілю:", error);
@@ -359,7 +432,7 @@ router.put('/profile/update', isLoggedIn, async (req, res, next) => {
         }
 
         console.log(`User ${userId} updated name to: ${updatedUser.name}`);
-        req.login(updatedUser, (err) => {
+        req.login(updatedUser, (err) => { // Оновлюємо користувача в сесії
             if (err) { return next(err); }
             res.redirect('/profile?success=' + encodeURIComponent('Ім\'я успішно оновлено!'));
         });
@@ -378,7 +451,7 @@ router.post('/profile/change-password', passwordChangeLimiter, isLoggedIn, async
     const { currentPassword, newPassword, confirmNewPassword } = req.body;
     const userId = req.user._id;
 
-    if (req.user.googleId) {
+    if (req.user.googleId) { // Перевірка, чи це Google акаунт
         return res.redirect('/profile?error=' + encodeURIComponent('Зміна пароля недоступна для Google акаунтів.'));
     }
 
@@ -391,7 +464,7 @@ router.post('/profile/change-password', passwordChangeLimiter, isLoggedIn, async
     if (newPassword.length < 5) {
         return res.redirect('/profile?error=' + encodeURIComponent('Новий пароль повинен містити принаймні 5 символів.'));
     }
-    if (!/[A-Z]/.test(newPassword)) {
+     if (!/[A-Z]/.test(newPassword)) {
         return res.redirect('/profile?error=' + encodeURIComponent('Новий пароль повинен містити принаймні одну велику літеру.'));
     }
     if (!/[0-9]/.test(newPassword)) {
@@ -409,7 +482,7 @@ router.post('/profile/change-password', passwordChangeLimiter, isLoggedIn, async
             return res.redirect('/profile?error=' + encodeURIComponent('Поточний пароль введено неправильно.'));
         }
 
-        user.password = newPassword;
+        user.password = newPassword; // Mongoose pre-save hook захешує пароль
         await user.save();
 
         console.log(`User ${userId} successfully changed password.`);
@@ -425,6 +498,7 @@ router.post('/profile/change-password', passwordChangeLimiter, isLoggedIn, async
     }
 });
 
+
 router.get('/logout', (req, res, next) => {
     req.logout((err) => {
       if (err) {
@@ -434,6 +508,7 @@ router.get('/logout', (req, res, next) => {
       req.session.destroy(destroyErr => {
         if (destroyErr) {
           console.error("Помилка при знищенні сесії користувача:", destroyErr);
+          // Не кидаємо помилку далі, просто логуємо
         }
         res.clearCookie('connect.sid'); 
         console.log('Користувач вийшов з системи. Сесію знищено.');
@@ -455,9 +530,10 @@ router.get('/product/:id/review', isLoggedIn, async (req, res, next) => {
             return res.status(404).render('404', { message: 'Товар не знайдено.' });
         }
 
+        // Перевірка, чи користувач придбав товар і замовлення виконано
         const purchase = await Order.findOne({
             userId: userId,
-            'items.productId': productId,
+            'items.productId': productId, // Переконуємося, що товар є серед замовлених
             status: 'Виконано'
         }).select('_id').lean();
 
@@ -466,6 +542,7 @@ router.get('/product/:id/review', isLoggedIn, async (req, res, next) => {
             return res.redirect(`/product/${productId}?error=not_purchased`);
         }
 
+        // Перевірка, чи користувач вже залишав відгук
         const existingReview = await Review.findOne({
             productId: productId,
             userId: userId
@@ -476,7 +553,7 @@ router.get('/product/:id/review', isLoggedIn, async (req, res, next) => {
             return res.redirect(`/product/${productId}?error=already_reviewed`);
         }
 
-        res.render('new-review', {
+        res.render('new-review', { // Припускаю, що у вас є шаблон new-review.ejs
             pageTitle: `Відгук на ${product.name}`,
             product: product,
             user: req.user,
@@ -489,17 +566,22 @@ router.get('/product/:id/review', isLoggedIn, async (req, res, next) => {
     }
 });
 
+
+// Google OAuth Routes
 router.get('/auth/google', passport.authenticate('google', {
     scope: ['profile', 'email']
 }));
 
 router.get('/auth/google/callback', passport.authenticate('google', {
-    failureRedirect: '/login',
+    failureRedirect: '/login', // Куди перенаправити при невдачі
+    // successRedirect: '/', // Визначається динамічно нижче
 }), (req, res) => {
+    // Успішна автентифікація
     console.log('Google authentication successful, user:', req.user?.email);
-    const redirectUrl = req.session.returnTo || '/';
-    delete req.session.returnTo;
+    const redirectUrl = req.session.returnTo || '/'; // Використовуємо збережений URL або '/'
+    delete req.session.returnTo; // Очищаємо збережений URL
     res.redirect(redirectUrl);
 });
+
 
 module.exports = router;

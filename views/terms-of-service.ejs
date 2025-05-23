@@ -114,47 +114,75 @@
         </div>
     </main>
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "WebPage",
-          "name": "<%- pageTitle %>",
-          "url": "<%= canonicalUrl %>",
-          "description": "<%- pageDescription %>",
-          "datePublished": "<%= datePublished %>",
-          "dateModified": "<%= dateModified %>",
-           "breadcrumb": {
-               "@id": "<%= canonicalUrl %>#breadcrumb"
-           },
-          "isPartOf": {
-            "@type": "WebSite",
-            "url": "<%= baseUrl %>/",
-            "name": "Вузлик до вузлика"
-          }
-        },
-        {
-          "@type": "BreadcrumbList",
-          "@id": "<%= canonicalUrl %>#breadcrumb",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Головна",
-              "item": "<%= baseUrl %>/"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "Умови Обслуговування",
-              "item": "<%= canonicalUrl %>"
-            }
-          ]
-        }
-      ]
+ <script type="application/ld+json">
+<%
+  const graph = [];
+
+  const organization = {
+    "@type": "Store", 
+    "@id": baseUrl + "/#organization", 
+    "name": "Вузлик до вузлика",
+    "url": baseUrl + "/",
+    "logo": baseUrl + "/images/logo.webp", 
+    "email": "info@vuzlyk.com",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Бровари",
+      "addressRegion": "Київська область",
+      "addressCountry": "UA"
     }
-    </script>
+  };
+  graph.push(organization);
+  graph.push({
+    "@type": "WebPage",
+    "@id": canonicalUrl, 
+    "url": canonicalUrl,
+    "name": pageTitle,
+    "description": pageDescription,
+    "inLanguage": "uk", // Язык страницы
+    "datePublished": datePublished,
+    "dateModified": dateModified,
+    "publisher": {
+      "@id": baseUrl + "/#organization"
+    },
+    "author": {
+      "@id": baseUrl + "/#organization"
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "@id": baseUrl + "/#website", 
+      "url": baseUrl + "/",
+      "name": "Вузлик до вузлика",
+      "publisher": {
+        "@id": baseUrl + "/#organization" 
+      }
+    },
+    "breadcrumb": {
+      "@id": canonicalUrl + "#breadcrumb" 
+    }
+  });
+
+  graph.push({
+    "@type": "BreadcrumbList",
+    "@id": canonicalUrl + "#breadcrumb",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Головна",
+        "item": baseUrl + "/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Умови Обслуговування", 
+        "item": canonicalUrl
+      }
+    ]
+  });
+%>
+<%- JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 0) %>
+</script>
 
     <%- include('partials/footer') %>
 

@@ -34,102 +34,116 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
-    <script type="application/ld+json">
+<script type="application/ld+json">
+<%
+  const _pageTitle = typeof pageTitle !== 'undefined' ? pageTitle : "Часті питання (FAQ) - Вузлик до вузлика";
+  const _pageDescription = typeof pageDescription !== 'undefined' ? pageDescription : "Відповіді на часті питання про вишивку, замовлення, доставку та догляд за виробами від майстерні Вузлик до вузлика.";
+  const _canonicalUrl = typeof canonicalUrl !== 'undefined' ? canonicalUrl : ( (typeof baseUrl === 'string' ? baseUrl : 'https://vuzlyk.com') + '/faq');
+  const _baseUrl = typeof baseUrl === 'string' ? baseUrl : 'https://vuzlyk.com';
+
+  const faqPageMainEntity = [];
+
+  function stripHtml(html) {
+    if (typeof html !== 'string') return '';
+    return html.replace(/<[^>]*>?/gm, '');
+  }
+
+  const faqItems = [
     {
-      "@context": "https://schema.org",
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Як зробити замовлення?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Оберіть позицію з нашого <a href='/catalog'>каталогу</a>, вкажіть ваші побажання щодо дизайну, розміру та кольорів. Залиште контактні дані, і ми незабаром зв’яжемося з вами, щоб обговорити деталі та підтвердити замовлення.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Який термін виконання замовлення?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Термін виконання залежить від складності та обсягу вашого замовлення. Зазвичай це займає від 3 до 5 робочих днів. Ми обов'язково повідомимо вам точний час після отримання замовлення.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Які способи оплати доступні?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Після виконання вашого замовлення ми надішлемо реквізити для оплати на рахунок ФОП.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Як я можу отримати замовлення?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Ми відправляємо замовлення через Нову Пошту чи Укрпоштою. Ви можете вибрати зручний для вас спосіб доставки під час оформлення замовлення.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Чи можна замовити вишивку за індивідуальним дизайном?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Так, ми приймаємо замовлення за індивідуальним дизайном. <a href='mailto:info@vuzlyk.com'>Напишіть нам</a> свої побажання або надайте ескіз, і ми створимо для вас унікальну вишивку, що відповідає вашим вимогам.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Чи можна змінити кольори вишивки?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Так, ви можете вказати бажані кольори в замовленні, і ми адаптуємо дизайн під ваші уподобання.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Чи можна замовити подарункову упаковку?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Так, ми можемо упакувати ваше замовлення в подарункову упаковку за додаткову плату. Виберіть цю опцію під час оформлення замовлення.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Чи є знижки на оптові замовлення?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Так, ми пропонуємо знижки на оптові замовлення. <a href='mailto:info@vuzlyk.com'>Зв'яжіться з нами</a> для отримання деталей та індивідуальної пропозиції.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Чи можна замовити вишивку для команди або корпоративних заходів?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Так, ми створюємо вишивки для корпоративних клієнтів та команд. <a href='mailto:info@vuzlyk.com'>Зв'яжіться з нами</a> для отримання деталей та індивідуальної пропозиції.</p>"
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Як доглядати за виробами ручної вишивки?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Рекомендуємо ручне прання у прохолодній воді з м'яким миючим засобом. Уникайте сильного тертя та віджиму. Прасуйте виріб з виворітного боку через тонку тканину.</p>" /* Додано загальні рекомендації. Можна додати посилання на сторінку /care-instructions, якщо вона є */
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Моє питання не тут, як з вами зв'язатися?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "<p>Якщо ви не знайшли відповідь на своє питання, будь ласка, <a href='mailto:info@vuzlyk.com'>напишіть нам листа</a>. Ми будемо раді допомогти!</p>" /* Змінив текст для mailto */
-          }
-        }
-      ]
+      question: "Як зробити замовлення?",
+      answerHtml: "<p>Оберіть позицію з нашого <a href='/catalog'>каталогу</a>, вкажіть ваші побажання щодо дизайну, розміру та кольорів. Залиште контактні дані, і ми незабаром зв’яжемося з вами, щоб обговорити деталі та підтвердити замовлення.</p>"
+    },
+    {
+      question: "Який термін виконання замовлення?",
+      answerHtml: "<p>Термін виконання залежить від складності та обсягу вашого замовлення. Зазвичай це займає від 3 до 5 робочих днів. Ми обов'язково повідомимо вам точний час після отримання замовлення.</p>"
+    },
+    {
+      question: "Які способи оплати доступні?",
+      answerHtml: "<p>Після виконання вашого замовлення ми надішлемо реквізити для оплати на рахунок ФОП.</p>"
+    },
+    {
+      question: "Як я можу отримати замовлення?",
+      answerHtml: "<p>Ми відправляємо замовлення через Нову Пошту чи Укрпоштою. Ви можете вибрати зручний для вас спосіб доставки під час оформлення замовлення.</p>"
+    },
+    {
+      question: "Чи можна замовити вишивку за індивідуальним дизайном?",
+      answerHtml: "<p>Так, ми приймаємо замовлення за індивідуальним дизайном. <a href='mailto:info@vuzlyk.com'>Напишіть нам</a> свої побажання або надайте ескіз, і ми створимо для вас унікальну вишивку, що відповідає вашим вимогам.</p>"
+    },
+    {
+      question: "Чи можна змінити кольори вишивки?",
+      answerHtml: "<p>Так, ви можете вказати бажані кольори в замовленні, і ми адаптуємо дизайн під ваші уподобання.</p>"
+    },
+    {
+      question: "Чи можна замовити подарункову упаковку?",
+      answerHtml: "<p>Так, ми можемо упакувати ваше замовлення в подарункову упаковку за додаткову плату. Виберіть цю опцію під час оформлення замовлення.</p>"
+    },
+    {
+      question: "Чи є знижки на оптові замовлення?",
+      answerHtml: "<p>Так, ми пропонуємо знижки на оптові замовлення. <a href='mailto:info@vuzlyk.com'>Зв'яжіться з нами</a> для отримання деталей та індивідуальної пропозиції.</p>"
+    },
+    {
+      question: "Чи можна замовити вишивку для команди або корпоративних заходів?",
+      answerHtml: "<p>Так, ми створюємо вишивки для корпоративних клієнтів та команд. <a href='mailto:info@vuzlyk.com'>Зв'яжіться з нами</a> для отримання деталей та індивідуальної пропозиції.</p>"
+    },
+    {
+      question: "Як доглядати за виробами ручної вишивки?",
+      answerHtml: "<p>Рекомендуємо ручне прання у прохолодній воді з м'яким миючим засобом. Уникайте сильного тертя та віджиму. Прасуйте виріб з виворітного боку через тонку тканину.</p>"
+    },
+    {
+      question: "Моє питання не тут, як з вами зв'язатися?",
+      answerHtml: "<p>Якщо ви не знайшли відповідь на своє питання, будь ласка, <a href='mailto:info@vuzlyk.com'>напишіть нам листа</a>. Ми будемо раді допомогти!</p>"
     }
-    </script>
+  ];
+
+  faqItems.forEach(item => {
+    faqPageMainEntity.push({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answerHtml 
+      }
+    });
+  });
+
+  const graph = [];
+
+  const faqWebPage = {
+    "@type": "WebPage",
+    "@id": _canonicalUrl,
+    "url": _canonicalUrl,
+    "name": _pageTitle,
+    "description": _pageDescription,
+    "inLanguage": "uk",
+    "isPartOf": {
+      "@type": "WebSite",
+      "@id": _baseUrl + "/#website",
+      "url": _baseUrl + "/",
+      "name": "Вузлик до вузлика",
+      "publisher": { "@id": _baseUrl + "/#organization" }
+    },
+    "breadcrumb": { "@id": _canonicalUrl + "#breadcrumb" },
+    "mainEntity": { "@id": _canonicalUrl + "#faqlist" } 
+  };
+  graph.push(faqWebPage);
+
+  graph.push({
+    "@type": "BreadcrumbList",
+    "@id": _canonicalUrl + "#breadcrumb",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Головна", "item": _baseUrl + "/" },
+      { "@type": "ListItem", "position": 2, "name": "Часті питання (FAQ)", "item": _canonicalUrl }
+    ]
+  });
+
+  graph.push({
+    "@type": "FAQPage",
+    "@id": _canonicalUrl + "#faqlist", 
+    "mainEntity": faqPageMainEntity 
+  });
+%>
+<%- JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 0) %>
+</script>
 </head>
 <body>
     <%- include('partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>

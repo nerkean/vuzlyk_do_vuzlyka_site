@@ -161,6 +161,12 @@
                         </label>
                     </div>
 
+                    
+ <div class="admin-form-group">
+    <label for="sku">SKU (Артикул) <small>(необов'язково, генерується автоматично, якщо порожньо)</small></label>
+    <input type="text" id="sku" name="sku" class="admin-form-control" value="<%= typeof formData !== 'undefined' ? formData.sku : '' %>">
+</div>
+
                     <hr>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Зберегти товар</button>

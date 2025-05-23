@@ -21,43 +21,67 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" /></noscript>
 
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": ["WebPage", "PrivacyPolicy"], 
-          "name": "Політика Конфіденційності - Вузлик до вузлика",
-          "url": "https://vuzlyk.com/privacy-policy",
-          "description": "Політика конфіденційності майстерні Вузлик до вузлика. Як ми збираємо, використовуємо та захищаємо ваші персональні дані.",
-          "datePublished": "2025-04-21",
-          dateModified": "2025-04-21",
-          "isPartOf": {
-            "@type": "WebSite",
-            "url": "https://vuzlyk.com/",
-            "name": "Вузлик до вузлика"
-          }
-        },
-        {
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Головна",
-              "item": "https://vuzlyk.com/"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "Політика Конфіденційності", 
-              "item": "https://vuzlyk.com/privacy-policy"
-            }
-          ]
-        }
-      ]
+  <script type="application/ld+json">
+<%
+  const _pageTitle = typeof pageTitle !== 'undefined' ? pageTitle : "Політика Конфіденційності - Вузлик до вузлика";
+  const _pageDescription = typeof pageDescription !== 'undefined' ? pageDescription : "Політика конфіденційності майстерні Вузлик до вузлика. Як ми збираємо, використовуємо та захищаємо ваші персональні дані.";
+  const _canonicalUrl = typeof canonicalUrl !== 'undefined' ? canonicalUrl : ( (typeof baseUrl === 'string' ? baseUrl : 'https://vuzlyk.com') + '/privacy-policy');
+  const _baseUrl = typeof baseUrl === 'string' ? baseUrl : 'https://vuzlyk.com';
+  const _datePublished = typeof datePublished !== 'undefined' ? datePublished : "2025-04-21"; 
+  const _dateModified = typeof dateModified !== 'undefined' ? dateModified : "2025-04-21";   
+
+  const graph = [];
+
+  graph.push({
+    "@type": "WebPage", 
+    "@id": _canonicalUrl, 
+    "url": _canonicalUrl,
+    "name": _pageTitle,
+    "description": _pageDescription,
+    "inLanguage": "uk",
+    "datePublished": _datePublished,
+    "dateModified": _dateModified,
+    "publisher": {
+      "@id": _baseUrl + "/#organization"
+    },
+    "author": {
+      "@id": _baseUrl + "/#organization" 
+    },
+    "isPartOf": {
+      "@type": "WebSite",
+      "@id": _baseUrl + "/#website", 
+      "url": _baseUrl + "/",
+      "name": "Вузлик до вузлика",
+      "publisher": {
+        "@id": _baseUrl + "/#organization"
+      }
+    },
+    "breadcrumb": {
+      "@id": _canonicalUrl + "#breadcrumb" 
     }
-    </script>
+  });
+
+  graph.push({
+    "@type": "BreadcrumbList",
+    "@id": _canonicalUrl + "#breadcrumb",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Головна",
+        "item": _baseUrl + "/"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Політика Конфіденційності",
+        "item": _canonicalUrl
+      }
+    ]
+  });
+%>
+<%- JSON.stringify({ "@context": "https://schema.org", "@graph": graph }, null, 0) %>
+</script>
 
 </head>
 <body>

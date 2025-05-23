@@ -26,6 +26,12 @@ const productSchema = new Schema({
     trim: true,
     maxlength: [170, 'Meta Description не може перевищувати 170 символів']
   },
+  sku: { // <--- ДОБАВЛЯЕМ НОВОЕ ПОЛЕ
+    type: String,
+    trim: true,
+    sparse: true, // Позволяет этому полю быть null и не нарушать уникальность, если значение не задано
+    unique: true    // Если SKU должны быть уникальными
+  },
   price: { 
     type: Number,
     required: [true, 'Ціна товару є обов\'язковою'],

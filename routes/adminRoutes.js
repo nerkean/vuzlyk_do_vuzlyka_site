@@ -273,11 +273,13 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
         let numPrice = 0;
         let numMaxPrice = null;
 
-        const {
-            name, description, price, maxPrice, category,
-            tags, materials, colors, care_instructions, isFeatured,
-            creation_time_info, status, metaDescription
-        } = req.body;
+const {
+    name, description, price, maxPrice, category,
+    tags, materials, colors, care_instructions, isFeatured,
+    creation_time_info, status, metaDescription,
+    sku // <--- Получаем SKU из req.body
+} = req.body;
+
 
         if (price !== undefined && price !== null && price !== '') {
             numPrice = parseFloat(price);
@@ -392,16 +394,17 @@ router.post('/products', checkAdminAuth, cpUpload, async (req, res, next) => {
         const processedMaterials = materials ? materials.split(',').map(m => m.trim()).filter(m => m) : [];
         const processedColors = colors ? colors.split(',').map(c => c.trim()).filter(c => c) : [];
 
-        const newProduct = new Product({
-            name, description, metaDescription: metaDescription ? metaDescription.trim() : null,
-            price: numPrice, 
-            maxPrice: (numMaxPrice !== null && numMaxPrice >= numPrice) ? numMaxPrice : undefined,
-            category, status: status || 'Під замовлення', images: processedImagesData,
-            livePhotoUrl: livePhotoUrlDb,
-            livePhotoPublicId: livePhotoPublicIdDb,
-            tags: processedTags, materials: processedMaterials, colors: processedColors,
-            care_instructions, creation_time_info, isFeatured: isFeatured === 'on'
-        });
+const newProduct = new Product({
+    name, description, metaDescription: metaDescription ? metaDescription.trim() : null,
+    price: numPrice, 
+    maxPrice: (numMaxPrice !== null && numMaxPrice >= numPrice) ? numMaxPrice : undefined,
+    category, status: status || 'Під замовлення', images: processedImagesData,
+    livePhotoUrl: livePhotoUrlDb,
+    livePhotoPublicId: livePhotoPublicIdDb,
+    tags: processedTags, materials: processedMaterials, colors: processedColors,
+    care_instructions, creation_time_info, isFeatured: isFeatured === 'on',
+    sku: sku ? sku.trim() : null // <--- Сохраняем SKU, если он есть, иначе null
+});
         await newProduct.save();
 
         for (const pathToDelete of successfullyProcessedOriginalPaths) {
@@ -504,12 +507,13 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
             return res.redirect(`/admin/products?error=notfound_update`);
         }
         
-        const {
-            name, description, price, maxPrice, category,
-            tags, materials, colors, care_instructions, isFeatured,
-            creation_time_info, status, metaDescription,
-            images_to_delete, delete_live_photo 
-        } = req.body;
+const {
+    name, description, price, maxPrice, category,
+    tags, materials, colors, care_instructions, isFeatured,
+    creation_time_info, status, metaDescription,
+    images_to_delete, delete_live_photo,
+    sku // <--- Получаем SKU из req.body
+} = req.body;
 
         if (!name || !description || !price || !category || !creation_time_info || !status) {
             if (newMainImageTempPaths.length > 0) await Promise.all(newMainImageTempPaths.map(p=>fs.unlink(p).catch(e=>{})));
@@ -520,6 +524,7 @@ router.put('/products/:id', checkAdminAuth, cpUpload, async (req, res, next) => 
         productToUpdate.name = name;
         productToUpdate.description = description;
         productToUpdate.metaDescription = metaDescription ? metaDescription.trim() : null;
+        productToUpdate.sku = sku ? sku.trim() : null;
         
         let currentNumPrice = parseFloat(price) || 0;
         let currentNumMaxPrice = maxPrice ? (parseFloat(maxPrice) || null) : null;

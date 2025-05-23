@@ -394,52 +394,158 @@ app.get('/product/:id', async (req, res, next) => {
       ? product.metaDescription.substring(0, 170) 
       : `${product.name} - вишивка ручної роботи від Вузлик. ${product.description ? product.description.substring(0, 100) + '...' : ''}`; 
 
-      const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com'; // Убедитесь, что baseUrl определен
-
-      // Очищаем описание от HTML для JSON-LD
+       const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com';
       let descriptionForJsonLd = product.description || '';
-      descriptionForJsonLd = descriptionForJsonLd.replace(/<[^>]*>?/gm, ''); // Удаляем все HTML-теги
-      descriptionForJsonLd = descriptionForJsonLd.replace(/\s+/g, ' ').trim(); // Заменяем множественные пробелы на один и обрезаем по краям
-  
+      descriptionForJsonLd = descriptionForJsonLd.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+
+      // --- НАЧАЛО МОДИФИКАЦИИ JSON-LD ---
       const productSchema = {
         "@context": "https://schema.org/",
         "@type": "Product",
-        "name": product.name, // Используем оригинальное имя
-        "description": descriptionForJsonLd, // Очищенное описание
+        "name": product.name,
+        "description": descriptionForJsonLd,
         "image": product.images && product.images.length > 0
-          ? product.images.map(img => new URL(img.large || img.medium || img.thumb, baseUrl).href) // Формируем полные URL
-          : [], // Пустой массив, если нет изображений
+          ? product.images.map(imgSet => {
+              // Убедимся, что imgSet и нужные свойства существуют
+              if (imgSet && imgSet.large && imgSet.large.url) return new URL(imgSet.large.url, baseUrl).href;
+              if (imgSet && imgSet.medium && imgSet.medium.url) return new URL(imgSet.medium.url, baseUrl).href;
+              if (imgSet && imgSet.thumb && imgSet.thumb.url) return new URL(imgSet.thumb.url, baseUrl).href;
+              return null; // Возвращаем null, если URL не найден, чтобы потом отфильтровать
+            }).filter(url => url !== null) // Удаляем null значения, если какие-то URL не были сформированы
+          : [],
+        "sku": product.sku || `VUZLYK-${product._id}`, // Используем product._id, так как productId это строка из req.params
         "brand": {
           "@type": "Organization",
-          "name": "Вузлик до вузлика"
+          "name": "Вузлик до вузлика",
+          "url": baseUrl // Добавляем URL сайта для бренда
         },
         "offers": {
           "@type": "Offer",
-          "url": `${baseUrl}/product/${productId}`,
-          "priceCurrency": res.locals.selectedCurrency || "UAH", // Валюта из res.locals или по умолчанию
-          "price": (product.price * (res.locals.exchangeRates[res.locals.selectedCurrency || "UAH"] || 1)).toFixed(2), // Цена с учетом валюты
-          "availability": "https://schema.org/PreOrder", // Или реальная доступность
+          "url": `${baseUrl}/product/${product._id}`, // Используем product._id
+          "priceCurrency": res.locals.selectedCurrency || "UAH",
+          "price": (product.price * (res.locals.exchangeRates[res.locals.selectedCurrency || "UAH"] || 1)).toFixed(2),
+          // Динамическая доступность
+          "availability": product.status === 'В наявності' ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
           "itemCondition": "https://schema.org/NewCondition"
-        },
-        // Здесь добавьте SKU, gtin, aggregateRating и т.д., если есть
-        "sku": product.sku || `VUZLYK-${productId}` // Пример SKU
+        }
       };
 
-  res.render('product-detail', {
-      product: product,
-      reviews: reviews,
-      averageRating: averageRating,
-      ratingCount: ratingCount,
-      similarProducts: similarProducts,
-      isCustomProduct: isCustomProduct,
-      canReview: canReview,
-      hasReviewed: hasReviewed,
-      currentUser: req.user,
-      infoMessage: null,
-      pageTitle: product.name,
-      metaDescription: descriptionForJsonLd.substring(0, 160), 
-      productLD: productSchema
-  });
+      // Добавляем aggregateRating, если есть отзывы
+      if (ratingCount > 0) {
+        productSchema.aggregateRating = {
+          "@type": "AggregateRating",
+          "ratingValue": averageRating,
+          "reviewCount": ratingCount
+        };
+      }
+
+      // Добавляем отзывы, если они есть
+      if (reviews && reviews.length > 0) {
+        productSchema.review = reviews.map(review => ({
+          "@type": "Review",
+          "author": {
+            "@type": "Person", // Предполагаем, что автор - человек (пользователь сайта)
+            "name": review.userId ? review.userId.name : "Анонімний користувач" // Имя из populate или заглушка
+          },
+          "datePublished": review.createdAt ? new Date(review.createdAt).toISOString() : undefined,
+          "reviewBody": review.text,
+          "reviewRating": {
+            "@type": "Rating",
+            "ratingValue": review.rating.toString() // Убедимся, что это строка, как часто ожидает Google
+          }
+        })).filter(r => r.reviewRating.ratingValue && r.datePublished); // Фильтруем отзывы без рейтинга или даты
+      }
+      
+      // Добавляем материалы, если они есть
+      if (product.materials && product.materials.length > 0) {
+        productSchema.material = product.materials; // Можно product.materials.join(", ") если нужна строка
+      }
+
+      // Добавляем цвета, если они есть
+      if (product.colors && product.colors.length > 0) {
+        productSchema.color = product.colors; // Можно product.colors.join(", ")
+      }
+
+      // Добавляем категорию
+      if (product.category) {
+        productSchema.category = product.category;
+      }
+
+      // Добавляем additionalProperty для других характеристик
+      productSchema.additionalProperty = [];
+
+      if (product.creation_time_info) {
+        productSchema.additionalProperty.push({
+          "@type": "PropertyValue",
+          "name": "Термін виготовлення",
+          "value": product.creation_time_info
+        });
+      }
+
+      if (product.dimensions) {
+        if (product.dimensions.width && product.dimensions.height) {
+          productSchema.additionalProperty.push({
+            "@type": "PropertyValue",
+            "name": "Розміри (ШxВ, см)", // Уточнил единицы
+            "value": `${product.dimensions.width} x ${product.dimensions.height}`
+          });
+        }
+        if (product.dimensions.size_name) {
+            productSchema.additionalProperty.push({
+            "@type": "PropertyValue",
+            "name": "Розмір виробу", // Более общее название, если это не числовые размеры
+            "value": product.dimensions.size_name
+            });
+        }
+      }
+
+      if (product.care_instructions) {
+        productSchema.additionalProperty.push({
+          "@type": "PropertyValue",
+          "name": "Інструкції по догляду",
+          "value": product.care_instructions
+        });
+      }
+      
+      // Удаляем additionalProperty если он пустой, чтобы не было лишнего в разметке
+      if (productSchema.additionalProperty.length === 0) {
+        delete productSchema.additionalProperty;
+      }
+
+      // Если у товара есть "живое фото" (видео или GIF), можно добавить его как 'video' или еще одно 'image'
+      if (product.livePhotoUrl) {
+        productSchema.video = {
+          "@type": "VideoObject",
+          "name": `Живе фото ${product.name}`,
+          "description": `Анімація або відео товару ${product.name}`,
+          "thumbnailUrl": product.images && product.images.length > 0 && product.images[0].medium ? new URL(product.images[0].medium.url, baseUrl).href : undefined,
+          "contentUrl": new URL(product.livePhotoUrl, baseUrl).href,
+          "uploadDate": product.createdAt ? new Date(product.createdAt).toISOString() : undefined // или updatedAt
+        };
+        if (product.livePhotoUrl.endsWith('.gif')) {
+           if (!productSchema.image) productSchema.image = [];
+           productSchema.image.push(new URL(product.livePhotoUrl, baseUrl).href);
+        }
+      }
+
+
+      // --- КОНЕЦ МОДИФИКАЦИИ JSON-LD ---
+
+      res.render('product-detail', {
+        product: product,
+        reviews: reviews, // передаем отзывы в шаблон, если они нужны для отображения на странице
+        averageRating: averageRating,
+        ratingCount: ratingCount,
+        similarProducts: similarProducts,
+        isCustomProduct: isCustomProduct,
+        canReview: canReview,
+        hasReviewed: hasReviewed,
+        currentUser: req.user,
+        infoMessage: null, // Возможно, это переменная для сообщений пользователю
+        pageTitle: product.metaTitle || product.name, // Используем metaTitle если есть
+        metaDescription: metaDesc,
+        productLD: productSchema // Передаем обновленный productSchema
+      });
   } catch (error) {
       console.error(`Помилка отримання товару ${productId}:`, error);
       next(error);
@@ -1049,6 +1155,82 @@ app.get('/about', (req, res) => {
       console.error("Помилка при рендерингу сторінки /about:", error);
       res.status(500).render('500');
   }
+});
+
+app.get('/contacts', (req, res) => {
+    res.render('contacts', {
+        pageTitle: "Контакти - Вузлик до вузлика", // Можна передавати з маршруту
+        query: req.query, // Для відображення повідомлень після відправки форми
+        formData: {} // Порожній об'єкт для значень форми (якщо не було помилки)
+    });
+});
+
+// НОВИЙ МАРШРУТ ДЛЯ ОБРОБКИ ФОРМИ КОНТАКТІВ
+app.post('/contacts/send', async (req, res) => {
+    const { name, email, phone, subject, message } = req.body;
+
+    if (!name || !email || !message) {
+        return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, заповніть усі обов\'язкові поля (ім\'я, email, повідомлення).') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+    }
+
+    // Валідація email (проста)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+         return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, введіть коректний email.') + `&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+    }
+
+    const mailSubject = subject ? `Повідомлення з сайту Вузлик: ${subject}` : `Нове повідомлення з контактної форми Вузлик від ${name}`;
+    const mailText = `
+Ім'я: ${name}
+Email: ${email}
+Телефон: ${phone || 'Не вказано'}
+Тема: ${subject || 'Без теми'}
+
+Повідомлення:
+${message}
+    `;
+    const mailHtml = `
+        <p><strong>Ім'я:</strong> ${name}</p>
+        <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+        <p><strong>Телефон:</strong> ${phone || 'Не вказано'}</p>
+        <p><strong>Тема:</strong> ${subject || 'Без теми'}</p>
+        <hr>
+        <p><strong>Повідомлення:</strong></p>
+        <p style="white-space: pre-wrap;">${message}</p>
+    `;
+
+    try {
+        if (!process.env.SMTP_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
+            console.error('Відсутні налаштування SMTP для відправки контактної форми.');
+            return res.redirect('/contacts?error=' + encodeURIComponent('Помилка сервера. Не вдалося відправити повідомлення.'));
+        }
+
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: parseInt(process.env.SMTP_PORT, 10),
+            secure: process.env.SMTP_SECURE === 'true',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
+        await transporter.sendMail({
+            from: `"${name} (Сайт Вузлик)" <${process.env.EMAIL_USER}>`, // Email відправника - ваш, але ім'я - користувача
+            replyTo: email, // Встановлюємо Reply-To на email користувача
+            to: process.env.ADMIN_EMAIL, // Ваш email для отримання повідомлень
+            subject: mailSubject,
+            text: mailText,
+            html: mailHtml,
+        });
+        
+        console.log(`[Contact Form] Повідомлення від ${name} (${email}) успішно відправлено.`);
+        res.redirect('/contacts?success=true');
+
+    } catch (error) {
+        console.error('Помилка відправки повідомлення з контактної форми:', error);
+        res.redirect('/contacts?error=' + encodeURIComponent('Сталася помилка при відправці повідомлення. Спробуйте пізніше.') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+    }
 });
 
 app.post('/api/products/:id/reviews', isLoggedIn, async (req, res) => {
