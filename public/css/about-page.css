@@ -287,7 +287,6 @@
 .cta-buttons { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; }
 .cta-buttons .btn { min-width: 200px; }
 
-/* GSAP Scrollytelling Section Styles */
 .creation-process-section {
     background-color: var(--color-light-bg);
     overflow: hidden; 
@@ -393,12 +392,11 @@
 }
 
 .process-step-content {
-    /* min-height: 80vh; /* Розглянь можливість видалення або значного зменшення, напр., 50vh або auto */
-    padding-top: 20px; /* Додай верхній відступ, якщо потрібно */
-    padding-bottom: 10vh; /* Скоригований відступ для простору між елементами */
+    padding-top: 20px; 
+    padding-bottom: 10vh; 
     opacity: 0;
     visibility: hidden;
-    margin-bottom: 5vh; /* Приклад зовнішнього відступу, якщо padding-bottom недостатньо */
+    margin-bottom: 5vh; 
 }
 
 
@@ -448,34 +446,32 @@
     .timeline-item::after { display: none; }
 
     .creation-process-scrollytelling {
-        /* flex-direction: column; -- ЦЕ ВИДАЛЯЄМО або змінюємо на row, якщо потрібно, щоб контент був справа */
-        flex-direction: row; /* Панель зліва, контент справа */
+        flex-direction: row; 
     }
     .process-progress-panel {
-        width: 50px; /* Вузька панель для лінії прогресу на планшетах */
+        width: 50px; 
         min-width: 40px;
         padding: 25px 15px;
         flex-direction: column; 
         align-items: center; 
         border-right: 1px solid var(--color-border); 
         border-bottom: none; 
-        /* position: sticky; top: 80px; height: calc(100vh - 100px); -- GSAP керує pin */
     }
     .progress-line-container {
         width: 4px; 
-        height: 100%; /* Лінія на всю висоту панелі */
+        height: 100%; 
         margin-right: 0; 
         margin-bottom: 0; 
         align-self: center;
     }
     .progress-line-fill {
          width: 100%; 
-         height: 0%;   /* Анімуємо висоту */
+         height: 0%; 
          top: 0; 
          bottom: auto;
     }
     .process-steps-nav {
-        display: none; /* Приховуємо текстову навігацію */
+        display: none; 
     }
     
     .process-content-panel {
@@ -483,10 +479,10 @@
         flex-grow: 1; 
     }
     .process-step-content {
-        min-height: auto; /* Дозволь контенту визначати висоту */
+        min-height: auto; 
         padding-top: 10px;
-        padding-bottom: 8vh; /* Налаштуй за потребою */
-        margin-bottom: 4vh; /* Налаштуй за потребою */
+        padding-bottom: 8vh;
+        margin-bottom: 4vh; 
     }
 }
 
@@ -520,12 +516,10 @@
     .process-progress-panel {
         width: 40px;
         padding: 30px 5px;
-        top: 70px; /* Перевір, чи це значення актуальне, якщо хедер не закріплений або має іншу висоту */
-        /* Висота панелі прогресу: висота в'юпорту - верхній зсув - невеликий нижній буфер */
+        top: 70px;
         height: calc(100vh - 70px - 20px);
     }
     .process-step-content {
-        /* min-height все ще auto */
         padding-top: 10px;
         padding-bottom: 10vh;
         margin-bottom: 5vh;
@@ -558,18 +552,17 @@
     .artisan-bio h3 { font-size: 1.3em;}
 
     .process-progress-panel {
-        width: 30px; /* Ще вужче */
+        width: 30px; 
         padding: 20px 5px;
-        top: 60px; /* Скоригуй, якщо висота хедера змінюється */
+        top: 60px; 
         height: calc(100vh - 60px - 20px);
     }
     .process-content-panel {
         padding: 15px 10px;
     }
     .process-step-content {
-        /* min-height все ще auto */
         padding-top: 5px;
-        padding-bottom: 12vh; /* Може знадобитися більше відносного простору на дуже маленьких екранах */
+        padding-bottom: 12vh; 
         margin-bottom: 6vh;
     }
     .progress-line-container {

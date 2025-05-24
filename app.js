@@ -47,82 +47,100 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(
     helmet({
-      contentSecurityPolicy: {
-        directives: {
-          ...helmet.contentSecurityPolicy.getDefaultDirectives(), // Залишає дефолтні значення, такі як default-src 'self'
-          "script-src": [
-            "'self'",
-            "https://cdn.jsdelivr.net",
-            "https://cdnjs.cloudflare.com",
-            "https://www.googletagmanager.com",
-            "https://www.google-analytics.com",
-            "https://unpkg.com", // Для AOS та інших бібліотек з unpkg
-            "https://*.googleadservices.com",
-            "https://*.doubleclick.net",
-            "https://tpc.googlesyndication.com",
-             "https://cdn.tailwindcss.com", // ДОЗВІЛ для Tailwind CSS
-            "'unsafe-inline'" // Потрібно для деяких вбудованих скриптів або обробників подій
-          ],
-          "script-src-attr": [
-            "'unsafe-inline'" // Дозволяє inline обробники типу onclick, якщо вони є
-          ],
-          "style-src": [
-            "'self'",
-            "https://fonts.googleapis.com",
-            "https://cdn.jsdelivr.net",
-            "https://cdnjs.cloudflare.com", // Для Font Awesome та AOS
-            "https://unpkg.com", // Для AOS
-            "https://fonts.gstatic.com", 
-            "'unsafe-inline'" // Для вбудованих стилів
-          ],
-          "font-src": [
-            "'self'",
-            "https://fonts.gstatic.com", // Для Google Fonts
-            "https://cdnjs.cloudflare.com", // Для Font Awesome
-            "data:" // Дозволяє data: URI для шрифтів (іноді використовується)
-          ],
-          "img-src": [
-            "'self'",
-            "data:", // Для вбудованих зображень (наприклад, base64)
-            "https://res.cloudinary.com", // Для зображень з Cloudinary
-            "https://www.google-analytics.com", // Для пікселів відстеження Google
-            "https://www.googletagmanager.com",
-            "https://*.google.com",
-            "https://*.googleadservices.com",
-            "https://*.doubleclick.net", 
-            "https://*.googlesyndication.com"
-          ],
-          // НОВА ДИРЕКТИВА або оновлення існуючої default-src
-          "media-src": [
-            "'self'", // Дозволяє медіа з вашого домену
-            "https://res.cloudinary.com" // ДОДАНО: Дозволяє відео/аудіо з Cloudinary
-          ],
-          "connect-src": [
-            "'self'",
-            "https://res.cloudinary.com", // Для можливих API запитів до Cloudinary
-            "https://www.google-analytics.com",
-            "https://region1.google-analytics.com", // Для Google Analytics
-            "https://www.googletagmanager.com",
-            "https://*.google.com",
-            "https://*.googleadservices.com",
-            "https://*.doubleclick.net" 
-          ],
-          "frame-src": [ // Для вбудованих фреймів (наприклад, Google reCAPTCHA, якщо використовуєте)
-            "'self'",
-            "https://*.google.com", // Для reCAPTCHA
-            "https://*.doubleclick.net" 
-          ],
-          "object-src": ["'none'"], // Забороняє <object>, <embed>, <applet>
-          "worker-src": ["'self'"], // Якщо використовуєте Web Workers
-          "form-action": ["'self'"], // Дозволяє формам відправлятися тільки на ваш домен
-          // "upgrade-insecure-requests": [], // Якщо сайт повністю на HTTPS, це корисно
-        }
-      },
-      crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-      crossOriginEmbedderPolicy: false, // Встановіть true, якщо всі ресурси це дозволяють
-      referrerPolicy: { policy: "strict-origin-when-cross-origin" }
+        contentSecurityPolicy: {
+            directives: {
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                "script-src": [
+                    "'self'",
+                    "https://cdn.jsdelivr.net",
+                    "https://cdnjs.cloudflare.com",
+                    "https://www.googletagmanager.com", 
+                    "https://www.google-analytics.com",
+                    "https://ssl.google-analytics.com", 
+                    "https://unpkg.com",
+                    "https://*.google.com", 
+                    "https://*.google.com.ua", 
+                    "https://*.googleadservices.com",
+                    "https://www.googleadservices.com",
+                    "https://*.doubleclick.net",
+                    "https://tpc.googlesyndication.com",
+                    "https://pagead2.googlesyndication.com",
+                    "https://cdn.tailwindcss.com", 
+                    "'unsafe-inline'"
+                ],
+                "script-src-attr": [
+                    "'unsafe-inline'" 
+                ],
+                "style-src": [
+                    "'self'",
+                    "https://fonts.googleapis.com",
+                    "https://cdn.jsdelivr.net",
+                    "https://cdnjs.cloudflare.com",
+                    "https://unpkg.com",
+                    "https://fonts.gstatic.com",
+                    "'unsafe-inline'"
+                ],
+                "font-src": [
+                    "'self'",
+                    "https://fonts.gstatic.com",
+                    "https://cdnjs.cloudflare.com",
+                    "data:"
+                ],
+                "img-src": [
+                    "'self'",
+                    "data:",
+                    "https://res.cloudinary.com",
+                    "https://www.google-analytics.com",
+                    "https://*.google.com",
+                    "https://www.google.com", 
+                    "https://www.google.com.ua", 
+                    "https://*.google.com.ua", 
+                    "https://*.googleadservices.com",
+                    "https://www.googleadservices.com",
+                    "https://*.doubleclick.net",
+                    "https://*.googlesyndication.com",
+                    "https://pagead2.googlesyndication.com", 
+                    "https://googleads.g.doubleclick.net", 
+                    "https://www.googletagmanager.com" 
+                ],
+                "media-src": [
+                    "'self'",
+                    "https://res.cloudinary.com"
+                ],
+                "connect-src": [
+                    "'self'",
+                    "https://res.cloudinary.com",
+                    "https://www.google-analytics.com",
+                    "https://*.google-analytics.com", 
+                    "https://www.googletagmanager.com",
+                    "https://*.google.com", 
+                    "https://www.google.com", 
+                    "https://www.google.com.ua", 
+                    "https://*.google.com.ua",
+                    "https://*.googleadservices.com",
+                    "https://www.googleadservices.com", 
+                    "https://*.doubleclick.net",
+                    "https://*.googlesyndication.com",
+                    "https://pagead2.googlesyndication.com",
+                    "https://googleads.g.doubleclick.net" 
+                ],
+                "frame-src": [ 
+                    "'self'",
+                    "https://www.googletagmanager.com", 
+                    "https://*.google.com", 
+                    "https://*.doubleclick.net", 
+                    "https://bid.g.doubleclick.net" 
+                ],
+                "object-src": ["'none'"], 
+                "worker-src": ["'self'"], 
+                "form-action": ["'self'"], 
+            }
+        },
+        crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+        crossOriginEmbedderPolicy: { policy: "unsafe-none" }, 
+        referrerPolicy: { policy: "strict-origin-when-cross-origin" }
     })
-  );
+);
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true })); 
@@ -150,7 +168,6 @@ app.use(passport.session());
 
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
-        // Перевіряємо заголовок, який додає Render (або інший проксі)
         if (req.headers['x-forwarded-proto'] !== 'https') {
             console.log(`[HTTPS Redirect] Redirecting http://${req.headers.host}${req.originalUrl} to https`);
             return res.redirect(['https://', req.get('Host'), req.originalUrl].join(''));
@@ -326,29 +343,28 @@ const adminRoutes = require('./routes/adminRoutes');
 app.use('/admin', adminRoutes); 
 app.use('/', authRoutes);
 
-app.get('/', async (req, res, next) => { // Додайте next для обробки помилок
+app.get('/', async (req, res, next) => {
     try {
         const baseUrl = process.env.BASE_URL || 'https://vuzlyk.com';
         const canonicalUrlForHomepage = baseUrl + '/';
 
         const featuredProducts = await Product.find({ isFeatured: true })
-            .select('name price maxPrice images slug') // Вибираємо потрібні поля, включаючи images
+            .select('name price maxPrice images slug') 
             .limit(4)
-            .lean(); // Додаємо .lean()
+            .lean();
 
         res.render('index', {
            featuredProducts: featuredProducts,
            canonicalUrl: canonicalUrlForHomepage,
            baseUrl: baseUrl,
-           // Передаємо змінні для форматування ціни, якщо вони ще не глобальні
            selectedCurrency: res.locals.selectedCurrency,
            exchangeRates: res.locals.exchangeRates,
            currencySymbols: res.locals.currencySymbols,
-           pageName: 'home' // Для активного меню
+           pageName: 'home' 
         });
     } catch (error) {
         console.error("Помилка отримання товарів для головної:", error);
-        next(error); // Передаємо помилку в обробник помилок
+        next(error);
     }
 });
 
@@ -398,7 +414,6 @@ app.get('/product/:id', async (req, res, next) => {
       let descriptionForJsonLd = product.description || '';
       descriptionForJsonLd = descriptionForJsonLd.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
 
-      // --- НАЧАЛО МОДИФИКАЦИИ JSON-LD ---
       const productSchema = {
         "@context": "https://schema.org/",
         "@type": "Product",
@@ -406,31 +421,28 @@ app.get('/product/:id', async (req, res, next) => {
         "description": descriptionForJsonLd,
         "image": product.images && product.images.length > 0
           ? product.images.map(imgSet => {
-              // Убедимся, что imgSet и нужные свойства существуют
               if (imgSet && imgSet.large && imgSet.large.url) return new URL(imgSet.large.url, baseUrl).href;
               if (imgSet && imgSet.medium && imgSet.medium.url) return new URL(imgSet.medium.url, baseUrl).href;
               if (imgSet && imgSet.thumb && imgSet.thumb.url) return new URL(imgSet.thumb.url, baseUrl).href;
-              return null; // Возвращаем null, если URL не найден, чтобы потом отфильтровать
-            }).filter(url => url !== null) // Удаляем null значения, если какие-то URL не были сформированы
+              return null; 
+            }).filter(url => url !== null) 
           : [],
-        "sku": product.sku || `VUZLYK-${product._id}`, // Используем product._id, так как productId это строка из req.params
+        "sku": product.sku || `VUZLYK-${product._id}`, 
         "brand": {
           "@type": "Organization",
           "name": "Вузлик до вузлика",
-          "url": baseUrl // Добавляем URL сайта для бренда
+          "url": baseUrl 
         },
         "offers": {
           "@type": "Offer",
-          "url": `${baseUrl}/product/${product._id}`, // Используем product._id
+          "url": `${baseUrl}/product/${product._id}`, 
           "priceCurrency": res.locals.selectedCurrency || "UAH",
           "price": (product.price * (res.locals.exchangeRates[res.locals.selectedCurrency || "UAH"] || 1)).toFixed(2),
-          // Динамическая доступность
           "availability": product.status === 'В наявності' ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
           "itemCondition": "https://schema.org/NewCondition"
         }
       };
 
-      // Добавляем aggregateRating, если есть отзывы
       if (ratingCount > 0) {
         productSchema.aggregateRating = {
           "@type": "AggregateRating",
@@ -439,39 +451,34 @@ app.get('/product/:id', async (req, res, next) => {
         };
       }
 
-      // Добавляем отзывы, если они есть
       if (reviews && reviews.length > 0) {
         productSchema.review = reviews.map(review => ({
           "@type": "Review",
           "author": {
-            "@type": "Person", // Предполагаем, что автор - человек (пользователь сайта)
-            "name": review.userId ? review.userId.name : "Анонімний користувач" // Имя из populate или заглушка
+            "@type": "Person", 
+            "name": review.userId ? review.userId.name : "Анонімний користувач" 
           },
           "datePublished": review.createdAt ? new Date(review.createdAt).toISOString() : undefined,
           "reviewBody": review.text,
           "reviewRating": {
             "@type": "Rating",
-            "ratingValue": review.rating.toString() // Убедимся, что это строка, как часто ожидает Google
+            "ratingValue": review.rating.toString()
           }
-        })).filter(r => r.reviewRating.ratingValue && r.datePublished); // Фильтруем отзывы без рейтинга или даты
+        })).filter(r => r.reviewRating.ratingValue && r.datePublished); 
       }
       
-      // Добавляем материалы, если они есть
       if (product.materials && product.materials.length > 0) {
-        productSchema.material = product.materials; // Можно product.materials.join(", ") если нужна строка
+        productSchema.material = product.materials; 
       }
 
-      // Добавляем цвета, если они есть
       if (product.colors && product.colors.length > 0) {
-        productSchema.color = product.colors; // Можно product.colors.join(", ")
+        productSchema.color = product.colors; 
       }
 
-      // Добавляем категорию
       if (product.category) {
         productSchema.category = product.category;
       }
 
-      // Добавляем additionalProperty для других характеристик
       productSchema.additionalProperty = [];
 
       if (product.creation_time_info) {
@@ -486,14 +493,14 @@ app.get('/product/:id', async (req, res, next) => {
         if (product.dimensions.width && product.dimensions.height) {
           productSchema.additionalProperty.push({
             "@type": "PropertyValue",
-            "name": "Розміри (ШxВ, см)", // Уточнил единицы
+            "name": "Розміри (ШxВ, см)",
             "value": `${product.dimensions.width} x ${product.dimensions.height}`
           });
         }
         if (product.dimensions.size_name) {
             productSchema.additionalProperty.push({
             "@type": "PropertyValue",
-            "name": "Розмір виробу", // Более общее название, если это не числовые размеры
+            "name": "Розмір виробу",
             "value": product.dimensions.size_name
             });
         }
@@ -507,12 +514,10 @@ app.get('/product/:id', async (req, res, next) => {
         });
       }
       
-      // Удаляем additionalProperty если он пустой, чтобы не было лишнего в разметке
       if (productSchema.additionalProperty.length === 0) {
         delete productSchema.additionalProperty;
       }
 
-      // Если у товара есть "живое фото" (видео или GIF), можно добавить его как 'video' или еще одно 'image'
       if (product.livePhotoUrl) {
         productSchema.video = {
           "@type": "VideoObject",
@@ -520,7 +525,7 @@ app.get('/product/:id', async (req, res, next) => {
           "description": `Анімація або відео товару ${product.name}`,
           "thumbnailUrl": product.images && product.images.length > 0 && product.images[0].medium ? new URL(product.images[0].medium.url, baseUrl).href : undefined,
           "contentUrl": new URL(product.livePhotoUrl, baseUrl).href,
-          "uploadDate": product.createdAt ? new Date(product.createdAt).toISOString() : undefined // или updatedAt
+          "uploadDate": product.createdAt ? new Date(product.createdAt).toISOString() : undefined 
         };
         if (product.livePhotoUrl.endsWith('.gif')) {
            if (!productSchema.image) productSchema.image = [];
@@ -528,12 +533,9 @@ app.get('/product/:id', async (req, res, next) => {
         }
       }
 
-
-      // --- КОНЕЦ МОДИФИКАЦИИ JSON-LD ---
-
       res.render('product-detail', {
         product: product,
-        reviews: reviews, // передаем отзывы в шаблон, если они нужны для отображения на странице
+        reviews: reviews, 
         averageRating: averageRating,
         ratingCount: ratingCount,
         similarProducts: similarProducts,
@@ -541,10 +543,10 @@ app.get('/product/:id', async (req, res, next) => {
         canReview: canReview,
         hasReviewed: hasReviewed,
         currentUser: req.user,
-        infoMessage: null, // Возможно, это переменная для сообщений пользователю
-        pageTitle: product.metaTitle || product.name, // Используем metaTitle если есть
+        infoMessage: null, 
+        pageTitle: product.metaTitle || product.name, 
         metaDescription: metaDesc,
-        productLD: productSchema // Передаем обновленный productSchema
+        productLD: productSchema 
       });
   } catch (error) {
       console.error(`Помилка отримання товару ${productId}:`, error);
@@ -978,15 +980,11 @@ app.post('/order/place', async (req, res) => {
             const transporter = nodemailer.createTransport({
                 host: process.env.SMTP_HOST,
                 port: parseInt(process.env.SMTP_PORT, 10),
-                secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+                secure: process.env.SMTP_SECURE === 'true', 
                 auth: {
-                    user: process.env.EMAIL_USER, // info@vuzlyk.com
-                    pass: process.env.EMAIL_PASS, // пароль від info@vuzlyk.com
+                    user: process.env.EMAIL_USER, 
+                    pass: process.env.EMAIL_PASS,
                 },
-                // tls: {
-                // ciphers:'SSLv3' // Може знадобитися для деяких хостингів
-                // rejectUnauthorized: false // УВАГА: Не рекомендується для продакшена
-                // }
             });
 
             const accentColor = '#b9936c';
@@ -1117,7 +1115,7 @@ app.post('/order/place', async (req, res) => {
             `;
 
   const mailOptionsCustomer = {
-                from: `"Вузлик до вузлика" <${process.env.EMAIL_USER}>`, // Відправник info@vuzlyk.com
+                from: `"Вузлик до вузлика" <${process.env.EMAIL_USER}>`,
                 to: orderData.contactInfo.email,
                 subject: customerSubject,
                 html: customerEmailHtml
@@ -1159,13 +1157,12 @@ app.get('/about', (req, res) => {
 
 app.get('/contacts', (req, res) => {
     res.render('contacts', {
-        pageTitle: "Контакти - Вузлик до вузлика", // Можна передавати з маршруту
-        query: req.query, // Для відображення повідомлень після відправки форми
-        formData: {} // Порожній об'єкт для значень форми (якщо не було помилки)
+        pageTitle: "Контакти - Вузлик до вузлика", 
+        query: req.query,
+        formData: {} 
     });
 });
 
-// НОВИЙ МАРШРУТ ДЛЯ ОБРОБКИ ФОРМИ КОНТАКТІВ
 app.post('/contacts/send', async (req, res) => {
     const { name, email, phone, subject, message } = req.body;
 
@@ -1216,9 +1213,9 @@ ${message}
         });
 
         await transporter.sendMail({
-            from: `"${name} (Сайт Вузлик)" <${process.env.EMAIL_USER}>`, // Email відправника - ваш, але ім'я - користувача
-            replyTo: email, // Встановлюємо Reply-To на email користувача
-            to: process.env.ADMIN_EMAIL, // Ваш email для отримання повідомлень
+            from: `"${name} (Сайт Вузлик)" <${process.env.EMAIL_USER}>`, 
+            replyTo: email, 
+            to: process.env.ADMIN_EMAIL, 
             subject: mailSubject,
             text: mailText,
             html: mailHtml,

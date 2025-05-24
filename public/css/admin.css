@@ -1,33 +1,32 @@
 :root {
     --color-white: #ffffff;
-    --color-light-bg: #f8f9fa; /* Світлий фон для сторінки */
-    --color-form-bg: #ffffff; /* Фон для самої форми */
+    --color-light-bg: #f8f9fa; 
+    --color-form-bg: #ffffff; 
     --color-dark-bg: #343a40;
-    --color-border: #dee2e6; /* Основний колір рамки */
-    --color-border-light: #e9ecef; /* Світліший колір рамки */
-    --color-text: #212529; /* Основний колір тексту */
-    --color-text-light: #6c757d; /* Світлий колір тексту (для підписів, small) */
-    --color-accent: #b9936c; /* Акцентний колір */
-    --color-accent-dark: #a07e5a; /* Темніший акцент */
-    --color-primary: #007bff; /* Основний колір для кнопок (можна замінити на акцентний) */
+    --color-border: #dee2e6; 
+    --color-border-light: #e9ecef; 
+    --color-text: #212529; 
+    --color-text-light: #6c757d;
+    --color-accent: #b9936c; 
+    --color-accent-dark: #a07e5a;
+    --color-primary: #007bff; 
     --color-primary-dark: #0056b3;
     --color-danger: #dc3545;
     --color-danger-dark: #a71d2a;
     --color-success: #28a745;
-    --color-secondary: #6c757d; /* Для другорядних кнопок */
+    --color-secondary: #6c757d;
     --color-secondary-dark: #5a6268;
 
-    --font-main: 'Roboto', Arial, sans-serif; /* Пропоную Roboto, якщо він є в common.css, або залиште Arial */
-    --font-heading: 'Montserrat', Arial, sans-serif; /* Для заголовків, якщо є */
+    --font-main: 'Roboto', Arial, sans-serif; 
+    --font-heading: 'Montserrat', Arial, sans-serif; 
 
     --box-shadow-light: 0 2px 4px rgba(0, 0, 0, 0.05);
     --box-shadow-medium: 0 5px 15px rgba(0, 0, 0, 0.1);
-    --border-radius-main: 8px; /* Збільшений радіус для м'якшого вигляду */
-    --input-padding-y: 0.65rem; /* Вертикальний падінг для інпутів */
-    --input-padding-x: 1rem;   /* Горизонтальний падінг для інпутів */
+    --border-radius-main: 8px; 
+    --input-padding-y: 0.65rem; 
+    --input-padding-x: 1rem;  
 }
 
-/* Загальні стилі для адмін-частини */
 body.admin-body {
     background-color: var(--color-light-bg);
     font-family: var(--font-main);
@@ -39,16 +38,15 @@ body.admin-body {
 
 .container {
     width: 90%;
-    max-width: 1200px; /* Можна трохи збільшити для комфорту на великих екранах */
+    max-width: 1200px; 
     margin: 0 auto;
     padding: 0 15px;
     box-sizing: border-box;
 }
 
-/* Хедер адмінки */
 .admin-header {
     background-color: var(--color-dark-bg);
-    padding: 15px 0; /* Трохи більше падінгу */
+    padding: 15px 0; 
     color: var(--color-white);
     box-shadow: var(--box-shadow-light);
 }
@@ -61,25 +59,25 @@ body.admin-body {
 }
 
 .admin-header h1 {
-    margin: 0; /* Забрати зайві відступи, якщо вони є від браузера */
-    font-size: 1.5em; /* Трохи більший шрифт для заголовка */
+    margin: 0; 
+    font-size: 1.5em; 
     font-family: var(--font-heading);
     color: var(--color-white);
 }
 
 .admin-header nav {
     display: flex;
-    gap: 20px; /* Збільшити відстань між посиланнями */
+    gap: 20px;
 }
 
 .admin-header nav a {
-    color: #e0e0e0; /* Трохи світліший текст для кращого контрасту */
+    color: #e0e0e0;
     text-decoration: none;
-    padding: 8px 0; /* Збільшити падінг для кращого кліку */
+    padding: 8px 0; 
     border-bottom: 2px solid transparent;
     transition: color 0.2s ease, border-color 0.2s ease;
     font-size: 1em;
-    font-weight: 500; /* Трохи жирніший шрифт */
+    font-weight: 500; 
 }
 .admin-header nav a:hover,
 .admin-header nav a.active {
@@ -87,69 +85,64 @@ body.admin-body {
     border-bottom-color: var(--color-accent);
 }
 
-/* Основний контент адмінки */
 .admin-main {
-    padding: 30px 0; /* Більше відступу зверху та знизу */
+    padding: 30px 0; 
 }
 
-.admin-main > .container > h1 { /* Стилізація головного H1 сторінки (напр. "Редагувати товар") */
+.admin-main > .container > h1 { 
     margin-top: 0;
     margin-bottom: 30px;
-    font-size: 2em; /* Більший розмір */
+    font-size: 2em;
     text-align: center;
     font-family: var(--font-heading);
     color: var(--color-text);
     font-weight: 600;
 }
 
-/* Стилі для контейнера форми */
 .admin-form-container {
-    max-width: 850px; /* Трохи ширше для комфорту */
+    max-width: 850px; 
     margin: 2rem auto;
-    padding: 2.5rem; /* Більше внутрішніх відступів */
+    padding: 2.5rem; 
     background: var(--color-form-bg);
     border-radius: var(--border-radius-main);
     box-shadow: var(--box-shadow-medium);
     border: 1px solid var(--color-border-light);
 }
 
-/* Групи полів форми */
 .admin-form-group {
-    margin-bottom: 1.75rem; /* Більший відступ між групами */
+    margin-bottom: 1.75rem; 
 }
 
 .admin-form-group label {
     display: block;
-    margin-bottom: 0.75rem; /* Більший відступ від інпута */
+    margin-bottom: 0.75rem; 
     font-weight: 600;
-    font-size: 1em; /* Трохи більший шрифт */
+    font-size: 1em; 
     color: var(--color-text);
 }
 
 .admin-form-group label small {
     font-weight: normal;
-    font-size: 0.85em; /* Зробити меншим */
+    font-size: 0.85em; 
     color: var(--color-text-light);
     margin-left: 5px;
-    display: inline; /* Щоб було в одному рядку з текстом label */
+    display: inline; 
 }
-.admin-form-group label .required { /* Стиль для зірочки */
+.admin-form-group label .required {
     color: var(--color-danger);
     font-weight: bold;
     margin-left: 3px;
 }
 
-
-/* Стилі для полів вводу, textarea, select */
 .admin-form-group input[type="text"],
 .admin-form-group input[type="number"],
-.admin-form-group input[type="file"], /* Стилізуємо input type file */
+.admin-form-group input[type="file"], 
 .admin-form-group textarea,
 .admin-form-group select {
     width: 100%;
     padding: var(--input-padding-y) var(--input-padding-x);
     border: 1px solid var(--color-border);
-    border-radius: var(--border-radius-main); /* Однаковий радіус */
+    border-radius: var(--border-radius-main); 
     font-size: 1em;
     font-family: var(--font-main);
     box-sizing: border-box;
@@ -161,7 +154,7 @@ body.admin-body {
 .admin-form-group input[type="file"] {
     padding: 0.5rem 0.75rem; 
     line-height: 1.5; 
-    background-color: var(--color-white); /* Додано фон для консистентності */
+    background-color: var(--color-white); 
 }
 
 
@@ -179,7 +172,6 @@ body.admin-body {
     line-height: 1.6;
 }
 
-/* Стилі для чекбоксів */
 .admin-form-group.checkbox-group label {
     display: flex;
     align-items: center;
@@ -201,7 +193,6 @@ body.admin-body {
      line-height: 1.4;
 }
 
-/* Маленький текст під полями */
 .admin-form-group small, 
 #metaDescCounter,
 #file-chosen, 
@@ -215,7 +206,6 @@ body.admin-body {
     text-align: right;
 }
 
-/* Рядок з кількома полями */
 .form-row {
     display: flex;
     gap: 1.75rem; 
@@ -225,7 +215,6 @@ body.admin-body {
     flex: 1;
 }
 
-/* Блок з кнопками */
 .form-actions {
     display: flex;
     gap: 15px; 
@@ -239,7 +228,6 @@ body.admin-body {
     margin-bottom: 0; 
 }
 
-/* Стилізація блоку поточних зображень (для сторінки редагування) */
 .current-images-list {
     display: flex;
     flex-wrap: wrap;
@@ -261,7 +249,7 @@ body.admin-body {
     background-color: var(--color-white);
     position: relative;
     transition: box-shadow 0.2s ease;
-    width: 120px; /* Фіксована ширина для кращого вигляду */
+    width: 120px;
 }
 .current-image-item:hover {
     box-shadow: var(--box-shadow-light);
@@ -284,30 +272,29 @@ body.admin-body {
     padding: 5px; 
     border-radius: 4px;
     transition: background-color 0.2s ease;
-    text-align: center; /* Центрування тексту */
-    width: 100%; /* Щоб label займав всю ширину */
-    justify-content: center; /* Центрування вмісту label */
+    text-align: center; 
+    width: 100%;
+    justify-content: center; 
 }
 .current-image-item label:hover {
-    background-color: rgba(220, 53, 69, 0.05); /* Світліший фон при наведенні */
+    background-color: rgba(220, 53, 69, 0.05); 
 }
 .current-image-item input[type="checkbox"] {
     margin: 0; 
     accent-color: var(--color-danger);
 }
 
-/* Стилізація блоку для ПЕРЕДПРОСМОТРУ нових зображень */
 .image-preview-container {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
-    margin-top: 15px; /* Відступ від інпуту файлів */
+    margin-top: 15px;
     padding: 15px;
     background-color: var(--color-light-bg);
     border: 1px solid var(--color-border-light);
     border-radius: var(--border-radius-main);
-    min-height: 100px; /* Мінімальна висота, щоб було видно, навіть якщо порожньо */
-    align-items: flex-start; /* Вирівнювання елементів по верху */
+    min-height: 100px; 
+    align-items: flex-start; 
 }
 
 .image-preview-item {
@@ -319,7 +306,7 @@ body.admin-body {
     padding: 10px;
     border-radius: var(--border-radius-main);
     background-color: var(--color-white);
-    width: 120px; /* Фіксована ширина для мініатюр */
+    width: 120px; 
     box-shadow: var(--box-shadow-light);
 }
 
@@ -334,15 +321,13 @@ body.admin-body {
     font-size: 0.8em;
     color: var(--color-text-light);
     text-align: center;
-    word-break: break-all; /* Перенос довгих імен файлів */
-    max-width: 100px; /* Обмеження ширини тексту */
+    word-break: break-all;
+    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap; /* Запобігання переносу на новий рядок, якщо не влазить */
+    white-space: nowrap; 
 }
 
-
-/* Стилізація кастомного інпуту для файлів (якщо використовується) */
 .file-input-label { 
     display: inline-block; 
     padding: var(--input-padding-y) var(--input-padding-x);
@@ -361,7 +346,6 @@ body.admin-body {
     color: var(--color-accent-dark);
 }
 
-/* Стилі для кнопок */
 .btn-primary {
     background-color: var(--color-accent); 
     color: var(--color-white);
@@ -383,7 +367,6 @@ body.admin-body {
 }
 
 
-/* Адаптивність для форм */
 @media (max-width: 768px) {
     .admin-form-container {
         padding: 1.5rem;
@@ -402,7 +385,7 @@ body.admin-body {
     .form-actions .btn {
         width: 100%;
     }
-    .current-images-list, .image-preview-container { /* Центрувати зображення на мобільних */
+    .current-images-list, .image-preview-container {
         justify-content: center; 
     }
 }
@@ -421,16 +404,15 @@ body.admin-body {
     .admin-form-group label {
         font-size: 0.9em;
     }
-    .current-image-item img, .image-preview-item img { /* Однаковий розмір для всіх мініатюр */
+    .current-image-item img, .image-preview-item img {
         width: 80px;
         height: 80px;
     }
     .current-image-item, .image-preview-item {
-        width: 100px; /* Зменшити ширину контейнера мініатюри */
+        width: 100px; 
     }
 }
 
-/* Логін сторінка */
 .login-container {
     display: flex;
     justify-content: center;
@@ -509,7 +491,6 @@ body.admin-body {
     text-align: center;
 }
 
-/* Загальні стилі для таблиць */
 .table-responsive-wrapper {
     overflow-x: auto;
     margin-bottom: 25px; 
@@ -530,7 +511,6 @@ body.admin-body {
     font-family: var(--font-heading);
 }
 
-/* Стилі для модального вікна */
 .modal-content {
     padding: 30px 35px; 
 }
@@ -539,7 +519,6 @@ body.admin-body {
     margin-bottom: 25px;
 }
 
-/* Адаптивність для таблиць (залишено з вашого коду, можна переглянути за потреби) */
 @media (max-width: 992px) {
     .orders-table th, .orders-table td,
     .product-list-table th, .product-list-table td {
@@ -558,7 +537,7 @@ body.admin-body {
     .admin-header .container { flex-direction: column; }
     .admin-header h1 { margin-bottom: 15px; text-align: center; }
     .admin-header nav { justify-content: center; gap: 10px; }
-    .admin-header nav a { font-size: 0.9em; /*margin-left: 0; Зайве, бо є gap */ }
+    .admin-header nav a { font-size: 0.9em; }
 
     .orders-table thead, .product-list-table thead { display: none; }
     .orders-table, .orders-table tbody, .orders-table tr, .orders-table td,
@@ -600,19 +579,19 @@ body.admin-body {
 
 @media (max-width: 480px) {
     body.admin-body { font-size: 15px; } 
-    .login-box { padding: 25px 20px; } /* Зменшити падінги для дуже малих екранів */
-    .admin-main > .container > h1 { font-size: 1.6em; } /* Зменшити заголовок */
+    .login-box { padding: 25px 20px; } 
+    .admin-main > .container > h1 { font-size: 1.6em; } 
 
      .orders-table td,
      .product-list-table td {
          padding-left: 10px; padding-right: 10px; text-align: left;
-         min-height: 0; padding-top: 35px; /* Збільшити верхній падінг для data-label */
+         min-height: 0; padding-top: 35px; 
          align-items: flex-start;
          flex-wrap: wrap;
      }
       .orders-table td::before,
       .product-list-table td::before {
-         position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); /* Збільшити відступ для data-label */
+         position: absolute; top: 10px; left: 10px; width: calc(100% - 20px); 
          font-weight: bold; margin-bottom: 0; padding-right: 0;
          white-space: normal; font-size: 0.85em; color: var(--color-text-light);
      }
@@ -625,37 +604,37 @@ body.admin-body {
      }
       .orders-table td[data-label="Дії"],
       .product-list-table td[data-label="Дії"] {
-         justify-content: flex-start; padding-top: 10px; /* Зменшити верхній падінг для дій */
+         justify-content: flex-start; padding-top: 10px; 
      }
       .product-list-table td[data-label="Фото"] { padding-top: 10px; }
       .product-list-table td[data-label="Дії"] .btn,
       .product-list-table td[data-label="Дії"] form { margin: 0 5px 5px 0; }
 
      .admin-form-group {
-         margin-bottom: 1.25rem; /* Трохи збільшити відступ для кращої читабельності на малих екранах */
+         margin-bottom: 1.25rem; 
      }
-     .form-row .admin-form-group { /* Якщо form-row все ще використовується на малих екранах */
+     .form-row .admin-form-group { 
          margin-bottom: 1.25rem;
      }
 
      .modal-content {
-        width: 95%; padding: 20px 15px; /* Зробити модалку ширшою і зменшити падінги */
+        width: 95%; padding: 20px 15px; 
     }
      #confirmActionBtn, #cancelActionBtn {
-        width: 100%; margin: 8px 0; /* Кнопки на всю ширину з відступом */
+        width: 100%; margin: 8px 0; 
         box-sizing: border-box;
     }
 }
 
 #generateMetaDescBtn {
-    background-color: var(--color-secondary); /* Або інший колір, наприклад, світло-синій */
+    background-color: var(--color-secondary); 
     border-color: var(--color-secondary);
     color: var(--color-white);
-    padding: 0.5rem 0.8rem; /* Менші падінги для маленької кнопки */
-    font-size: 0.85em; /* Менший шрифт */
+    padding: 0.5rem 0.8rem; 
+    font-size: 0.85em; 
     line-height: 1.5;
-    margin-left: 10px; /* Відступ від textarea */
-    white-space: nowrap; /* Щоб текст не переносився */
+    margin-left: 10px; 
+    white-space: nowrap; 
 }
 
 #generateMetaDescBtn:hover {
@@ -669,24 +648,22 @@ body.admin-body {
     cursor: not-allowed;
 }
 
-/* Стилі для спіннера (якщо ви його додасте) */
 .spinner-border-sm {
     width: 1rem;
     height: 1rem;
     border-width: .2em;
-    vertical-align: -0.125em; /* Вирівнювання зі текстом */
+    vertical-align: -0.125em; 
     margin-right: 0.3em;
 }
-/* Bootstrap spinner animation (якщо не використовуєте Bootstrap CSS) */
 @keyframes spinner-border {
   to { transform: rotate(360deg); }
 }
 .spinner-border {
   display: inline-block;
-  width: 1em; /* Розмір спіннера */
-  height: 1em; /* Розмір спіннера */
+  width: 1em; 
+  height: 1em; 
   vertical-align: text-bottom;
-  border: .15em solid currentColor; /* Товщина лінії */
+  border: .15em solid currentColor;
   border-right-color: transparent;
   border-radius: 50%;
   animation: .75s linear infinite spinner-border;

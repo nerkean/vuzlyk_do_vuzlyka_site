@@ -1,10 +1,8 @@
-// --- vuzlyk/routes/adminRoutes.js ---
 const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
-// const Post = require('../models/Post'); 
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -115,7 +113,7 @@ router.get('/orders', checkAdminAuth, async (req, res) => {
         const ordersWithProductDetails = await Promise.all(ordersFromDB.map(async (order) => {
             console.log(`[Admin Orders] Processing order ID: ${order._id}`);
             const itemsWithDetails = await Promise.all(order.items.map(async (item) => {
-                let productImageUrl = '/images/placeholder-small.webp'; // Default placeholder
+                let productImageUrl = '/images/placeholder-small.webp'; 
                 console.log(`[Admin Orders] Item: "${item.name}", ProductID: "${item.productId}"`);
 
                 if (item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
@@ -129,12 +127,12 @@ router.get('/orders', checkAdminAuth, async (req, res) => {
                                 productImageUrl = firstImageSet.thumb.url;
                                 console.log(`[Admin Orders] SUCCESS: Using thumb.url for "${item.name}": ${productImageUrl}`);
                             } else if (firstImageSet.medium && typeof firstImageSet.medium === 'object' && firstImageSet.medium.url) {
-                                productImageUrl = firstImageSet.medium.url; // Fallback to medium
+                                productImageUrl = firstImageSet.medium.url; 
                                 console.log(`[Admin Orders] INFO: Using medium.url for "${item.name}": ${productImageUrl}`);
                             } else if (firstImageSet.large && typeof firstImageSet.large === 'object' && firstImageSet.large.url) {
-                                productImageUrl = firstImageSet.large.url; // Fallback to large
+                                productImageUrl = firstImageSet.large.url; 
                                 console.log(`[Admin Orders] INFO: Using large.url for "${item.name}": ${productImageUrl}`);
-                            } else if (typeof firstImageSet === 'string') { // Fallback for very old structure (if images was an array of strings)
+                            } else if (typeof firstImageSet === 'string') { 
                                 productImageUrl = firstImageSet;
                                 console.log(`[Admin Orders] INFO: Using direct string from images array for "${item.name}": ${productImageUrl}`);
                             }
@@ -165,7 +163,6 @@ router.get('/orders', checkAdminAuth, async (req, res) => {
     }
 });
 
-// ... (решта маршрутів: update-status, delete order, products, generate-meta-description) ...
 router.post('/orders/:id/update-status', checkAdminAuth, async (req, res) => {
     const orderId = req.params.id;
     const { newStatus } = req.body;
@@ -277,7 +274,7 @@ const {
     name, description, price, maxPrice, category,
     tags, materials, colors, care_instructions, isFeatured,
     creation_time_info, status, metaDescription,
-    sku // <--- Получаем SKU из req.body
+    sku 
 } = req.body;
 
 
@@ -403,7 +400,7 @@ const newProduct = new Product({
     livePhotoPublicId: livePhotoPublicIdDb,
     tags: processedTags, materials: processedMaterials, colors: processedColors,
     care_instructions, creation_time_info, isFeatured: isFeatured === 'on',
-    sku: sku ? sku.trim() : null // <--- Сохраняем SKU, если он есть, иначе null
+    sku: sku ? sku.trim() : null
 });
         await newProduct.save();
 
@@ -512,7 +509,7 @@ const {
     tags, materials, colors, care_instructions, isFeatured,
     creation_time_info, status, metaDescription,
     images_to_delete, delete_live_photo,
-    sku // <--- Получаем SKU из req.body
+    sku 
 } = req.body;
 
         if (!name || !description || !price || !category || !creation_time_info || !status) {
