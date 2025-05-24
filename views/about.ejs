@@ -247,34 +247,33 @@
                     </div>
                     <div class="process-content-panel">
                         <div class="process-step-content" id="step-content-1">
-                            <img src="/images/about/sketch.webp" alt="Ескіз вишивки" loading="lazy">
                             <h3>1. Ідея та Ескіз</h3>
                             <p>Все починається з вашого бажання або нашого натхнення. Ми обговорюємо ідею, створюємо або адаптуємо ескіз, враховуючи всі ваші побажання щодо орнаменту, кольорів та символіки.</p>
+                           <img src="/images/process_1_1.jpg" alt="Ескіз вишивки 'Чернівці'" loading="lazy">
                         </div>
                         <div class="process-step-content" id="step-content-2">
-                            <img src="/images/about/materials.webp" alt="Підбір ниток та тканини" loading="lazy">
                             <h3>2. Підбір Матеріалів</h3>
                             <p>Ретельно обираємо найкращі натуральні тканини – льон, бавовну, домоткане полотно. Підбираємо високоякісні нитки, що ідеально пасуватимуть до вашого задуму та забезпечать довговічність виробу.</p>
+                            <img src="/images/web.webp" alt="Нитки кольорові'" loading="lazy">
                         </div>
                         <div class="process-step-content" id="step-content-3">
-                            <img src="/images/about/" alt="Нанесення візерунку на тканину" loading="lazy">
                             <h3>3. Нанесення Візерунку</h3>
                             <p>З максимальною точністю переносимо затверджений візерунок на тканину. Це важливий етап, що гарантує акуратність майбутньої вишивки.</p>
+                            <img src="/images/owl.png" alt="Нитки кольорові'" loading="lazy">
                         </div>
                         <div class="process-step-content" id="step-content-4">
-                            <img src="/images/" alt="Процес вишивання" loading="lazy">
                             <h3>4. Магія Стібків</h3>
                             <p>Найчарівніший етап – народження візерунку. Стібок за стібком, з любов'ю та увагою до кожної деталі, майстриня втілює ескіз у життя, використовуючи традиційні та авторські техніки.</p>
+                            <img src="/images/owl2.png" alt="Нитки кольорові'" loading="lazy">
                         </div>
                         <div class="process-step-content" id="step-content-5">
-                            <img src="/images/about/finishing.webp" alt="Фінальна обробка вишивки" loading="lazy">
                             <h3>5. Фінальні Штрихи</h3>
-                            <p>Після завершення вишивки, виріб проходить ретельну обробку: прання спеціальними засобами, прасування, перевірка якості. Якщо це одяг – відбувається пошиття за вашими мірками.</p>
+                            <p>Після завершення вишивки, виріб проходить ретельну обробку: прання спеціальними засобами, прасування, перевірка якості.</p>
                         </div>
                         <div class="process-step-content" id="step-content-6">
-                            <img src="/images/about/ready_product.webp" alt="Готова вишиванка" loading="lazy">
                             <h3>6. Готовий Витвір – Ваш Оберіг</h3>
                             <p>Ваша унікальна вишивка готова! Дбайливо запакована, вона вирушає до вас, щоб стати не просто річчю, а справжнім оберегом, сповненим тепла та української душі.</p>
+                       <img src="/images/present.png" alt="Процес вишивання" loading="lazy">
                         </div>
                     </div>
                 </div>
@@ -445,7 +444,7 @@
 
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
         if (typeof AOS !== 'undefined') {
             AOS.init({
                 once: true,
@@ -488,93 +487,132 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-            gsap.registerPlugin(ScrollTrigger);
+       if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
 
-            const processSection = document.querySelector('.creation-process-scrollytelling');
-            if (processSection) {
-                const progressPanel = processSection.querySelector('.process-progress-panel');
-                const progressFill = processSection.querySelector('.progress-line-fill');
-                const stepNavItems = gsap.utils.toArray('.process-steps-nav .step-nav-item');
-                const stepContents = gsap.utils.toArray('.process-content-panel .process-step-content');
+        const processSection = document.querySelector('.creation-process-scrollytelling');
+        if (processSection) {
+            const progressPanel = processSection.querySelector('.process-progress-panel');
+            const progressFill = processSection.querySelector('.progress-line-fill');
+            const stepNavItems = gsap.utils.toArray('.process-steps-nav .step-nav-item'); // Може бути корисним для десктопу
+            const stepContents = gsap.utils.toArray('.process-content-panel .process-step-content');
 
-                if (progressPanel && progressFill && stepNavItems.length > 0 && stepContents.length > 0 && stepNavItems.length === stepContents.length) {
-                    
-                    const vh = window.innerHeight;
-                    // Кожен крок займає 100% висоти екрану для прокрутки, щоб дати більше простору
-                    const stepScrollHeight = vh; 
-                    const totalPinScrollDistance = stepContents.length * stepScrollHeight;
+            if (progressPanel && progressFill && stepContents.length > 0) {
 
-                    ScrollTrigger.create({
-                        trigger: processSection,
-                        start: "top top",
-                        end: () => `+=${totalPinScrollDistance}`,
-                        pin: progressPanel,
-                        scrub: 1,
-                        anticipatePin: 1,
-                        // markers: {startColor: "green", endColor: "red", indent: 0, fontSize: "10px"},
-                        onUpdate: self => {
-                            let progress = self.progress;
-                            if (window.innerWidth <= 992) {
-                                gsap.to(progressFill, { width: (progress * 100) + '%', ease: "none" });
-                            } else {
-                                gsap.to(progressFill, { height: (progress * 100) + '%', ease: "none" });
-                            }
-                            
-                            const numSteps = stepNavItems.length;
+                ScrollTrigger.create({
+                    trigger: processSection,
+                    start: "top top", // Пін починається, коли верх секції досягає верху в'юпорту
+                    endTrigger: stepContents[stepContents.length - 1], // Кінець, коли останній блок контенту в полі зору
+                    // ВАЖЛИВО: скоригуй end, щоб врахувати висоту панелі прогресу
+                    // Кінець, коли низ останнього блоку контенту досягає низу закріпленої панелі прогресу + невеликий буфер
+                    end: () => `bottom bottom-=${progressPanel.offsetHeight + 20}`, // +20px буфер
+                    pin: progressPanel,
+                    scrub: 1, // Плавний скраб
+                    anticipatePin: 1,
+                    // markers: {startColor: "green", endColor: "red", indent: 0, fontSize: "10px"}, // Розкоментуй для дебагу
+                    onUpdate: self => {
+                        let progress = self.progress;
+                        progress = Math.max(0, Math.min(progress, 1)); // Гарантуємо, що прогрес між 0 та 1
+
+                        gsap.to(progressFill, { height: (progress * 100) + '%', ease: "none" });
+
+                        // Логіка для класу 'active' на навігаційних елементах (якщо вони видимі)
+                        // Ця частина для .step-nav-item, яка прихована на мобільних.
+                        if (stepNavItems.length === stepContents.length) {
+                            const numSteps = stepContents.length;
                             let currentOverallStep = Math.floor(progress * numSteps);
-                            if (progress >= 0.999) currentOverallStep = numSteps - 1;
-
+                            if (progress >= 0.999) { // Гарантуємо, що останній крок підсвічений в самому кінці
+                                currentOverallStep = numSteps - 1;
+                            }
                             stepNavItems.forEach((navItem, index) => {
                                 navItem.classList.toggle('active', index <= currentOverallStep);
                             });
-                        },
-                    });
-
-                    stepContents.forEach((content, index) => {
-                        gsap.set(content, { autoAlpha: 0, y: 50 }); 
-
-                        ScrollTrigger.create({
-                            trigger: content, // Тригером тепер є сам блок контенту
-                            start: "top center+=10%", // Активується, коли верх блоку трохи нижче центру
-                            end: "bottom center-=10%",   // Деактивується, коли низ блоку трохи вище центру
-                            // markers: {startColor: `hsl(${index * 60}, 100%, 70%)`, endColor: `hsl(${index * 60}, 100%, 40%)`, indent: 150 + index * 10, fontSize: "10px"},
-                            onEnter: () => {
-                                gsap.to(content, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power1.out" });
-                                stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
-                                stepNavItems[index].classList.add('fully-active');
-                            },
-                            onLeave: () => {
-                                gsap.to(content, { autoAlpha: 0, y: -30, duration: 0.3, ease: "power1.in" });
-                                // Не знімаємо fully-active тут, це зробить onEnter наступного або onEnterBack попереднього
-                            },
-                            onEnterBack: () => {
-                                gsap.to(content, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power1.out" });
-                                stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
-                                stepNavItems[index].classList.add('fully-active');
-                            },
-                            onLeaveBack: () => {
-                                gsap.to(content, { autoAlpha: 0, y: 30, duration: 0.3, ease: "power1.in" });
-                                stepNavItems[index].classList.remove('fully-active');
-                                if (index > 0) {
-                                    stepNavItems[index - 1].classList.add('fully-active');
+                        }
+                    },
+                    onLeave: () => {
+                        // Гарантуємо, що прогрес-бар заповнений, коли проскролили повз секцію
+                        gsap.to(progressFill, { height: '100%', ease: "none" });
+                        if (stepNavItems.length === stepContents.length) {
+                            stepNavItems.forEach((navItem, index) => {
+                                navItem.classList.add('active'); // Всі активні
+                                if (index === stepNavItems.length - 1) {
+                                    navItem.classList.add('fully-active'); // Останній повністю активний
                                 } else {
-                                     // Якщо це перший елемент і ми скролимо вгору, знімаємо fully-active з усіх
-                                     stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
+                                    navItem.classList.remove('fully-active');
                                 }
+                            });
+                        }
+                    },
+                    onEnterBack: self => {
+                        // При поверненні в секцію, перераховуємо прогрес
+                        let progress = self.progress;
+                        progress = Math.max(0, Math.min(progress, 1));
+                        gsap.to(progressFill, { height: (progress * 100) + '%', ease: "none" });
+
+                        if (stepNavItems.length === stepContents.length) {
+                            const numSteps = stepContents.length;
+                            let currentOverallStep = Math.floor(progress * numSteps);
+                            if (progress >= 0.999) {
+                                currentOverallStep = numSteps - 1;
                             }
-                        });
+                            stepNavItems.forEach((navItem, index) => {
+                                navItem.classList.toggle('active', index <= currentOverallStep);
+                                // 'fully-active' керується трігерами блоків контенту
+                            });
+                        }
+                    }
+                });
+
+                // ScrollTriggers для кожного кроку контенту (для появи/зникнення та керування 'fully-active' для навігації)
+                stepContents.forEach((content, index) => {
+                    gsap.set(content, { autoAlpha: 0, y: 50 }); // Початковий стан: приховано та трохи зміщено
+
+                    ScrollTrigger.create({
+                        trigger: content,
+                        // Скоригуй start/end для моменту, коли контент стає "активним"
+                        // "top center+=X%" - верх контенту на X% нижче центру в'юпорту
+                        // "bottom center-=Y%" - низ контенту на Y% вище центру в'юпорту
+                        start: "top center+=20%", // З'являється трохи пізніше
+                        end: "bottom center-=20%",   // Зникає трохи раніше
+                        // markers: {startColor: `hsl(${index * 60}, 100%, 70%)`, endColor: `hsl(${index * 60}, 100%, 40%)`, indent: 150 + index * 10, fontSize: "10px"}, // Дебаг
+                        onEnter: () => {
+                            gsap.to(content, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power1.out" });
+                            if (stepNavItems[index]) { // Якщо навігація існує
+                                stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
+                                stepNavItems[index].classList.add('fully-active');
+                            }
+                        },
+                        onLeave: () => {
+                            gsap.to(content, { autoAlpha: 0, y: -30, duration: 0.3, ease: "power1.in" });
+                        },
+                        onEnterBack: () => {
+                            gsap.to(content, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power1.out" });
+                            if (stepNavItems[index]) {
+                                stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
+                                stepNavItems[index].classList.add('fully-active');
+                            }
+                        },
+                        onLeaveBack: () => {
+                            gsap.to(content, { autoAlpha: 0, y: 30, duration: 0.3, ease: "power1.in" });
+                            if (stepNavItems[index]) stepNavItems[index].classList.remove('fully-active');
+                            if (index > 0 && stepNavItems[index - 1]) {
+                                stepNavItems[index - 1].classList.add('fully-active');
+                            } else if (index === 0) {
+                                stepNavItems.forEach((nav) => nav.classList.remove('fully-active'));
+                            }
+                        }
                     });
-                } else {
-                    console.warn("GSAP Scrollytelling: Not all required elements found for process section.");
-                }
+                });
             } else {
-                 console.warn("GSAP Scrollytelling: Main process section not found.");
+                console.warn("GSAP Scrollytelling: Не знайдено всіх необхідних елементів для секції процесу (progressPanel, progressFill, stepContents).");
             }
         } else {
-            console.error('GSAP or ScrollTrigger library not loaded.');
+            console.warn("GSAP Scrollytelling: Головну секцію процесу '.creation-process-scrollytelling' не знайдено.");
         }
-    });
+    } else {
+        console.error('Бібліотеки GSAP або ScrollTrigger не завантажені.');
+    }
+});
     </script>
 </body>
 </html>

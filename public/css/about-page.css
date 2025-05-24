@@ -295,20 +295,18 @@
 
 .creation-process-scrollytelling {
     display: flex;
-    /* min-height встановлюється динамічно через JS або через end в ScrollTrigger */
     position: relative;
 }
 
 .process-progress-panel {
-    width: 280px; /* Збільшено ширину */
-    min-width: 250px; /* Мінімальна ширина */
-    padding: 40px 20px 40px 30px; /* Збільшено лівий падінг */
+    width: 280px; 
+    min-width: 250px; 
+    padding: 40px 20px 40px 30px; 
     position: sticky; 
     top: 100px; 
     height: calc(100vh - 120px); 
-    display: flex; /* Залишаємо flex для вирівнювання лінії та тексту */
-    /* flex-direction: column; -- видалено, бо тепер лінія і текст поруч */
-    align-items: flex-start; /* Вирівнювання по верху */
+    display: flex; 
+    align-items: flex-start; 
     border-right: 1px solid var(--color-border);
     box-sizing: border-box;
     flex-shrink: 0;
@@ -317,18 +315,18 @@
 .progress-line-container {
     position: relative;
     width: 4px; 
-    min-height: 300px; /* Мінімальна висота, щоб лінія була видима */
-    height: 80%; /* Висота лінії відносно панелі, можна налаштувати */
-    max-height: calc(100% - 80px); /* Залишаємо місце для відступів */
+    min-height: 300px; 
+    height: 80%; 
+    max-height: calc(100% - 80px); 
     background-color: var(--color-border-light);
     border-radius: 2px;
-    margin-right: 25px; /* Збільшено відступ від тексту етапів */
-    align-self: stretch; /* Розтягуємо по висоті панелі */
+    margin-right: 25px; 
+    align-self: stretch; 
 }
 
 .progress-line-fill {
     position: absolute;
-    top: 0; /* Заповнення зверху вниз */
+    top: 0; 
     left: 0;
     width: 100%;
     height: 0%; 
@@ -340,11 +338,11 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    flex-grow: 1; /* Дозволяємо списку зайняти доступний простір */
+    flex-grow: 1; 
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* Рівномірно розподілити етапи по висоті */
-    height: 100%; /* Займає всю висоту панелі */
+    justify-content: space-around; 
+    height: 100%; 
 }
 
 .process-steps-nav .step-nav-item {
@@ -355,28 +353,28 @@
     transition: color 0.3s ease, font-weight 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
     position: relative;
     opacity: 0.6;
-    display: flex; /* Для вирівнювання іконки та тексту */
-    align-items: center; /* Вирівнювання по центру вертикалі */
+    display: flex; 
+    align-items: center; 
 }
 
 .process-steps-nav .step-nav-item.active {
     color: var(--color-text);
-    font-weight: 500; /* Зменшено, щоб fully-active було виразнішим */
+    font-weight: 500; 
     opacity: 0.8;
 }
 .process-steps-nav .step-nav-item.fully-active {
     color: var(--color-accent-dark);
     font-weight: 700;
     opacity: 1;
-    transform: translateX(5px); /* Легкий зсув для активного елемента */
+    transform: translateX(5px); 
 }
 
 .process-steps-nav .step-nav-item i {
-    margin-right: 12px; /* Збільшено відступ */
+    margin-right: 12px; 
     color: var(--color-accent-light);
     transition: color 0.3s ease, transform 0.3s ease;
     width: 22px; 
-    font-size: 1.1em; /* Трохи більші іконки */
+    font-size: 1.1em; 
     text-align: center;
 }
 
@@ -391,18 +389,21 @@
 .process-content-panel {
     flex-grow: 1;
     padding: 40px; 
+    min-width: 0; 
 }
 
 .process-step-content {
-    /* min-height: 80vh; -- Тепер не так критично, бо ScrollTrigger працює по самому елементу */
-    padding-bottom: 30vh; /* Залишаємо достатньо місця після контенту */
-    opacity: 0; 
+    /* min-height: 80vh; /* Розглянь можливість видалення або значного зменшення, напр., 50vh або auto */
+    padding-top: 20px; /* Додай верхній відступ, якщо потрібно */
+    padding-bottom: 10vh; /* Скоригований відступ для простору між елементами */
+    opacity: 0;
     visibility: hidden;
-    /* transition видалено, анімація через GSAP */
+    margin-bottom: 5vh; /* Приклад зовнішнього відступу, якщо padding-bottom недостатньо */
 }
 
+
 .process-step-content.active { 
-    opacity: 1; /* Цей клас може бути не потрібен, якщо GSAP керує прозорістю */
+    opacity: 1; 
     visibility: visible;
 }
 
@@ -410,7 +411,7 @@
     max-width: 100%;
     height: auto;
     border-radius: var(--border-radius-main);
-    margin-bottom: 25px; /* Збільшено відступ */
+    margin-bottom: 25px; 
     box-shadow: var(--box-shadow-light);
     max-height: 350px; 
     object-fit: cover;
@@ -420,17 +421,17 @@
 }
 
 .process-step-content h3 {
-    font-size: 2em; /* Збільшено */
+    font-size: 2em; 
     color: var(--color-accent-dark);
-    margin-bottom: 20px; /* Збільшено */
+    margin-bottom: 20px; 
     font-family: var(--font-heading);
 }
 
 .process-step-content p {
-    font-size: 1.1em; /* Збільшено */
-    line-height: 1.75; /* Збільшено */
+    font-size: 1.1em; 
+    line-height: 1.75; 
     color: var(--color-text-light);
-    max-width: 650px; /* Обмеження ширини для кращої читабельності */
+    max-width: 650px; 
 }
 
 @media (max-width: 992px) {
@@ -447,75 +448,48 @@
     .timeline-item::after { display: none; }
 
     .creation-process-scrollytelling {
-        flex-direction: column;
+        /* flex-direction: column; -- ЦЕ ВИДАЛЯЄМО або змінюємо на row, якщо потрібно, щоб контент був справа */
+        flex-direction: row; /* Панель зліва, контент справа */
     }
     .process-progress-panel {
-        width: 100%;
-        position: sticky; 
-        top: 80px; 
-        height: auto; /* Автоматична висота */
-        padding: 15px; /* Зменшено падінги */
-        border-right: none;
-        border-bottom: 1px solid var(--color-border);
-        flex-direction: column; /* Повертаємо вертикальний напрямок для панелі */
-        align-items: center; /* Центруємо вміст панелі */
-        background-color: var(--color-light-bg); 
-        z-index: 10; 
+        width: 50px; /* Вузька панель для лінії прогресу на планшетах */
+        min-width: 40px;
+        padding: 25px 15px;
+        flex-direction: column; 
+        align-items: center; 
+        border-right: 1px solid var(--color-border); 
+        border-bottom: none; 
+        /* position: sticky; top: 80px; height: calc(100vh - 100px); -- GSAP керує pin */
     }
     .progress-line-container {
-        width: 100%; 
-        height: 5px; /* Горизонтальна лінія */
-        margin-right: 0;
-        margin-bottom: 10px; 
-        align-self: center; /* Центруємо лінію */
+        width: 4px; 
+        height: 100%; /* Лінія на всю висоту панелі */
+        margin-right: 0; 
+        margin-bottom: 0; 
+        align-self: center;
     }
     .progress-line-fill {
-         height: 100%; 
-         width: 0%;   
-         top: 0; /* Заповнення зліва направо */
+         width: 100%; 
+         height: 0%;   /* Анімуємо висоту */
+         top: 0; 
          bottom: auto;
     }
     .process-steps-nav {
-        display: flex; 
-        flex-direction: row; /* Етапи в ряд */
-        justify-content: space-around; /* Рівномірно по ширині */
-        overflow-x: auto; 
-        width: 100%;
-        padding-bottom: 5px; 
-        height: auto; /* Автоматична висота */
+        display: none; /* Приховуємо текстову навігацію */
     }
-    .process-steps-nav .step-nav-item {
-        padding: 8px 10px; /* Зменшено падінги */
-        white-space: nowrap; 
-        border-bottom: 3px solid transparent; /* Індикатор знизу */
-        margin-right: 10px;
-        font-size: 0.9em; /* Трохи менший шрифт */
-        opacity: 0.7;
-    }
-     .process-steps-nav .step-nav-item:last-child {
-        margin-right: 0;
-    }
-    .process-steps-nav .step-nav-item.active {
-       border-bottom-color: var(--color-accent);
-       opacity: 1;
-    }
-     .process-steps-nav .step-nav-item.fully-active {
-       border-bottom-color: var(--color-accent-dark);
-       font-weight: 700;
-       transform: none; /* Прибираємо зсув */
-    }
-    .process-steps-nav .step-nav-item i {
-        font-size: 1em; /* Менші іконки */
-        margin-right: 5px;
-    }
+    
     .process-content-panel {
-        padding: 25px 15px; /* Зменшено падінги */
+        padding: 25px 15px; 
+        flex-grow: 1; 
     }
     .process-step-content {
-        min-height: auto; 
-        padding-bottom: 30px;
+        min-height: auto; /* Дозволь контенту визначати висоту */
+        padding-top: 10px;
+        padding-bottom: 8vh; /* Налаштуй за потребою */
+        margin-bottom: 4vh; /* Налаштуй за потребою */
     }
 }
+
 
 @media (max-width: 768px) {
     #zdog-hero-canvas {
@@ -543,6 +517,19 @@
     .why-choose-us-list li { font-size: 1em; padding-left: 30px;}
     .why-choose-us-list li i { font-size: 1.2em; top: 3px;}
 
+    .process-progress-panel {
+        width: 40px;
+        padding: 30px 5px;
+        top: 70px; /* Перевір, чи це значення актуальне, якщо хедер не закріплений або має іншу висоту */
+        /* Висота панелі прогресу: висота в'юпорту - верхній зсув - невеликий нижній буфер */
+        height: calc(100vh - 70px - 20px);
+    }
+    .process-step-content {
+        /* min-height все ще auto */
+        padding-top: 10px;
+        padding-bottom: 10vh;
+        margin-bottom: 5vh;
+    }
     .process-step-content h3 { font-size: 1.5em; }
     .process-step-content p { font-size: 1em; }
 }
@@ -571,21 +558,24 @@
     .artisan-bio h3 { font-size: 1.3em;}
 
     .process-progress-panel {
-        top: 70px; /* Зменшуємо відступ від хедера для дуже малих екранів */
-        padding: 10px;
-    }
-    .process-steps-nav .step-nav-item { 
-        font-size: 0.85em; /* Ще менший шрифт для етапів */
-        margin-right: 8px; 
-        padding: 5px;
-    }
-    .process-steps-nav .step-nav-item i { 
-        margin-right: 4px;
-        font-size: 0.9em;
+        width: 30px; /* Ще вужче */
+        padding: 20px 5px;
+        top: 60px; /* Скоригуй, якщо висота хедера змінюється */
+        height: calc(100vh - 60px - 20px);
     }
     .process-content-panel {
         padding: 15px 10px;
     }
+    .process-step-content {
+        /* min-height все ще auto */
+        padding-top: 5px;
+        padding-bottom: 12vh; /* Може знадобитися більше відносного простору на дуже маленьких екранах */
+        margin-bottom: 6vh;
+    }
+    .progress-line-container {
+        margin-right: 0;
+    }
+
     .process-step-content h3 { font-size: 1.3em; }
     .process-step-content p { font-size: 0.95em; }
     .process-step-content img { max-height: 250px; }
