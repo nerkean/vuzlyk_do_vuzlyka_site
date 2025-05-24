@@ -617,44 +617,48 @@ function getSortQuery(sortOption) {
 }
 
 app.post('/cart/add', async (req, res) => {
-  const { productId, quantity } = req.body;
-  const qty = parseInt(quantity) || 1;
-  try {
-      if (!req.session.cart) {
-          req.session.cart = [];
-      }
-      const product = await Product.findById(productId).lean();
+    const { productId, quantity } = req.body;
+    const qty = parseInt(quantity) || 1;
+    try {
+        if (!req.session.cart) {
+            req.session.cart = [];
+        }
+        const product = await Product.findById(productId).lean();
 
-      if (!product) {
-          console.warn(`[WARN] Спроба додати неіснуючий товар ${productId} до кошика.`);
-          return res.status(404).json({ success: false, message: 'Товар не знайдено' });
-      }
+        if (!product) {
+            console.warn(`[WARN] Спроба додати неіснуючий товар ${productId} до кошика.`);
+            return res.status(404).json({ success: false, message: 'Товар не знайдено' });
+        }
 
-      let imageForCart = '/images/placeholder.svg'; 
-      if (product.images && product.images.length > 0 && product.images[0].thumb) {
-           imageForCart = product.images[0].thumb;
-      } else if (product.images && product.images.length > 0 && typeof product.images[0] === 'string') {
-           imageForCart = product.images[0];
-      }
+        let imageForCart = '/images/placeholder.svg';
+        if (product.images && product.images.length > 0) {
+            const firstImageSet = product.images[0];
+            if (firstImageSet.thumb && firstImageSet.thumb.url) { 
+                imageForCart = firstImageSet.thumb.url; 
+            } else if (firstImageSet.medium && firstImageSet.medium.url) { 
+                imageForCart = firstImageSet.medium.url;
+                console.warn(`[WARN] Для товару ${productId} в кошику використано medium зображення, бо thumb відсутнє.`);
+            }
+        }
 
-      const existingItemIndex = req.session.cart.findIndex(item => item.productId === productId);
+        const existingItemIndex = req.session.cart.findIndex(item => item.productId === productId);
 
-      if (existingItemIndex > -1) {
-          req.session.cart[existingItemIndex].quantity += qty;
-          req.session.cart[existingItemIndex].image = imageForCart;
-          req.session.cart[existingItemIndex].price = product.price; 
-          req.session.cart[existingItemIndex].name = product.name; 
-      } else {
-          req.session.cart.push({
-              productId: productId,
-              name: product.name,
-              price: product.price, 
-              image: imageForCart, 
-              quantity: qty
-          });
-      }
+        if (existingItemIndex > -1) {
+            req.session.cart[existingItemIndex].quantity += qty;
+            req.session.cart[existingItemIndex].image = imageForCart; 
+            req.session.cart[existingItemIndex].price = product.price;
+            req.session.cart[existingItemIndex].name = product.name;
+        } else {
+            req.session.cart.push({
+                productId: productId,
+                name: product.name,
+                price: product.price,
+                image: imageForCart,
+                quantity: qty
+            });
+        }
 
-       const newCartItemCount = req.session.cart.reduce((sum, item) => sum + item.quantity, 0);
+        const newCartItemCount = req.session.cart.reduce((sum, item) => sum + item.quantity, 0);
         console.log('Оновлений кошик в сесії:', req.session.cart);
 
         res.json({
