@@ -8,14 +8,12 @@
     <meta name="robots" content="index, follow">
     <% if (locals.canonicalUrl) { %><link rel="canonical" href="<%= canonicalUrl %>" /><% } %>
 
-    <%# --- Favicons --- %>
     <link rel="icon" type="image/png" href="/images/favicon/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/images/favicon/favicon.svg" />
     <link rel="shortcut icon" href="/images/favicon/favicon.ico" />
     <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/images/favicon/site.webmanifest" />
 
-    <%# --- Preconnects & Preloads --- %>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://unpkg.com" crossorigin>
@@ -25,7 +23,6 @@
         <link rel="preload" href="<%= post.imageUrl %>" as="image">
     <% } %>
 
-    <%# --- Google Analytics --- %>
      <% if (locals.isProduction && locals.gaMeasurementId) { %>
         <script async src="https://www.googletagmanager.com/gtag/js?id=<%= locals.gaMeasurementId %>"></script>
         <script>
@@ -38,7 +35,6 @@
         </script>
     <% } %>
 
-    <%# --- Stylesheets --- %>
     <link rel="stylesheet" href="/css/common.css"> 
 
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'" xintegrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -50,7 +46,6 @@
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" as="style" onload="this.onload=null;this.rel='stylesheet'" xintegrity="sha512-1cK78a1o+ht2JcaW6g8OXYwqpev9+6GqOkz9xmBN9iUUhIndKtxwILGWYOSibOKjLsEdjyjZvYDq/cZwNeak0w==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" xintegrity="sha512-1cK78a1o+ht2JcaW6g8OXYwqpev9+6GqOkz9xmBN9iUUhIndKtxwILGWYOSibOKjLsEdjyjZvYDq/cZwNeak0w==" crossorigin="anonymous" referrerpolicy="no-referrer"></noscript>
 
-    <%# --- Meta OG & Twitter --- %>
     <meta property="og:title" content="<%= pageTitle %>">
     <meta property="og:description" content="<%= metaDescription %>">
     <meta property="og:image" content="<%= ogImage %>">
@@ -70,44 +65,69 @@
     <meta name="twitter:description" content="<%= metaDescription %>">
     <meta name="twitter:image" content="<%= ogImage %>">
     
-    <%# --- JSON-LD для статті --- %>
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "BlogPosting",
-        "mainEntityOfPage": {
-            "@type": "WebPage",
-            "@id": "<%= canonicalUrl %>"
-        },
-        "headline": "<%= post.title.replace(/"/g, '\\"') %>",
-        "description": "<%= post.summary.replace(/"/g, '\\"') %>",
-        <% if (post.imageUrl) { %>
-        "image": {
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "<%= canonicalUrl %>"
+    },
+    "headline": <%- JSON.stringify(post.metaTitle || post.title) %>,
+    "description": <%- JSON.stringify(post.metaDescription || post.summary) %>,
+    <% if (post.imageUrl) { %>
+    "image": {
+        "@type": "ImageObject",
+        "url": "<%= new URL(post.imageUrl, locals.baseUrl || 'https://vuzlyk.com').href %>"
+    },
+    <% } %>
+    "author": {
+        "@type": "Organization",
+        "name": "<%= post.authorDisplay && post.authorDisplay.trim() !== '' ? post.authorDisplay : 'Вузлик до вузлика' %>",
+        "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>"
+    },
+    "publisher": {
+        "@type": "Organization",
+        "name": "Вузлик до вузлика",
+        "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>",
+        "logo": {
             "@type": "ImageObject",
-            "url": "<%= post.imageUrl %>",
-            "height": 600, 
-            "width": 800  
-        },
-        <% } %>
-        "author": {
-            "@type": "Organization", 
-            "name": "<%= post.authorDisplay || 'Вузлик до вузлика' %>",
-            "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>"
-        },
+            "url": "<%= new URL('/images/logo.webp', locals.baseUrl || 'https://vuzlyk.com').href %>",
+            "width": 180,
+            "height": 60
+        }
+    },
+    "datePublished": "<%= post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString() %>",
+    "dateModified": "<%= new Date(post.updatedAt).toISOString() %>",
+    <%
+        let articleTextContent = post.content ? post.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+        let wordCount = articleTextContent ? articleTextContent.split(/\s+/).length : 0;
+    %>
+    "articleBody": <%- JSON.stringify(articleTextContent) %>,
+    <% if (wordCount > 0) { %>
+    "wordCount": "<%= wordCount %>",
+    <% } %>
+    <% if (post.tags && post.tags.length > 0) { %>
+    "keywords": <%- JSON.stringify(post.tags.join(", ")) %>,
+    <% } %>
+    "isPartOf": {
+        "@type": "Blog",
+        "name": "Блог майстерні Вузлик до вузлика",
+        "url": "<%= new URL('/blog', locals.baseUrl || 'https://vuzlyk.com').href %>",
         "publisher": {
             "@type": "Organization",
             "name": "Вузлик до вузлика",
+             "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>",
             "logo": {
                 "@type": "ImageObject",
-                "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>/images/logo.webp", 
-                "width": 180, 
+                "url": "<%= new URL('/images/logo.webp', locals.baseUrl || 'https://vuzlyk.com').href %>",
+                "width": 180,
                 "height": 60
             }
-        },
-        "datePublished": "<%= post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString() %>",
-        "dateModified": "<%= new Date(post.updatedAt).toISOString() %>"
+        }
     }
-    </script>
+}
+</script>
 </head>
 <body>
     <%- include('../partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>

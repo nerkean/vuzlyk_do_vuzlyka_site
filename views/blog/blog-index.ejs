@@ -52,56 +52,64 @@
     <meta name="twitter:image" content="<%= locals.baseUrl || 'https://vuzlyk.com' %>/images/og-image.jpg">
 
     <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "<%= pageTitle.replace(/"/g, '\\"') %>",
-        "description": "<%= metaDescription.replace(/"/g, '\\"') %>",
-        "url": "<%= canonicalUrl %>",
-        "publisher": {
-            "@type": "Organization",
-            "name": "Вузлик до вузлика",
-            "logo": {
+{
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "name": <%- JSON.stringify(pageTitle) %>,
+    "description": <%- JSON.stringify(metaDescription) %>,
+    "url": "<%= canonicalUrl %>",
+    "publisher": {
+        "@type": "Organization",
+        "name": "Вузлик до вузлика",
+        "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>",
+        "logo": {
+            "@type": "ImageObject",
+            "url": "<%= new URL('/images/logo.webp', locals.baseUrl || 'https://vuzlyk.com').href %>",
+            "width": 180,
+            "height": 60
+        }
+    }
+    <% if (posts && posts.length > 0) { %>,
+    "blogPost": [
+        <% posts.forEach((post, index) => { %>
+        {
+            "@type": "BlogPosting",
+            "@id": "<%= new URL('/blog/' + post.slug, locals.baseUrl || 'https://vuzlyk.com').href %>",
+            "mainEntityOfPage": "<%= new URL('/blog/' + post.slug, locals.baseUrl || 'https://vuzlyk.com').href %>",
+            "headline": <%- JSON.stringify(post.metaTitle || post.title) %>,
+            "url": "<%= new URL('/blog/' + post.slug, locals.baseUrl || 'https://vuzlyk.com').href %>",
+            "description": <%- JSON.stringify(post.summary) %>,
+            <% if (post.imageUrl) { %>
+            "image": {
                 "@type": "ImageObject",
-                "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>/images/logo.webp",
-                "width": 180,
-                "height": 60 
+                "url": "<%= new URL(post.imageUrl, locals.baseUrl || 'https://vuzlyk.com').href %>"
+            },
+            <% } %>
+            "datePublished": "<%= post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString() %>",
+            "dateModified": "<%= new Date(post.updatedAt).toISOString() %>",
+            "author": {
+                "@type": "Organization",
+                "name": "<%= post.authorDisplay && post.authorDisplay.trim() !== '' ? post.authorDisplay : 'Вузлик до вузлика' %>",
+                "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>"
+            },
+            "publisher": {
+                "@type": "Organization",
+                "name": "Вузлик до вузлика",
+                "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "<%= new URL('/images/logo.webp', locals.baseUrl || 'https://vuzlyk.com').href %>",
+                    "width": 180,
+                    "height": 60
+                }
             }
         }
-        <% if (posts && posts.length > 0) { %>,
-        "mainEntity": {
-            "@type": "ItemList",
-            "itemListElement": [
-                <% posts.forEach((post, index) => { %>
-                {
-                    "@type": "ListItem",
-                    "position": <%= (currentPage - 1) * POSTS_PER_PAGE + index + 1 %>,
-                    "item": {
-                        "@type": "BlogPosting",
-                        "@id": "<%= locals.baseUrl || 'https://vuzlyk.com' %>/blog/<%= post.slug %>",
-                        "headline": "<%= post.title.replace(/"/g, '\\"') %>",
-                        "url": "<%= locals.baseUrl || 'https://vuzlyk.com' %>/blog/<%= post.slug %>",
-                        "datePublished": "<%= post.publishedAt ? new Date(post.publishedAt).toISOString() : new Date(post.createdAt).toISOString() %>",
-                        "dateModified": "<%= new Date(post.updatedAt).toISOString() %>",
-                        "author": {
-                            "@type": "Organization",
-                            "name": "<%= post.authorDisplay || 'Вузлик до вузлика' %>"
-                        }
-                        <% if (post.imageUrl) { %>,
-                        "image": "<%= post.imageUrl %>"
-                        <% } %>
-                        <% if (post.summary) { %>,
-                        "description": "<%= post.summary.replace(/"/g, '\\"') %>"
-                        <% } %>
-                    }
-                }
-                <%= (index < posts.length - 1) ? ',' : '' %>
-                <% }); %>
-            ]
-        }
-        <% } %>
-    }
-    </script>
+        <%= (index < posts.length - 1) ? ',' : '' %>
+        <% }); %>
+    ]
+    <% } %>
+}
+</script>
 </head>
 <body>
     <%- include('../partials/header', { cartItemCount: typeof cartItemCount !== 'undefined' ? cartItemCount : 0 }) %>

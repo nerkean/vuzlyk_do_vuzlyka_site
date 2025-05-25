@@ -178,9 +178,7 @@
     </main>
 
     <script>
-        // ... (існуючий JavaScript для meta description та imageFiles preview) ...
         document.addEventListener('DOMContentLoaded', function() {
-            // Лічильник для Meta Description
             const metaDescTextarea = document.getElementById('metaDescription');
             const metaDescCounter = document.getElementById('metaDescCounter');
             const metaDescMaxLength = 170; 
@@ -203,7 +201,6 @@
                 updateMetaCounter(); 
             }
 
-            // Передпросмотр для основних зображень товару (imageFiles)
             const imageInput = document.getElementById('imageFiles');
             const previewContainer = document.getElementById('imagePreviewContainerNew'); 
             const productForm = document.getElementById('newProductForm'); 
@@ -284,11 +281,9 @@
                 }
             }
     
-            // Код для генерації Meta Description (залишаємо твій існуючий)
             const generateMetaBtn = document.getElementById('generateMetaDescBtn');
             const productNameInput = document.getElementById('name');
             const productDescriptionTextarea = document.getElementById('description');
-            // metaDescTextarea вже визначено вище
 
             if (generateMetaBtn && productNameInput && productDescriptionTextarea && metaDescTextarea) {
                 generateMetaBtn.addEventListener('click', async function() {
@@ -336,19 +331,18 @@
                 });
             }
 
-            // JavaScript для передпросмотру "живого" фото
             const livePhotoInput = document.getElementById('livePhotoFile');
             const livePhotoPreviewContainer = document.getElementById('livePhotoPreviewContainer');
 
             if (livePhotoInput && livePhotoPreviewContainer) {
                 livePhotoInput.addEventListener('change', function(event) {
-                    livePhotoPreviewContainer.innerHTML = ''; // Очищуємо попередній предпросмотр
+                    livePhotoPreviewContainer.innerHTML = ''; 
                     if (this.files && this.files[0]) {
                         const file = this.files[0];
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             const previewItem = document.createElement('div');
-                            previewItem.classList.add('image-preview-item'); // Використовуємо той самий клас
+                            previewItem.classList.add('image-preview-item'); 
 
                             let mediaElement;
                             if (file.type.startsWith('image/gif')) {
@@ -358,20 +352,18 @@
                                 mediaElement = document.createElement('video');
                                 mediaElement.autoplay = true;
                                 mediaElement.loop = true;
-                                mediaElement.muted = true; // Важливо для автопрогравання в багатьох браузерах
+                                mediaElement.muted = true; 
                                 mediaElement.alt = "Предпросмотр відео";
-                                mediaElement.setAttribute('playsinline', ''); // Для iOS
+                                mediaElement.setAttribute('playsinline', ''); 
                             } else {
                                 livePhotoPreviewContainer.textContent = 'Непідтримуваний тип файлу для "живого" фото.';
                                 return;
                             }
                             
                             mediaElement.src = e.target.result;
-                            // Стилі для mediaElement вже частково є через .image-preview-item img
-                            // Додатково можна задати:
-                            mediaElement.style.maxWidth = '100px'; // Або інший розмір
+                            mediaElement.style.maxWidth = '100px'; 
                             mediaElement.style.maxHeight = '100px';
-                            mediaElement.style.objectFit = 'contain'; // Щоб бачити весь GIF/відео
+                            mediaElement.style.objectFit = 'contain';
 
                             const fileNameSpan = document.createElement('span');
                             fileNameSpan.classList.add('file-name-preview');
@@ -386,7 +378,6 @@
                 });
             }
             
-            // Обробник відправки форми (залишаємо твій існуючий)
             if (productForm) {
                 productForm.addEventListener('submit', async function(event) {
                     event.preventDefault(); 
@@ -396,7 +387,6 @@
                         imageInput.focus(); 
                         return; 
                     }
-                    // ... (решта твого коду обробки submit)
                     if (selectedFiles.length > MAX_FILES) {
                         alert(`Забагато файлів. Максимум ${MAX_FILES}. Видаліть зайві.`);
                         return;
@@ -422,7 +412,6 @@
                         formDataForSubmit.append('imageFiles', file, file.name);
                     });
 
-                    // Додаємо livePhotoFile, якщо він вибраний
                     if (livePhotoInput.files && livePhotoInput.files[0]) {
                         formDataForSubmit.append('livePhotoFile', livePhotoInput.files[0], livePhotoInput.files[0].name);
                     }
