@@ -357,6 +357,7 @@
                 </div>
             </div>
         </section>
+
 <section class="map-section section-padding">
     <div class="container">
         <h2 class="section-title" data-aos="fade-up">Наша Географія</h2>
@@ -372,7 +373,6 @@
         </div>
     </div>
 </section>
-
     </main>
 
     <%- include('partials/footer') %>
@@ -489,9 +489,10 @@ function initMap() {
     });
 }
 
+
         if (document.getElementById('gmap')) {
-            const mapsApiKey = "<%= locals.googleMapsApiKey %>"; 
-            if (mapsApiKey && mapsApiKey !== 'undefined' && mapsApiKey !== '') { 
+            const mapsApiKey = "<%= locals.googleMapsApiKey %>"; // <--- ОТРИМУЄМО КЛЮЧ
+            if (mapsApiKey && mapsApiKey !== 'undefined' && mapsApiKey !== '') { // Перевірка, чи ключ існує
                 const script = document.createElement('script');
                 script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&callback=initMap&loading=async&defer`;
                 script.onerror = () => console.error("Google Maps script failed to load.");
