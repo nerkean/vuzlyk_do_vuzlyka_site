@@ -62,14 +62,11 @@
         "addressRegion": "Київська область",
         "addressCountry": "UA"
       },
-<<<<<<< HEAD
       "geo": { 
         "@type": "GeoCoordinates",
         "latitude": "50.5106", 
         "longitude": "30.7902" 
       },
-=======
->>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
       "contactPoint": [
   {
     "@type": "ContactPoint",
@@ -360,8 +357,6 @@
                 </div>
             </div>
         </section>
-<<<<<<< HEAD
-
 <section class="map-section section-padding">
     <div class="container">
         <h2 class="section-title" data-aos="fade-up">Наша Географія</h2>
@@ -377,8 +372,7 @@
         </div>
     </div>
 </section>
-=======
->>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
+
     </main>
 
     <%- include('partials/footer') %>
@@ -412,7 +406,6 @@
                    spaceBetween: 0,
                });
            } 
-<<<<<<< HEAD
 
 function initMap() {
     // Координати для центру України (приблизно) та відповідний масштаб
@@ -496,18 +489,20 @@ function initMap() {
     });
 }
 
-        // Завантаження Google Maps API та ініціалізація карти
-        // Переконайтеся, що цей скрипт завантажується після того, як DOM готовий
         if (document.getElementById('gmap')) {
-            const script = document.createElement('script');
-            script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyARbtr_d0TAFl1xuqJ49xjpyVRcQTqVYc0&callback=initMap&loading=async&defer`;
-            script.onerror = () => console.error("Google Maps script failed to load.");
-            document.head.appendChild(script);
-            // Зробимо функцію initMap глобальною, щоб callback міг її викликати
-            window.initMap = initMap;
+            const mapsApiKey = "<%= locals.googleMapsApiKey %>"; 
+            if (mapsApiKey && mapsApiKey !== 'undefined' && mapsApiKey !== '') { 
+                const script = document.createElement('script');
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&callback=initMap&loading=async&defer`;
+                script.onerror = () => console.error("Google Maps script failed to load.");
+                document.head.appendChild(script);
+                window.initMap = initMap;
+            } else {
+                console.warn("Google Maps API Key is not configured. Map will not be loaded.");
+                const gmapDiv = document.getElementById('gmap');
+                if(gmapDiv) gmapDiv.innerHTML = '<p style="text-align:center; padding-top:50px;">Карта тимчасово недоступна.</p>';
+            }
         }
-=======
->>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
       });
     </script>
 </body>
