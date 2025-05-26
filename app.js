@@ -54,6 +54,7 @@ app.use(
                     "'self'",
                     "https://cdn.jsdelivr.net",
                     "https://cdnjs.cloudflare.com",
+<<<<<<< HEAD
                     "https://www.googletagmanager.com",
                     "https://www.google-analytics.com",
                     "https://ssl.google-analytics.com",
@@ -63,16 +64,32 @@ app.use(
                     "https://maps.google.com", // Також використовується Картами
                     "https://maps.gstatic.com", // Для статичних ресурсів Карт (іконки, тайли)
                     "https://*.google.com.ua",
+=======
+                    "https://www.googletagmanager.com", 
+                    "https://www.google-analytics.com",
+                    "https://ssl.google-analytics.com", 
+                    "https://unpkg.com",
+                    "https://*.google.com", 
+                    "https://*.google.com.ua", 
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
                     "https://*.googleadservices.com",
                     "https://www.googleadservices.com",
                     "https://*.doubleclick.net",
                     "https://tpc.googlesyndication.com",
                     "https://pagead2.googlesyndication.com",
+<<<<<<< HEAD
                     "https://cdn.tailwindcss.com",
                     "'unsafe-inline'" // Намагайся цього уникати в майбутньому
                 ],
                 "script-src-attr": [
                     "'unsafe-inline'"
+=======
+                    "https://cdn.tailwindcss.com", 
+                    "'unsafe-inline'"
+                ],
+                "script-src-attr": [
+                    "'unsafe-inline'" 
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
                 ],
                 "style-src": [
                     "'self'",
@@ -81,6 +98,7 @@ app.use(
                     "https://cdnjs.cloudflare.com",
                     "https://unpkg.com",
                     "https://fonts.gstatic.com",
+<<<<<<< HEAD
                     "https://maps.googleapis.com", // Для стилів, які можуть завантажуватися API Карт
                     "'unsafe-inline'" // Потрібно для динамічних стилів карт, якщо такі є
                 ],
@@ -89,6 +107,14 @@ app.use(
                     "https://fonts.gstatic.com", // Для Google Fonts
                     "https://cdnjs.cloudflare.com", // Для Font Awesome
                     "https://maps.gstatic.com", // Для шрифтів, які можуть використовуватися на Картах
+=======
+                    "'unsafe-inline'"
+                ],
+                "font-src": [
+                    "'self'",
+                    "https://fonts.gstatic.com",
+                    "https://cdnjs.cloudflare.com",
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
                     "data:"
                 ],
                 "img-src": [
@@ -97,19 +123,31 @@ app.use(
                     "https://res.cloudinary.com",
                     "https://www.google-analytics.com",
                     "https://*.google.com",
+<<<<<<< HEAD
                     "https://www.google.com",
                     "https://www.google.com.ua",
                     "https://*.google.com.ua",
+=======
+                    "https://www.google.com", 
+                    "https://www.google.com.ua", 
+                    "https://*.google.com.ua", 
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
                     "https://*.googleadservices.com",
                     "https://www.googleadservices.com",
                     "https://*.doubleclick.net",
                     "https://*.googlesyndication.com",
+<<<<<<< HEAD
                     "https://pagead2.googlesyndication.com",
                     "https://googleads.g.doubleclick.net",
                     "https://www.googletagmanager.com",
                     "https://maps.googleapis.com", // Для статичних карт або зображень з API
                     "https://maps.gstatic.com",   // Для іконок, тайлів карти тощо
                     "https://csi.gstatic.com"     // Часто використовується для зображень/пікселів Карт
+=======
+                    "https://pagead2.googlesyndication.com", 
+                    "https://googleads.g.doubleclick.net", 
+                    "https://www.googletagmanager.com" 
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
                 ],
                 "media-src": [
                     "'self'",
@@ -119,6 +157,7 @@ app.use(
                     "'self'",
                     "https://res.cloudinary.com",
                     "https://www.google-analytics.com",
+<<<<<<< HEAD
                     "https://*.google-analytics.com",
                     "https://www.googletagmanager.com",
                     "https://*.google.com",
@@ -150,6 +189,35 @@ app.use(
         },
         crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
         crossOriginEmbedderPolicy: { policy: "unsafe-none" },
+=======
+                    "https://*.google-analytics.com", 
+                    "https://www.googletagmanager.com",
+                    "https://*.google.com", 
+                    "https://www.google.com", 
+                    "https://www.google.com.ua", 
+                    "https://*.google.com.ua",
+                    "https://*.googleadservices.com",
+                    "https://www.googleadservices.com", 
+                    "https://*.doubleclick.net",
+                    "https://*.googlesyndication.com",
+                    "https://pagead2.googlesyndication.com",
+                    "https://googleads.g.doubleclick.net" 
+                ],
+                "frame-src": [ 
+                    "'self'",
+                    "https://www.googletagmanager.com", 
+                    "https://*.google.com", 
+                    "https://*.doubleclick.net", 
+                    "https://bid.g.doubleclick.net" 
+                ],
+                "object-src": ["'none'"], 
+                "worker-src": ["'self'"], 
+                "form-action": ["'self'"], 
+            }
+        },
+        crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+        crossOriginEmbedderPolicy: { policy: "unsafe-none" }, 
+>>>>>>> 09a55f9b077274fe3f528e634d4a960b94c36a18
         referrerPolicy: { policy: "strict-origin-when-cross-origin" }
     })
 );
