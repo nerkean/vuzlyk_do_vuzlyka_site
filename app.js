@@ -49,78 +49,77 @@ app.use(
     helmet({
         contentSecurityPolicy: {
             directives: {
-                ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+                ...helmet.contentSecurityPolicy.getDefaultDirectives(), // Залишає default-src 'self' та інші
                 "script-src": [
                     "'self'",
                     "https://cdn.jsdelivr.net",
                     "https://cdnjs.cloudflare.com",
+                    "https://unpkg.com", // Для AOS, Swiper та інших бібліотек з unpkg
                     "https://www.googletagmanager.com",
                     "https://www.google-analytics.com",
                     "https://ssl.google-analytics.com",
-                    "https://unpkg.com",
-                    "https://*.google.com", // Загальний дозвіл для google.com
-                    "https://maps.googleapis.com", // Основний API Карт
-                    "https://maps.google.com", // Також використовується Картами
-                    "https://maps.gstatic.com", // Для статичних ресурсів Карт (іконки, тайли)
-                    "https://*.google.com.ua",
-                    "https://www.googletagmanager.com", 
-                    "https://www.google-analytics.com",
-                    "https://ssl.google-analytics.com", 
-                    "https://unpkg.com",
-                    "https://*.google.com", 
-                    "https://*.google.com.ua", 
-                    "https://*.googleadservices.com",
-                    "https://www.googleadservices.com",
-                    "https://*.doubleclick.net",
-                    "https://tpc.googlesyndication.com",
-                    "https://pagead2.googlesyndication.com",
-                    "https://cdn.tailwindcss.com",
-                    "'unsafe-inline'" // Намагайся цього уникати в майбутньому
+                    "https://maps.googleapis.com",      // API Google Карт
+                    "https://maps.gstatic.com",         // Статичні ресурси карт (іконки, тайли)
+                    "https://*.google.com",             // Загальний для інших сервісів Google (може перекривати деякі maps.googleapis.com)
+                    "https://*.google.com.ua",          // Для регіональних сервісів Google
+                    "https://*.googleadservices.com",   // Google Ads
+                    "https://www.googleadservices.com", // Google Ads
+                    "https://*.doubleclick.net",        // Рекламні сервіси
+                    "https://tpc.googlesyndication.com",// Рекламні сервіси
+                    "https://pagead2.googlesyndication.com", // Рекламні сервіси
+                    "https://cdn.tailwindcss.com",      // Якщо використовуєш Tailwind CSS з CDN
+                    "'unsafe-inline'"                   // Для вбудованих скриптів та обробників подій (намагайся мінімізувати)
                 ],
                 "script-src-attr": [
-                    "'unsafe-inline'"
+                    "'unsafe-inline'" // Дозволяє inline обробники типу onclick, якщо вони є
                 ],
                 "style-src": [
                     "'self'",
-                    "https://fonts.googleapis.com",
-                    "https://cdn.jsdelivr.net",
-                    "https://cdnjs.cloudflare.com",
-                    "https://unpkg.com",
-                    "https://fonts.gstatic.com",
-                    "'unsafe-inline'"
+                    "https://fonts.googleapis.com",    // Google Fonts
+                    "https://cdn.jsdelivr.net",        // Bootstrap, Swiper
+                    "https://cdnjs.cloudflare.com",    // Font Awesome, AOS
+                    "https://unpkg.com",              // AOS, Swiper
+                    "https://fonts.gstatic.com",      // Google Fonts (gstatic)
+                    "https://maps.googleapis.com",    // Для стилів, що завантажуються API Карт
+                    "'unsafe-inline'"                 // Для вбудованих стилів та стилів карт
                 ],
                 "font-src": [
                     "'self'",
-                    "https://fonts.gstatic.com",
-                    "https://cdnjs.cloudflare.com",
-                    "data:"
+                    "https://fonts.gstatic.com",      // Google Fonts
+                    "https://cdnjs.cloudflare.com",    // Font Awesome
+                    "https://maps.gstatic.com",       // Шрифти, які можуть використовуватися на Картах
+                    "data:"                           // Для вбудованих шрифтів (якщо є)
                 ],
                 "img-src": [
                     "'self'",
-                    "data:",
-                    "https://res.cloudinary.com",
-                    "https://www.google-analytics.com",
+                    "data:",                           // Для base64 зображень
+                    "https://res.cloudinary.com",     // Твої зображення з Cloudinary
+                    "https://www.google-analytics.com",// Пікселі Google Analytics
                     "https://*.google.com",
-                    "https://www.google.com", 
-                    "https://www.google.com.ua", 
-                    "https://*.google.com.ua", 
+                    "https://www.google.com",
+                    "https://www.google.com.ua",
+                    "https://*.google.com.ua",
                     "https://*.googleadservices.com",
                     "https://www.googleadservices.com",
                     "https://*.doubleclick.net",
                     "https://*.googlesyndication.com",
-                    "https://pagead2.googlesyndication.com", 
-                    "https://googleads.g.doubleclick.net", 
-                    "https://www.googletagmanager.com" 
+                    "https://pagead2.googlesyndication.com",
+                    "https://googleads.g.doubleclick.net",
+                    "https://www.googletagmanager.com",
+                    "https://maps.googleapis.com",    // Статичні карти, Street View
+                    "https://maps.gstatic.com",       // Тайли карти, іконки
+                    "https://csi.gstatic.com",        // Зображення/пікселі для сервісів Google
+                    "maps.google.com"     // Може використовуватися для деяких елементів карт
                 ],
-                "media-src": [
+                "media-src": [ // Якщо є відео/аудіо
                     "'self'",
                     "https://res.cloudinary.com"
                 ],
                 "connect-src": [
                     "'self'",
-                    "https://res.cloudinary.com",
+                    "https://res.cloudinary.com",     // API запити до Cloudinary
                     "https://www.google-analytics.com",
-                    "https://*.google-analytics.com",
+                    "https://*.google-analytics.com", // Для Google Analytics
                     "https://www.googletagmanager.com",
                     "https://*.google.com",
                     "https://www.google.com",
@@ -128,24 +127,29 @@ app.use(
                     "https://*.google.com.ua",
                     "https://*.googleadservices.com",
                     "https://www.googleadservices.com",
+                    "https://*.doubleclick.net",
                     "https://*.googlesyndication.com",
                     "https://pagead2.googlesyndication.com",
-                    "https://googleads.g.doubleclick.net" 
+                    "https://googleads.g.doubleclick.net",
+                    "https://maps.googleapis.com",    // Запити API Карт (геокодування, маршрути)
+                    "https://maps.google.com",   // Запити Карт
+                    "https://*. cerebrospinal.googleapis.com" // Іноді використовується для сервісів Google Maps
                 ],
-                "frame-src": [ 
+                "frame-src": [ // Для вбудованих фреймів
                     "'self'",
-                    "https://www.googletagmanager.com", 
-                    "https://*.google.com", 
-                    "https://*.doubleclick.net", 
-                    "https://bid.g.doubleclick.net" 
+                    "https://www.googletagmanager.com",
+                    "https://*.google.com",          // Дозволяє фрейми з усіх піддоменів google.com (включаючи карти)
+                    "https://maps.google.com",   // Для карт
+                    "https://*.doubleclick.net",
+                    "https://bid.g.doubleclick.net"
                 ],
-                "object-src": ["'none'"], 
-                "worker-src": ["'self'"], 
-                "form-action": ["'self'"], 
+                "object-src": ["'none'"], // Забороняє <object>, <embed>, <applet>
+                "worker-src": ["'self'"], // Якщо використовуєш Web Workers
+                "form-action": ["'self'"], // Дозволяє формам відправлятися тільки на твій домен
             }
         },
         crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
-        crossOriginEmbedderPolicy: { policy: "unsafe-none" }, 
+        crossOriginEmbedderPolicy: { policy: "unsafe-none" },
         referrerPolicy: { policy: "strict-origin-when-cross-origin" }
     })
 );
