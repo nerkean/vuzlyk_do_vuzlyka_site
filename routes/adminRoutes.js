@@ -400,8 +400,12 @@ const newProduct = new Product({
     livePhotoPublicId: livePhotoPublicIdDb,
     tags: processedTags, materials: processedMaterials, colors: processedColors,
     care_instructions, creation_time_info, isFeatured: isFeatured === 'on',
-    sku: sku ? sku.trim() : null
 });
+
+if (sku && sku.trim() !== '') {
+    newProduct.sku = sku.trim();
+}
+
         await newProduct.save();
 
         for (const pathToDelete of successfullyProcessedOriginalPaths) {
@@ -668,6 +672,16 @@ const {
             productToUpdate.markModified('livePhotoUrl');
             productToUpdate.markModified('livePhotoPublicId');
         }
+
+        if (sku && sku.trim() !== '') {
+    productToUpdate.sku = sku.trim();
+} else {
+    // productToUpdate.sku = undefined; // Mongoose видалить це поле при збереженні
+    // Або, якщо ти оновлюєш через findByIdAndUpdate, можна так:
+    // await Product.findByIdAndUpdate(productId, { $unset: { sku: 1 } });
+    // Для productToUpdate.save() присвоєння undefined має працювати:
+    productToUpdate.sku = undefined;
+}
 
         const savedProduct = await productToUpdate.save(); 
         console.log(`[Admin Routes] PUT: Товар ${productId} успішно оновлено.`);
