@@ -254,7 +254,7 @@
                                 <textarea id="message" name="message" rows="6" class="form-control" required><%= typeof formData !== 'undefined' ? formData.message : '' %></textarea>
                             </div>
 
-                             <input type="hidden" id="recaptcha-token" name="recaptchaToken">
+ <input type="hidden" id="recaptcha-token-input" name="recaptchaToken">
 
                             <div class="form-group text-center">
                                 <button type="submit" class="btn btn-primary">Відправити повідомлення</button>
@@ -272,37 +272,66 @@
     <script src="/js/main.js" defer></script>
     <script src="https://unpkg.com/aos@next/dist/aos.js" defer></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
+   document.addEventListener('DOMContentLoaded', function() {
         if (typeof AOS !== 'undefined') {
-            AOS.init({
-                once: true,
-                duration: 700,
-                easing: 'ease-out-cubic',
-                offset: 50
-            });
+            AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic', offset: 50 });
         }
 
         const contactForm = document.getElementById('contact-form-recaptcha');
-            if (contactForm) {
-                contactForm.addEventListener('submit', function(event) {
-                    event.preventDefault(); // Зупиняємо стандартну відправку форми
+        const recaptchaTokenInput = document.getElementById('recaptcha-token-input'); // Використовуємо ID
 
-                    grecaptcha.ready(function() {
-                        grecaptcha.execute('<%= locals.reCaptchaSiteKey %>', { action: 'contact_form_submit' }) // 'contact_form_submit' - довільна назва дії
-                            .then(function(token) {
-                                // Встановлюємо токен у приховане поле
-                                document.getElementById('recaptcha-token').value = token;
-                                // Тепер відправляємо форму
-                                contactForm.submit();
-                            })
-                            .catch(function(error) {
-                                console.error('Помилка reCAPTCHA:', error);
-                                // Можна показати повідомлення користувачу, що reCAPTCHA не спрацювала
-                                alert('Не вдалося перевірити reCAPTCHA. Спробуйте оновити сторінку.');
-                            });
-                    });
+        if (contactForm && recaptchaTokenInput) {
+            contactForm.addEventListener('submit', function(event) {
+                event.preventDefault(); // Завжди зупиняємо стандартну відправку
+                console.log('[reCAPTCHA] Form submission intercepted.');
+
+                if (typeof grecaptcha === 'undefined' || typeof grecaptcha.execute === 'undefined') {
+                    console.error('[reCAPTCHA] grecaptcha object or execute function is not available. API script might not have loaded correctly or is blocked.');
+                    alert('Помилка завантаження сервісу reCAPTCHA. Будь ласка, перевірте консоль браузера та оновіть сторінку.');
+                    // Можна спробувати відправити форму без токена, якщо це критично, але це небезпечно
+                    // form.submit();
+                    return;
+                }
+
+                const submitButton = contactForm.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.textContent = 'Відправка...';
+                }
+
+                grecaptcha.ready(function() {
+                    console.log('[reCAPTCHA] grecaptcha is ready. Executing...');
+                    grecaptcha.execute('<%= locals.reCaptchaSiteKey %>', { action: 'contact_form_submit' })
+                        .then(function(token) {
+                            console.log('[reCAPTCHA] Token received from Google:', token);
+                            if (token) {
+                                recaptchaTokenInput.value = token;
+                                console.log('[reCAPTCHA] Token set to hidden field. Value:', recaptchaTokenInput.value);
+                                console.log('[reCAPTCHA] Now submitting the form programmatically.');
+                                contactForm.submit(); // Відправляємо форму програмно
+                            } else {
+                                console.error('[reCAPTCHA] Received an empty or null token from Google.');
+                                alert('Не вдалося отримати токен reCAPTCHA. Спробуйте ще раз.');
+                                if (submitButton) {
+                                    submitButton.disabled = false;
+                                    submitButton.textContent = 'Відправити повідомлення';
+                                }
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('[reCAPTCHA] Error during grecaptcha.execute:', error);
+                            alert('Помилка під час перевірки reCAPTCHA. Будь ласка, спробуйте пізніше або перевірте консоль.');
+                            if (submitButton) {
+                                submitButton.disabled = false;
+                                submitButton.textContent = 'Відправити повідомлення';
+                            }
+                        });
                 });
-            }
+            });
+        } else {
+            if (!contactForm) console.error('[reCAPTCHA] Contact form with ID "contact-form-recaptcha" not found.');
+            if (!recaptchaTokenInput) console.error('[reCAPTCHA] Hidden input with ID "recaptcha-token-input" not found.');
+        }
     });
     </script>
 </body>
