@@ -312,7 +312,7 @@ app.use((req, res, next) => {
     res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`; // Додано для baseUrl
     res.locals.googleMapsApiKey = process.env.Maps_API_KEY; // <-- ДОДАНО КЛЮЧ КАРТ
     res.locals.googleMapsApiKey = process.env.Maps_API_KEY;
-    res.locals.reCaptchaSiteKey = process.env.RECAPTCHA_V2_SITE_KEY;
+    res.locals.reCaptchaV2SiteKey = process.env.RECAPTCHA_V2_SITE_KEY;
     next();
 });
 
