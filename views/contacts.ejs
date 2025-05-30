@@ -7,6 +7,10 @@
     <meta name="description" content="Зв'яжіться з майстернею української вишивки 'Вузлик до вузлика'. Ми завжди раді відповісти на ваші запитання, обговорити індивідуальне замовлення або просто поспілкуватися про мистецтво вишивки.">
     <meta name="keywords" content="контакти, зв'язатися, Вузлик до вузлика, українська вишивка, замовити вишиванку, email, соціальні мережі, Валентина Юрченко, Бровари">
     
+   <% if (locals.reCaptchaSiteKey) { %>
+        <script src="https://www.google.com/recaptcha/api.js?render=<%= locals.reCaptchaSiteKey %>" async defer></script>
+    <% } %>
+
     <meta property="og:title" content="Контакти Майстерні 'Вузлик до вузлика'">
     <meta property="og:description" content="Знайдіть всю необхідну інформацію для зв'язку з нами: email, соціальні мережі. Завжди раді вашим зверненням!">
     <meta property="og:image" content="https://vuzlyk.com/images/og-image.jpg">
@@ -249,6 +253,9 @@
                                 <label for="message">Ваше повідомлення <span class="required">*</span></label>
                                 <textarea id="message" name="message" rows="6" class="form-control" required><%= typeof formData !== 'undefined' ? formData.message : '' %></textarea>
                             </div>
+
+                             <input type="hidden" id="recaptcha-token" name="recaptchaToken">
+
                             <div class="form-group text-center">
                                 <button type="submit" class="btn btn-primary">Відправити повідомлення</button>
                             </div>
@@ -274,6 +281,28 @@
                 offset: 50
             });
         }
+
+        const contactForm = document.getElementById('contact-form-recaptcha');
+            if (contactForm) {
+                contactForm.addEventListener('submit', function(event) {
+                    event.preventDefault(); // Зупиняємо стандартну відправку форми
+
+                    grecaptcha.ready(function() {
+                        grecaptcha.execute('<%= locals.reCaptchaSiteKey %>', { action: 'contact_form_submit' }) // 'contact_form_submit' - довільна назва дії
+                            .then(function(token) {
+                                // Встановлюємо токен у приховане поле
+                                document.getElementById('recaptcha-token').value = token;
+                                // Тепер відправляємо форму
+                                contactForm.submit();
+                            })
+                            .catch(function(error) {
+                                console.error('Помилка reCAPTCHA:', error);
+                                // Можна показати повідомлення користувачу, що reCAPTCHA не спрацювала
+                                alert('Не вдалося перевірити reCAPTCHA. Спробуйте оновити сторінку.');
+                            });
+                    });
+                });
+            }
     });
     </script>
 </body>

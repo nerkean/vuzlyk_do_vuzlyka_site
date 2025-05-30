@@ -67,7 +67,9 @@ app.use(
                     "https://*.doubleclick.net",        // Рекламні сервіси
                     "https://tpc.googlesyndication.com",// Рекламні сервіси
                     "https://pagead2.googlesyndication.com", // Рекламні сервіси
-                    "https://cdn.tailwindcss.com",      // Якщо використовуєш Tailwind CSS з CDN
+                    "https://cdn.tailwindcss.com",
+                    "https://www.google.com/recaptcha/",      // Для API reCAPTCHA
+                    "https://www.gstatic.com/recaptcha/",      // Якщо використовуєш Tailwind CSS з CDN
                     "'unsafe-inline'"                   // Для вбудованих скриптів та обробників подій (намагайся мінімізувати)
                 ],
                 "script-src-attr": [
@@ -141,7 +143,9 @@ app.use(
                     "https://*.google.com",          // Дозволяє фрейми з усіх піддоменів google.com (включаючи карти)
                     "https://maps.google.com",   // Для карт
                     "https://*.doubleclick.net",
-                    "https://bid.g.doubleclick.net"
+                    "https://bid.g.doubleclick.net",
+                     "https://www.google.com/recaptcha/",      // Для віджета reCAPTCHA
+                    "https://recaptcha.google.com/"
                 ],
                 "object-src": ["'none'"], // Забороняє <object>, <embed>, <applet>
                 "worker-src": ["'self'"], // Якщо використовуєш Web Workers
@@ -307,6 +311,8 @@ app.use((req, res, next) => {
     res.locals.formatPrice = app.locals.formatPrice;
     res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`; // Додано для baseUrl
     res.locals.googleMapsApiKey = process.env.Maps_API_KEY; // <-- ДОДАНО КЛЮЧ КАРТ
+    res.locals.googleMapsApiKey = process.env.Maps_API_KEY;
+    res.locals.reCaptchaSiteKey = process.env.RECAPTCHA_V3_SITE_KEY;
     next();
 });
 
@@ -1181,20 +1187,69 @@ app.get('/contacts', (req, res) => {
 });
 
 app.post('/contacts/send', async (req, res) => {
-    const { name, email, phone, subject, message } = req.body;
+    // Додаємо лог для перевірки, що приходить з клієнта
+    console.log('[Contact Form] Received body:', JSON.stringify(req.body, null, 2));
 
-    if (!name || !email || !message) {
-        return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, заповніть усі обов\'язкові поля (ім\'я, email, повідомлення).') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+    const { name, email, phone, subject, message, recaptchaToken } = req.body; // <--- ВИПРАВЛЕНО: додано recaptchaToken
+
+    // 1. Перевірка токена reCAPTCHA
+    // Тепер recaptchaToken буде або рядком (можливо, порожнім), або undefined, якщо його зовсім не було
+    if (!recaptchaToken) { // Ця умова спрацює, якщо recaptchaToken === '' (порожній рядок) або undefined/null
+        console.warn('[Contact Form] reCAPTCHA token відсутній або порожній.');
+        return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, пройдіть перевірку reCAPTCHA (токен не отримано).') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
     }
 
-    // Валідація email (проста)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-         return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, введіть коректний email.') + `&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
-    }
+    try {
+        const secretKey = process.env.RECAPTCHA_V3_SECRET_KEY;
+        if (!secretKey) {
+            console.error('[Contact Form] RECAPTCHA_V3_SECRET_KEY не налаштовано на сервері.');
+            // Якщо ключ не налаштований, ти можеш вирішити, чи пропускати перевірку (небезпечно для продакшену)
+            // чи повертати помилку. Для безпеки краще повернути помилку.
+            return res.redirect('/contacts?error=' + encodeURIComponent('Помилка конфігурації сервера reCAPTCHA.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+        }
 
-    const mailSubject = subject ? `Повідомлення з сайту Вузлик: ${subject}` : `Нове повідомлення з контактної форми Вузлик від ${name}`;
-    const mailText = `
+        const verificationURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}&remoteip=${req.ip}`;
+
+        const recaptchaResponse = await axios.post(verificationURL);
+        const recaptchaData = recaptchaResponse.data;
+
+        console.log('[Contact Form] reCAPTCHA verification response:', recaptchaData);
+
+        if (!recaptchaData.success) {
+            console.warn('[Contact Form] Перевірка reCAPTCHA не пройдена:', recaptchaData['error-codes']);
+            let userErrorMessage = 'Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.';
+            if (recaptchaData['error-codes'] && recaptchaData['error-codes'].includes('timeout-or-duplicate')) {
+                userErrorMessage = 'Час дії перевірки reCAPTCHA минув або токен вже використано. Оновіть сторінку та спробуйте знову.';
+            } else if (recaptchaData['error-codes'] && recaptchaData['error-codes'].includes('invalid-input-response')) {
+                userErrorMessage = 'Недійсний токен reCAPTCHA. Можливо, він порожній. Оновіть сторінку.';
+            }
+            return res.redirect('/contacts?error=' + encodeURIComponent(userErrorMessage) + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+        }
+
+        // Перевірка оцінки та дії
+        if (recaptchaData.score < 0.5) { // Поріг можна налаштувати
+            console.warn(`[Contact Form] Низька оцінка reCAPTCHA: ${recaptchaData.score} для дії ${recaptchaData.action}. IP: ${req.ip}`);
+            // return res.redirect('/contacts?error=' + encodeURIComponent('Система виявила підозрілу активність. Спробуйте пізніше.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+        }
+
+        if (recaptchaData.action !== 'contact_form_submit') {
+            console.warn(`[Contact Form] Неправильна дія reCAPTCHA: очікувалось 'contact_form_submit', отримано '${recaptchaData.action}'. IP: ${req.ip}`);
+            // return res.redirect('/contacts?error=' + encodeURIComponent('Помилка перевірки форми. Спробуйте оновити сторінку.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+        }
+
+        // Якщо дійшли сюди, reCAPTCHA пройдена успішно або з прийнятною оцінкою.
+        // Продовжуємо обробку форми...
+
+        if (!name || !email || !message) {
+            return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, заповніть усі обов\'язкові поля (ім\'я, email, повідомлення).') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, введіть коректний email.') + `&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+        }
+
+        const mailSubject = subject ? `Повідомлення з сайту Вузлик: ${subject}` : `Нове повідомлення з контактної форми Вузлик від ${name}`;
+        const mailText = `
 Ім'я: ${name}
 Email: ${email}
 Телефон: ${phone || 'Не вказано'}
@@ -1203,7 +1258,7 @@ Email: ${email}
 Повідомлення:
 ${message}
     `;
-    const mailHtml = `
+        const mailHtml = `
         <p><strong>Ім'я:</strong> ${name}</p>
         <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
         <p><strong>Телефон:</strong> ${phone || 'Не вказано'}</p>
@@ -1213,12 +1268,10 @@ ${message}
         <p style="white-space: pre-wrap;">${message}</p>
     `;
 
-    try {
         if (!process.env.SMTP_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASS || !process.env.ADMIN_EMAIL) {
             console.error('Відсутні налаштування SMTP для відправки контактної форми.');
             return res.redirect('/contacts?error=' + encodeURIComponent('Помилка сервера. Не вдалося відправити повідомлення.'));
         }
-
         const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: parseInt(process.env.SMTP_PORT, 10),
@@ -1228,22 +1281,21 @@ ${message}
                 pass: process.env.EMAIL_PASS,
             },
         });
-
         await transporter.sendMail({
-            from: `"${name} (Сайт Вузлик)" <${process.env.EMAIL_USER}>`, 
-            replyTo: email, 
-            to: process.env.ADMIN_EMAIL, 
+            from: `"${name} (Сайт Вузлик)" <${process.env.EMAIL_USER}>`,
+            replyTo: email,
+            to: process.env.ADMIN_EMAIL,
             subject: mailSubject,
             text: mailText,
             html: mailHtml,
         });
-        
+
         console.log(`[Contact Form] Повідомлення від ${name} (${email}) успішно відправлено.`);
         res.redirect('/contacts?success=true');
 
     } catch (error) {
-        console.error('Помилка відправки повідомлення з контактної форми:', error);
-        res.redirect('/contacts?error=' + encodeURIComponent('Сталася помилка при відправці повідомлення. Спробуйте пізніше.') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
+        console.error('Помилка обробки контактної форми або reCAPTCHA (зовнішній catch):', error);
+        res.redirect('/contacts?error=' + encodeURIComponent('Сталася помилка при відправці повідомлення. Спробуйте пізніше.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
     }
 });
 
