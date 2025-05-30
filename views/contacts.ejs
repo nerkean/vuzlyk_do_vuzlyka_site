@@ -7,9 +7,7 @@
     <meta name="description" content="Зв'яжіться з майстернею української вишивки 'Вузлик до вузлика'. Ми завжди раді відповісти на ваші запитання, обговорити індивідуальне замовлення або просто поспілкуватися про мистецтво вишивки.">
     <meta name="keywords" content="контакти, зв'язатися, Вузлик до вузлика, українська вишивка, замовити вишиванку, email, соціальні мережі, Валентина Юрченко, Бровари">
     
-   <% if (locals.reCaptchaSiteKey) { %>
-        <script src="https://www.google.com/recaptcha/api.js?render=<%= locals.reCaptchaSiteKey %>" async defer></script>
-    <% } %>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <meta property="og:title" content="Контакти Майстерні 'Вузлик до вузлика'">
     <meta property="og:description" content="Знайдіть всю необхідну інформацію для зв'язку з нами: email, соціальні мережі. Завжди раді вашим зверненням!">
@@ -254,7 +252,11 @@
                                 <textarea id="message" name="message" rows="6" class="form-control" required><%= typeof formData !== 'undefined' ? formData.message : '' %></textarea>
                             </div>
 
- <input type="hidden" id="recaptcha-token-input" name="recaptchaToken">
+                            <% if (locals.reCaptchaV2SiteKey) { %>
+                            <div class="form-group">
+                                <div class="g-recaptcha" data-sitekey="<%= locals.reCaptchaV2SiteKey %>"></div>
+                            </div>
+                            <% } %>
 
                             <div class="form-group text-center">
                                 <button type="submit" class="btn btn-primary">Відправити повідомлення</button>
@@ -275,62 +277,6 @@
    document.addEventListener('DOMContentLoaded', function() {
         if (typeof AOS !== 'undefined') {
             AOS.init({ once: true, duration: 700, easing: 'ease-out-cubic', offset: 50 });
-        }
-
-        const contactForm = document.getElementById('contact-form-recaptcha');
-        const recaptchaTokenInput = document.getElementById('recaptcha-token-input'); // Використовуємо ID
-
-        if (contactForm && recaptchaTokenInput) {
-            contactForm.addEventListener('submit', function(event) {
-                event.preventDefault(); // Завжди зупиняємо стандартну відправку
-                console.log('[reCAPTCHA] Form submission intercepted.');
-
-                if (typeof grecaptcha === 'undefined' || typeof grecaptcha.execute === 'undefined') {
-                    console.error('[reCAPTCHA] grecaptcha object or execute function is not available. API script might not have loaded correctly or is blocked.');
-                    alert('Помилка завантаження сервісу reCAPTCHA. Будь ласка, перевірте консоль браузера та оновіть сторінку.');
-                    // Можна спробувати відправити форму без токена, якщо це критично, але це небезпечно
-                    // form.submit();
-                    return;
-                }
-
-                const submitButton = contactForm.querySelector('button[type="submit"]');
-                if (submitButton) {
-                    submitButton.disabled = true;
-                    submitButton.textContent = 'Відправка...';
-                }
-
-                grecaptcha.ready(function() {
-                    console.log('[reCAPTCHA] grecaptcha is ready. Executing...');
-                    grecaptcha.execute('<%= locals.reCaptchaSiteKey %>', { action: 'contact_form_submit' })
-                        .then(function(token) {
-                            console.log('[reCAPTCHA] Token received from Google:', token);
-                            if (token) {
-                                recaptchaTokenInput.value = token;
-                                console.log('[reCAPTCHA] Token set to hidden field. Value:', recaptchaTokenInput.value);
-                                console.log('[reCAPTCHA] Now submitting the form programmatically.');
-                                contactForm.submit(); // Відправляємо форму програмно
-                            } else {
-                                console.error('[reCAPTCHA] Received an empty or null token from Google.');
-                                alert('Не вдалося отримати токен reCAPTCHA. Спробуйте ще раз.');
-                                if (submitButton) {
-                                    submitButton.disabled = false;
-                                    submitButton.textContent = 'Відправити повідомлення';
-                                }
-                            }
-                        })
-                        .catch(function(error) {
-                            console.error('[reCAPTCHA] Error during grecaptcha.execute:', error);
-                            alert('Помилка під час перевірки reCAPTCHA. Будь ласка, спробуйте пізніше або перевірте консоль.');
-                            if (submitButton) {
-                                submitButton.disabled = false;
-                                submitButton.textContent = 'Відправити повідомлення';
-                            }
-                        });
-                });
-            });
-        } else {
-            if (!contactForm) console.error('[reCAPTCHA] Contact form with ID "contact-form-recaptcha" not found.');
-            if (!recaptchaTokenInput) console.error('[reCAPTCHA] Hidden input with ID "recaptcha-token-input" not found.');
         }
     });
     </script>

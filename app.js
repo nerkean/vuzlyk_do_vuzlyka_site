@@ -312,7 +312,7 @@ app.use((req, res, next) => {
     res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`; // Додано для baseUrl
     res.locals.googleMapsApiKey = process.env.Maps_API_KEY; // <-- ДОДАНО КЛЮЧ КАРТ
     res.locals.googleMapsApiKey = process.env.Maps_API_KEY;
-    res.locals.reCaptchaSiteKey = process.env.RECAPTCHA_V3_SITE_KEY;
+    res.locals.reCaptchaSiteKey = process.env.RECAPTCHA_V2_SITE_KEY;
     next();
 });
 
@@ -1187,58 +1187,43 @@ app.get('/contacts', (req, res) => {
 });
 
 app.post('/contacts/send', async (req, res) => {
-    // Додаємо лог для перевірки, що приходить з клієнта
-    console.log('[Contact Form] Received body:', JSON.stringify(req.body, null, 2));
+   console.log('[Contact Form V2] Received body:', JSON.stringify(req.body, null, 2));
 
-    const { name, email, phone, subject, message, recaptchaToken } = req.body; // <--- ВИПРАВЛЕНО: додано recaptchaToken
+    // Тепер токен буде в req.body['g-recaptcha-response']
+    const { name, email, phone, subject, message } = req.body;
+    const recaptchaToken = req.body['g-recaptcha-response'];
 
     // 1. Перевірка токена reCAPTCHA
-    // Тепер recaptchaToken буде або рядком (можливо, порожнім), або undefined, якщо його зовсім не було
-    if (!recaptchaToken) { // Ця умова спрацює, якщо recaptchaToken === '' (порожній рядок) або undefined/null
-        console.warn('[Contact Form] reCAPTCHA token відсутній або порожній.');
-        return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, пройдіть перевірку reCAPTCHA (токен не отримано).') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+    if (!process.env.RECAPTCHA_V2_SECRET_KEY) {
+        console.error('[Contact Form V2] RECAPTCHA_V2_SECRET_KEY не налаштовано на сервері.');
+        // ... обробка помилки конфігурації ...
+        return res.redirect('/contacts?error=' + encodeURIComponent('Помилка конфігурації сервера reCAPTCHA.') /* ... */);
+    }
+
+    if (!recaptchaToken) {
+        console.warn('[Contact Form V2] reCAPTCHA token (g-recaptcha-response) відсутній або порожній.');
+        return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, пройдіть перевірку "Я не робот".') /* ... */);
     }
 
     try {
-        const secretKey = process.env.RECAPTCHA_V3_SECRET_KEY;
-        if (!secretKey) {
-            console.error('[Contact Form] RECAPTCHA_V3_SECRET_KEY не налаштовано на сервері.');
-            // Якщо ключ не налаштований, ти можеш вирішити, чи пропускати перевірку (небезпечно для продакшену)
-            // чи повертати помилку. Для безпеки краще повернути помилку.
-            return res.redirect('/contacts?error=' + encodeURIComponent('Помилка конфігурації сервера reCAPTCHA.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
-        }
-
+        const secretKey = process.env.RECAPTCHA_V2_SECRET_KEY;
         const verificationURL = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}&remoteip=${req.ip}`;
 
         const recaptchaResponse = await axios.post(verificationURL);
         const recaptchaData = recaptchaResponse.data;
 
-        console.log('[Contact Form] reCAPTCHA verification response:', recaptchaData);
+        console.log('[Contact Form V2] reCAPTCHA verification response:', recaptchaData);
 
         if (!recaptchaData.success) {
-            console.warn('[Contact Form] Перевірка reCAPTCHA не пройдена:', recaptchaData['error-codes']);
-            let userErrorMessage = 'Перевірка reCAPTCHA не пройдена. Спробуйте ще раз.';
-            if (recaptchaData['error-codes'] && recaptchaData['error-codes'].includes('timeout-or-duplicate')) {
-                userErrorMessage = 'Час дії перевірки reCAPTCHA минув або токен вже використано. Оновіть сторінку та спробуйте знову.';
-            } else if (recaptchaData['error-codes'] && recaptchaData['error-codes'].includes('invalid-input-response')) {
-                userErrorMessage = 'Недійсний токен reCAPTCHA. Можливо, він порожній. Оновіть сторінку.';
-            }
-            return res.redirect('/contacts?error=' + encodeURIComponent(userErrorMessage) + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+            console.warn('[Contact Form V2] Перевірка reCAPTCHA не пройдена:', recaptchaData['error-codes']);
+            let userErrorMessage = 'Перевірка "Я не робот" не пройдена. Спробуйте ще раз.';
+            // ... (можна додати більш детальну обробку error-codes, якщо потрібно) ...
+            return res.redirect('/contacts?error=' + encodeURIComponent(userErrorMessage) /* ... */);
         }
 
-        // Перевірка оцінки та дії
-        if (recaptchaData.score < 0.5) { // Поріг можна налаштувати
-            console.warn(`[Contact Form] Низька оцінка reCAPTCHA: ${recaptchaData.score} для дії ${recaptchaData.action}. IP: ${req.ip}`);
-            // return res.redirect('/contacts?error=' + encodeURIComponent('Система виявила підозрілу активність. Спробуйте пізніше.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
-        }
-
-        if (recaptchaData.action !== 'contact_form_submit') {
-            console.warn(`[Contact Form] Неправильна дія reCAPTCHA: очікувалось 'contact_form_submit', отримано '${recaptchaData.action}'. IP: ${req.ip}`);
-            // return res.redirect('/contacts?error=' + encodeURIComponent('Помилка перевірки форми. Спробуйте оновити сторінку.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
-        }
-
-        // Якщо дійшли сюди, reCAPTCHA пройдена успішно або з прийнятною оцінкою.
-        // Продовжуємо обробку форми...
+        // Якщо дійшли сюди, reCAPTCHA v2 пройдена успішно.
+        // Видаляємо перевірку score та action, оскільки вони специфічні для v3.
+        console.log('[Contact Form V2] reCAPTCHA успішно пройдена.');
 
         if (!name || !email || !message) {
             return res.redirect('/contacts?error=' + encodeURIComponent('Будь ласка, заповніть усі обов\'язкові поля (ім\'я, email, повідомлення).') + `&name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message)}`);
@@ -1290,12 +1275,12 @@ ${message}
             html: mailHtml,
         });
 
-        console.log(`[Contact Form] Повідомлення від ${name} (${email}) успішно відправлено.`);
+console.log(`[Contact Form V2] Повідомлення від ${name} (${email}) успішно відправлено.`);
         res.redirect('/contacts?success=true');
 
     } catch (error) {
-        console.error('Помилка обробки контактної форми або reCAPTCHA (зовнішній catch):', error);
-        res.redirect('/contacts?error=' + encodeURIComponent('Сталася помилка при відправці повідомлення. Спробуйте пізніше.') + `&name=${encodeURIComponent(name || '')}&email=${encodeURIComponent(email || '')}&phone=${encodeURIComponent(phone || '')}&subject=${encodeURIComponent(subject || '')}&message=${encodeURIComponent(message || '')}`);
+        console.error('Помилка обробки контактної форми або reCAPTCHA V2 (зовнішній catch):', error);
+        res.redirect('/contacts?error=' + encodeURIComponent('Сталася помилка при відправці повідомлення. Спробуйте пізніше.') /* ... */);
     }
 });
 
